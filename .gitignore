@@ -1,0 +1,21 @@
+# PlatformIO
+.pio/
+firmware/.pio/
+*.bin
+*.elf
+
+# VS Code (Projekt-Settings optional versionieren)
+.vscode/*
+!.vscode/extensions.json
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+*~
+
+# Build / Logs
+build/
+*.log
+
+# Claude Code lokale Sitzungsdaten (Projektkontext CLAUDE.md wird versioniert)
+.claude/
