@@ -12,11 +12,11 @@ PlatformIO-Projekt, Scheduler-Skelett, CLAUDE.md, Docs, Beispiel-Logik + Test.
 Hysterese + Mindesthaltezeit. Notbrems-Blinken (FR-TL-07) als deaktivierbarer
 Zustand. Fail-safe-Grundlicht (FR-SAF-01). Tests der Kennlinie/Hysterese.
 
-## M2 — Lebenszyklus (R1)  ☐
+## M2 — Lebenszyklus (R1)  ✅
 INIT→RUN mit Sensor-Init-Timeout (FR-STA-01/02), Init-Diagnose-Blinken (FR-TL-03),
 degradierter RUN. Watchdog (FR-SAF-03).
 
-## M3 — Sensorik (R4, Erfassung)  ☐
+## M3 — Sensorik (R4, Erfassung)  ☐ ← als Nächstes
 `sensors`: MPU6050 (Komplementärfilter), BMP280, L86. I²C-Timeout/Recovery
 (FR-SNS-03/04), Plausibilitätsprüfung (FR-SNS-05), GNSS-Fix-Status (FR-TEL-05).
 
