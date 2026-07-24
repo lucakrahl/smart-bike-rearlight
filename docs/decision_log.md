@@ -16,5 +16,6 @@ Auszug der zentralen Architekturentscheidungen (Vollständige Liste: Bible Kap. 
 | Warnblinker per Langdruck (≥ 5 s) | ASK-Fernbedienung ohne Kombisignal | gleichzeitiges Tastendrücken |
 | Trennung Logik ↔ Hardware | Host-Unit-Tests möglich | Logik an Treiber gekoppelt |
 | No-OTA-Partition + NVS-Konfig | BLE-Firmware passt; NVS reicht | OTA-Schema / LittleFS |
+| Build-Umgebung: PlatformIO mit pioarduino-Plattform (Arduino-ESP32-Core 3.3.x) | Core 3.x nötig für `ledcAttach` (CON-02); offizielle espressif32-Plattform liefert nur Core 2.0.17 | Arduino IDE / offizielle espressif32-Plattform (Core 2.x) |
 
 *Nächste Entscheidungen ab hier eintragen (nach Freigabe).*
