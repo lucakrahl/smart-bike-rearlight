@@ -1,6 +1,7 @@
 # PlatformIO
 .pio/
 firmware/.pio/
+firmware/compile_commands.json
 *.bin
 *.elf
 

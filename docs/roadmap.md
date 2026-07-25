@@ -20,11 +20,18 @@ degradierter RUN. Watchdog (FR-SAF-03).
 direkt im 100-Hz-Task; `led_output`-Treiber (PWM) gebaut. Läuft auf PC- und
 ESP32-Build. `critical_sensors_ready`/`decel_ms2` sind noch Platzhalter, bis M3.
 
-## M3 — Sensorik (R4, Erfassung)  ☐ ← als Nächstes
-`sensors`: MPU6050 (Komplementärfilter), BMP280, L86. I²C-Timeout/Recovery
-(FR-SNS-03/04), Plausibilitätsprüfung (FR-SNS-05), GNSS-Fix-Status (FR-TEL-05).
+## M3 — Sensorik (R4, Erfassung) — Teilschritt IMU  ✅
+`imu_driver` (MPU6050, I2C-Timeout FR-SNS-03) + `motion_filter` (Komplementär-
+filter, Gravitationskompensation, richtungsabhängige Bremserkennung — Sprints
+lösen kein Bremslicht aus), jeweils mit Host-Tests. In `main.cpp` verdrahtet,
+ersetzt beide `TODO(M3)`-Platzhalter (`critical_sensors_ready`, `decel_ms2`).
 
-## M4 — Blinker + RF (R3)  ☐
+**Zurückgestellt (eigene Folgeschritte, noch keiner Milestone-Nummer
+zugeordnet):** I²C-Recovery (FR-SNS-04), Plausibilitätsprüfung (FR-SNS-05),
+BMP280, L86/GNSS-Fix-Status (FR-TEL-05). Achsen-/Vorzeichenkonvention der IMU
+ist als `TODO(offen)` in `config.h` markiert (unverifiziert, s. `MOTION_BRAKE_SIGN`).
+
+## M4 — Blinker + RF (R3)  ☐ ← als Nächstes
 `rf_input` + `button_decoder` (Kurz-/Langdruck FR-RF-03/04), Blinker-State-Machine
 (FR-BLK-01..09), 1,5-Hz-Takt. Tests der Blinklogik/Tastenerkennung.
 

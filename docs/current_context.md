@@ -4,21 +4,23 @@
 
 **Stand:** Repo-Grundgerüst angelegt (Phase 3). SRS vollständig (Bible v0.7).
 Build-Umgebung steht (PlatformIO mit pioarduino, Arduino-ESP32-Core 3.3.11).
-R1 (`lifecycle_fsm`) und R2 (`tail_light_fsm`) sind in `main.cpp` verdrahtet
-(`taskLifecycleAndTailLight`, 100 Hz); LED-Treiber `led_output` (PWM, CON-02)
-gebaut. Baut grün auf PC (`pio test -e native`, 19/19) und ESP32
-(`pio run -e esp32dev`, Flash 10,3 % / RAM 7,3 %).
+R1 (`lifecycle_fsm`), R2 (`tail_light_fsm`) und der IMU-Teilschritt von R4
+(`imu_driver` + `motion_filter`) sind in `main.cpp` verdrahtet
+(`taskLifecycleAndTailLight`, 100 Hz). Baut grün auf PC (`pio test -e native`,
+23/23) und ESP32 (`pio run -e esp32dev`, Flash 10,7 % / RAM 7,3 %).
 
 **Aktueller Fokus:** Firmware-Implementierung nach SRS fortsetzen.
 
-**Nächster Schritt:** M3 der Roadmap — Sensorik (R4): `sensors`-Treiber
-(MPU6050 Komplementärfilter, BMP280, L86), Plausibilitätsprüfung
-(FR-SNS-03/04/05). Damit werden die beiden Platzhalter in `main.cpp`
-(`critical_sensors_ready`, `decel_ms2`) durch echte Sensordaten ersetzt.
+**Nächster Schritt:** M4 der Roadmap — Blinker + RF (R3): `rf_input` +
+`button_decoder` (Kurz-/Langdruck FR-RF-03/04), Blinker-State-Machine
+(FR-BLK-01..09), 1,5-Hz-Takt.
 
-**Zuletzt erledigt:** M1 Rücklicht-Region und M2 Lebenszyklus-Region (jeweils
-mit Host-Tests) sowie deren Integration in `main.cpp` inkl. neuem
-`led_output`-PWM-Treiber (erste Lichtausgabe auf echter Hardware).
+**Zuletzt erledigt:** M3, Teilschritt IMU — `imu_driver` (MPU6050, I2C-Timeout
+FR-SNS-03) + `motion_filter` (Komplementärfilter, Gravitationskompensation,
+richtungsabhängige Bremserkennung), mit Host-Tests, in `main.cpp` verdrahtet.
 
 **Blocker/offene Klärungen:** LED-Kanalzuordnung/Datenblatt (Bible 11.1);
-RF-Release-Timeout vorläufig (FR-RF-03).
+RF-Release-Timeout vorläufig (FR-RF-03); Achsen-/Vorzeichenkonvention der IMU
+unverifiziert (`TODO(offen)` bei `MOTION_BRAKE_SIGN` in `config.h`); aus M3
+zurückgestellt: I²C-Recovery (FR-SNS-04), Plausibilitätsprüfung (FR-SNS-05),
+BMP280, L86/GNSS-Fix-Status (FR-TEL-05) — noch keinem Milestone zugeordnet.
