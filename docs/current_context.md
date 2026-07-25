@@ -18,9 +18,11 @@ R1 (`lifecycle_fsm`), R2 (`tail_light_fsm`) und der IMU-Teilschritt von R4
 **Zuletzt erledigt:** M3, Teilschritt IMU — `imu_driver` (MPU6050, I2C-Timeout
 FR-SNS-03) + `motion_filter` (Komplementärfilter, Gravitationskompensation,
 richtungsabhängige Bremserkennung), mit Host-Tests, in `main.cpp` verdrahtet.
+IMU-Brems-Richtung am realen Board kalibriert: `MOTION_BRAKE_SIGN` in
+`config.h` von -1 auf +1 gedreht (Bremsen erzeugt jetzt positiven Wert);
+Achsen-/Vorzeichenkonvention ist damit verifiziert, kein `TODO(offen)` mehr.
 
 **Blocker/offene Klärungen:** LED-Kanalzuordnung/Datenblatt (Bible 11.1);
-RF-Release-Timeout vorläufig (FR-RF-03); Achsen-/Vorzeichenkonvention der IMU
-unverifiziert (`TODO(offen)` bei `MOTION_BRAKE_SIGN` in `config.h`); aus M3
-zurückgestellt: I²C-Recovery (FR-SNS-04), Plausibilitätsprüfung (FR-SNS-05),
-BMP280, L86/GNSS-Fix-Status (FR-TEL-05) — noch keinem Milestone zugeordnet.
+RF-Release-Timeout vorläufig (FR-RF-03); aus M3 zurückgestellt: I²C-Recovery
+(FR-SNS-04), Plausibilitätsprüfung (FR-SNS-05), BMP280, L86/GNSS-Fix-Status
+(FR-TEL-05) — noch keinem Milestone zugeordnet.

@@ -29,7 +29,8 @@ ersetzt beide `TODO(M3)`-Platzhalter (`critical_sensors_ready`, `decel_ms2`).
 **Zurückgestellt (eigene Folgeschritte, noch keiner Milestone-Nummer
 zugeordnet):** I²C-Recovery (FR-SNS-04), Plausibilitätsprüfung (FR-SNS-05),
 BMP280, L86/GNSS-Fix-Status (FR-TEL-05). Achsen-/Vorzeichenkonvention der IMU
-ist als `TODO(offen)` in `config.h` markiert (unverifiziert, s. `MOTION_BRAKE_SIGN`).
+ist am realen Board kalibriert (`MOTION_BRAKE_SIGN` in `config.h`, kein
+`TODO(offen)` mehr).
 
 ## M4 — Blinker + RF (R3)  ☐ ← als Nächstes
 `rf_input` + `button_decoder` (Kurz-/Langdruck FR-RF-03/04), Blinker-State-Machine
