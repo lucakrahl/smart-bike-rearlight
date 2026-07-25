@@ -7,7 +7,7 @@
 ## M0 — Grundgerüst  ✅
 PlatformIO-Projekt, Scheduler-Skelett, CLAUDE.md, Docs, Beispiel-Logik + Test.
 
-## M1 — Rücklicht-Region (R2)  ☐
+## M1 — Rücklicht-Region (R2)  ✅
 `led_output` (PWM, CON-02) + Bremslicht-State-Machine (FR-TL-01/03/04/05/06),
 Hysterese + Mindesthaltezeit. Notbrems-Blinken (FR-TL-07) als deaktivierbarer
 Zustand. Fail-safe-Grundlicht (FR-SAF-01). Tests der Kennlinie/Hysterese.
@@ -15,6 +15,10 @@ Zustand. Fail-safe-Grundlicht (FR-SAF-01). Tests der Kennlinie/Hysterese.
 ## M2 — Lebenszyklus (R1)  ✅
 INIT→RUN mit Sensor-Init-Timeout (FR-STA-01/02), Init-Diagnose-Blinken (FR-TL-03),
 degradierter RUN. Watchdog (FR-SAF-03).
+
+**R1→R2-Integration (main.cpp):** ✅ — `lifecycle_fsm` treibt `tail_light_fsm`
+direkt im 100-Hz-Task; `led_output`-Treiber (PWM) gebaut. Läuft auf PC- und
+ESP32-Build. `critical_sensors_ready`/`decel_ms2` sind noch Platzhalter, bis M3.
 
 ## M3 — Sensorik (R4, Erfassung)  ☐ ← als Nächstes
 `sensors`: MPU6050 (Komplementärfilter), BMP280, L86. I²C-Timeout/Recovery
