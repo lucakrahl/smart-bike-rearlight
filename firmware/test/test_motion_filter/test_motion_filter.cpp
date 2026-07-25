@@ -18,17 +18,18 @@ void test_calm_level_pose_yields_near_zero() {
 
 void test_simulated_braking_exceeds_threshold() {
   MotionFilter filter;
-  // Eben (Z=g), Bremsvorzeichen default: Bremsen = negative Y-Beschleunigung.
-  MotionInput in{0.0f, -3.5f, G, 0.0f, 0.01f};
+  // Eben (Z=g). Brems-Richtung am realen Board verifiziert: Bremsen =
+  // positive Y-Beschleunigung (MOTION_BRAKE_SIGN, config.h).
+  MotionInput in{0.0f, 3.5f, G, 0.0f, 0.01f};
   const float decel = filter.update(in);
   TEST_ASSERT_TRUE(decel > BRAKE_ON_MS2);
 }
 
 void test_accelerating_in_non_braking_direction_yields_near_zero() {
   MotionFilter filter;
-  // Sprint/Antritt: positive Y-Beschleunigung (Nicht-Brems-Richtung) darf
-  // das Bremslicht nicht ausloesen.
-  MotionInput in{0.0f, 3.5f, G, 0.0f, 0.01f};
+  // Sprint/Antritt: negative Y-Beschleunigung (Nicht-Brems-Richtung, s.
+  // verifizierte Konvention oben) darf das Bremslicht nicht ausloesen.
+  MotionInput in{0.0f, -3.5f, G, 0.0f, 0.01f};
   const float decel = filter.update(in);
   TEST_ASSERT_FLOAT_WITHIN(0.01f, 0.0f, decel);
 }

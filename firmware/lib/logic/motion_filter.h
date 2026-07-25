@@ -4,9 +4,9 @@
 // millis()); kennt nicht den konkreten IMU-Treiber. Host-testbar (siehe
 // firmware/test/test_motion_filter/).
 //
-// TODO(offen): Achsen-/Vorzeichenkonvention unverifiziert, s. Kommentar bei
-// MOTION_BRAKE_SIGN in config.h (Y=Fahrtrichtung ist durch die Bible
-// gesichert; Z=oben/X=seitlich sowie das Bremsvorzeichen sind Annahmen).
+// Achsen-/Vorzeichenkonvention am realen Board verifiziert, s. Kommentar bei
+// MOTION_BRAKE_SIGN in config.h (Y=Fahrtrichtung, Z=oben, X=seitlich;
+// Bremsen erzeugt einen positiven Wert).
 #pragma once
 #include "config.h"
 
@@ -15,7 +15,7 @@ namespace logic {
 struct MotionParams {
   float alpha       = COMPL_FILTER_ALPHA;  // Komplementärfilter-Gewicht (Bible Kap. 6.4)
   float gravity_ms2 = 9.80665f;            // Standardschwerebeschleunigung
-  float brake_sign  = MOTION_BRAKE_SIGN;   // TODO(offen): Achsenkalibrierung, s. config.h
+  float brake_sign  = MOTION_BRAKE_SIGN;   // kalibriert am realen Board, s. config.h
 };
 
 struct MotionInput {
