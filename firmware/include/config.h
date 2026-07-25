@@ -33,6 +33,15 @@ constexpr float ESS_OFF_MS2     = 3.0f;   // FR-TL-07 Hysterese aus
 constexpr uint32_t BRAKE_MIN_HOLD_MS = 300;  // FR-TL-06 Mindesthaltezeit
 constexpr float COMPL_FILTER_ALPHA   = 0.98f; // Bible Kap. 6.4
 
+// TODO(offen): Achsen-/Vorzeichenkonvention der IMU unverifiziert (Annahme:
+// Y=Fahrtrichtung [Bible, gesichert], Z=oben, X=seitlich=Nickachse bei
+// ebenem Stand — nur Y ist durch die Bible bestaetigt, Z/X sind eine fuer
+// die Neigungskompensation noetige Ergaenzung). MOTION_BRAKE_SIGN legt fest,
+// welches Vorzeichen der gravitationskompensierten Y-Beschleunigung als
+// "Bremsen" zaehlt (Standardannahme: +Y=vorwaerts -> Bremsen=negativ).
+// Beides auf dem realen Aufbau zu verifizieren/kalibrieren.
+constexpr float MOTION_BRAKE_SIGN = -1.0f;
+
 // ---- Notbrems-Blinken default AUS (FR-TL-07, § 67 Abs. 4) -----------------
 constexpr bool ESS_ENABLED_DEFAULT = false;
 
@@ -56,3 +65,7 @@ constexpr uint32_t RF_CODE_RIGHT = 10967537;  // Taste 2
 
 // ---- Sicherheit ----------------------------------------------------------
 constexpr uint32_t WATCHDOG_TIMEOUT_MS = 2000;  // FR-SAF-03
+
+// ---- I2C (fest) ------------------------------------------------------------
+constexpr uint32_t I2C_TIMEOUT_MS   = 50;    // FR-SNS-03 (~25-50 ms Budget)
+constexpr uint8_t  MPU6050_I2C_ADDR = 0x68;  // Bible Kap. 4.2

@@ -13,14 +13,16 @@
 #include "pins.h"
 #include "config.h"
 #include "led_output.h"       // drivers  (R2/R3 Aktorik, CON-02)
+#include "imu_driver.h"       // drivers  (R4 IMU, FR-SNS-01/02/03)
 #include "lifecycle_fsm.h"    // logic    (R1)
 #include "tail_light_fsm.h"   // logic    (R2)
+#include "motion_filter.h"    // logic    (R4->R2, Komplementaerfilter)
 
 // PWM-Kanal-Zuordnung erfolgt ueber ledcAttach() (Core v3.x, CON-02).
 // TODO(FR-...): weitere Treiber-/Logikmodule einbinden, sobald angelegt:
 //   #include "rf_input.h"       // drivers  (FR-RF-01)
 //   #include "button_decoder.h" // logic    (FR-RF-03/04)
-//   #include "sensors.h"        // drivers  (FR-SNS)
+//   #include "sensors.h"        // drivers  (BMP280/L86, FR-SNS)
 //   #include "telemetry.h"      // drivers  (FR-TEL)
 //   #include "scheduler.h"      // optional Helfer
 
@@ -31,6 +33,8 @@ static uint32_t t_imu = 0, t_baro = 0, t_gnss = 0, t_tele = 0;
 // taskLifecycleAndTailLight() 100 Hz getickt (s. u.).
 static logic::LifecycleFsm lifecycleFsm;
 static logic::TailLightFsm tailLightFsm;
+static logic::MotionFilter motionFilter;
+static uint32_t t_motion_prev_ms = 0;  // fuer dt_s der Komplementaerfilter-Eingabe
 
 // ------------------------------------------------------------------------
 // Task-Stubs — hier kommt die Logik der jeweiligen Region hinein.
@@ -40,8 +44,12 @@ static void taskLifecycleAndTailLight() {
   // Reaktionszeit <= 50 ms (NFR-RT-01).
   const uint32_t now = millis();
 
-  const bool  critical_sensors_ready = false;  // TODO(M3): aus IMU-Init
-  const float decel_ms2 = 0.0f;                // TODO(M3): aus IMU (Komplementaerfilter)
+  const float dt_s = (now - t_motion_prev_ms) / 1000.0f;
+  t_motion_prev_ms = now;
+  const drivers::ImuSample raw = drivers::imuRead();
+  const float decel_ms2 = motionFilter.update(
+      {raw.accel_x_ms2, raw.accel_y_ms2, raw.accel_z_ms2, raw.gyro_x_rads, dt_s});
+  const bool critical_sensors_ready = drivers::imuIsReady();
 
   const logic::LifecycleOutput sys = lifecycleFsm.update(critical_sensors_ready, now);
   const logic::TailLightOutput tl  = tailLightFsm.update(decel_ms2, sys.state, now);
@@ -93,6 +101,13 @@ void setup() {
   drivers::attach(PIN_BRAKE_LIGHT);
   drivers::attach(PIN_BLINK_LEFT);
   drivers::attach(PIN_BLINK_RIGHT);
+
+  // R1-Eingang "kritische Sensoren bereit" (FR-STA-01): IMU-Init, zeitbegrenzt
+  // durch Wire-Timeout (FR-SNS-03). Ergebnis wird pro Tick per imuIsReady()
+  // an lifecycleFsm.update() gereicht (s. taskLifecycleAndTailLight()).
+  const bool imu_ready = drivers::imuBegin();
+  Serial.printf("[boot] IMU ready=%d\n", (int)imu_ready);
+  t_motion_prev_ms = millis();
 
   // TODO(FR-CFG-03): Konfiguration aus NVS laden (Defaults bei leerem NVS).
   // TODO(FR-SAF-03): Task-Watchdog aktivieren (~2 s) — Hardware, gehoert hier
