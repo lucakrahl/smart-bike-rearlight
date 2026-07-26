@@ -26,19 +26,23 @@ filter, Gravitationskompensation, richtungsabhängige Bremserkennung — Sprints
 lösen kein Bremslicht aus), jeweils mit Host-Tests. In `main.cpp` verdrahtet,
 ersetzt beide `TODO(M3)`-Platzhalter (`critical_sensors_ready`, `decel_ms2`).
 
-**Zurückgestellt (eigene Folgeschritte, noch keiner Milestone-Nummer
-zugeordnet):** I²C-Recovery (FR-SNS-04), Plausibilitätsprüfung (FR-SNS-05),
-BMP280, L86/GNSS-Fix-Status (FR-TEL-05). Achsen-/Vorzeichenkonvention der IMU
-ist am realen Board kalibriert (`MOTION_BRAKE_SIGN` in `config.h`, kein
-`TODO(offen)` mehr).
+**Zurückgestellt, verschoben nach M5:** I²C-Recovery (FR-SNS-04),
+Plausibilitätsprüfung (FR-SNS-05), BMP280, L86/GNSS-Fix-Status (FR-TEL-05).
+Achsen-/Vorzeichenkonvention der IMU ist am realen Board kalibriert
+(`MOTION_BRAKE_SIGN` in `config.h`, kein `TODO(offen)` mehr).
 
-## M4 — Blinker + RF (R3)  ☐ ← als Nächstes
-`rf_input` + `button_decoder` (Kurz-/Langdruck FR-RF-03/04), Blinker-State-Machine
-(FR-BLK-01..09), 1,5-Hz-Takt. Tests der Blinklogik/Tastenerkennung.
+## M4 — Blinker + RF (R3)  ✅
+`rf_input` + `button_decoder` (Entprellung FR-RF-02, Halte-/Release-Erkennung
+FR-RF-03, Kurz-/Langdruck FR-RF-04, FR-BLK-07), Blinker-State-Machine
+AUS/LINKS/RECHTS/WARN (FR-BLK-01..09), 1,5-Hz-Takt (FR-BLK-08). In `main.cpp`
+verdrahtet (FR-BLK-09-Gate gegen `SystemState`, Event genau einmal
+konsumiert). Tests der Tastenerkennung/Blinklogik.
 
-## M5 — Telemetrie + BLE (R4)  ☐
+## M5 — Telemetrie + BLE (R4)  ☐ ← als Nächstes
 Versioniertes Frame (FR-TEL-02/03/06), BLE-Notify unidirektional (FR-SYS-04),
-RAM-Ringpuffer (FR-TEL-04, NFR-RES-01).
+RAM-Ringpuffer (FR-TEL-04, NFR-RES-01). **Zusätzlich aus M3 übernommen:**
+BMP280 + L86/GNSS-Fix-Status (FR-TEL-05), I²C-Recovery (FR-SNS-04),
+Plausibilitätsprüfung (FR-SNS-05).
 
 ## M6 — Konfiguration  ☐
 NVS/`Preferences` + serielles Kalibrier-Interface (FR-CFG-01/02/03).
