@@ -11,8 +11,9 @@ struct ImuSample {
   float gyro_x_rads;                             // Drehrate um die Nickachse (X)
 };
 
-// Initialisiert den MPU6050 (I2C, Adresse aus config.h). I2C-Zugriffe
-// zeitbegrenzt ueber Wire-Timeout (FR-SNS-03). Rueckgabe: true = Init
+// Initialisiert den MPU6050 (I2C, Adresse aus config.h) auf dem zentral in
+// main.cpp/setup() eingerichteten Bus (Wire.begin()/setTimeOut(), FR-SNS-03 —
+// dieser Treiber ruft selbst kein Wire.begin() auf). Rueckgabe: true = Init
 // erfolgreich ("IMU ready"). Blockierend, nur fuer setup() gedacht.
 bool imuBegin();
 

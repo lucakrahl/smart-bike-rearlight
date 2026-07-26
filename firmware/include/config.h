@@ -46,10 +46,16 @@ constexpr bool ESS_ENABLED_DEFAULT = false;
 
 // ---- Sampling / Telemetrie (fest, FR-SNS-02 / FR-TEL-02) ------------------
 constexpr uint32_t PERIOD_IMU_MS   = 10;    // 100 Hz
-constexpr uint32_t PERIOD_BARO_MS  = 100;   // 10 Hz
+constexpr uint32_t PERIOD_BARO_MS  = 100;   // 10 Hz (Task-Slot; BMP280-FORCED-Zyklus s. BARO_FORCED_CYCLE_MS)
 constexpr uint32_t PERIOD_GNSS_MS  = 1000;  // 1 Hz
 constexpr uint32_t PERIOD_TELE_MS  = 100;   // 10 Hz
 constexpr uint16_t TELEMETRY_SCHEMA_VERSION = 1;  // FR-TEL-06
+
+// BMP280 laeuft im FORCED-Mode bewusst langsamer als der 10-Hz-Task-Slot:
+// Trigger und Read sind auf zwei Zyklen entkoppelt (s. bmp280_driver), das
+// hier ist die Zykluszeit dazwischen. Reduziert die Selbsterwaermung
+// (gemessen +2,6 °C im Dauerbetrieb) durch niedrige Duty-Cycle.
+constexpr uint32_t BARO_FORCED_CYCLE_MS = 1000;
 
 // ---- Ringpuffer (NFR-RES-01) ---------------------------------------------
 constexpr uint16_t RINGBUFFER_FRAMES = 600;  // ~60 s @ 10 Hz
@@ -66,5 +72,12 @@ constexpr uint32_t RF_CODE_RIGHT = 10967537;  // Taste 2
 constexpr uint32_t WATCHDOG_TIMEOUT_MS = 2000;  // FR-SAF-03
 
 // ---- I2C (fest) ------------------------------------------------------------
+// Bus wird zentral einmalig in main.cpp/setup() initialisiert (Wire.begin() +
+// Wire.setTimeOut()); die Treiber (imu_driver, bmp280_driver) sind reine
+// Busnutzer und rufen selbst kein Wire.begin() auf (FR-SNS-03 an einer Stelle).
 constexpr uint32_t I2C_TIMEOUT_MS   = 50;    // FR-SNS-03 (~25-50 ms Budget)
 constexpr uint8_t  MPU6050_I2C_ADDR = 0x68;  // Bible Kap. 4.2
+constexpr uint8_t  BMP280_I2C_ADDR  = 0x76;  // Bible Kap. 4.2
+
+// ---- Debug (temporaer) -----------------------------------------------------
+constexpr bool DEBUG_SERIAL = true;  // schaltet TODO(temp debug)-Ausgaben; vor Auslieferung false

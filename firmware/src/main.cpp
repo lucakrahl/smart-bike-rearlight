@@ -10,10 +10,12 @@
 // Worst-Case-Loop, NFR-RT-04).
 
 #include <Arduino.h>
+#include <Wire.h>
 #include "pins.h"
 #include "config.h"
 #include "led_output.h"       // drivers  (R2/R3 Aktorik, CON-02)
 #include "imu_driver.h"       // drivers  (R4 IMU, FR-SNS-01/02/03)
+#include "bmp280_driver.h"    // drivers  (R4 Baro, FR-SNS-01/02/03)
 #include "rf_input.h"         // drivers  (RF-Empfang, FR-RF-01)
 #include "lifecycle_fsm.h"    // logic    (R1)
 #include "tail_light_fsm.h"   // logic    (R2)
@@ -23,7 +25,7 @@
 
 // PWM-Kanal-Zuordnung erfolgt ueber ledcAttach() (Core v3.x, CON-02).
 // TODO(FR-...): weitere Treiber-/Logikmodule einbinden, sobald angelegt:
-//   #include "sensors.h"        // drivers  (BMP280/L86, FR-SNS)
+//   #include "gnss_driver.h"    // drivers  (L86, FR-SNS)
 //   #include "telemetry.h"      // drivers  (FR-TEL)
 //   #include "scheduler.h"      // optional Helfer
 
@@ -80,7 +82,36 @@ static void taskLifecycleAndTailLight() {
 }
 
 static void taskBaro() {
-  // 10 Hz. TODO(FR-SNS-02): BMP280 lesen (optional, FR-STA-05).
+  // Task-Slot 10 Hz (s. loop()), BMP280-FORCED-Zyklus laeuft bewusst
+  // langsamer (BARO_FORCED_CYCLE_MS, ~1 Hz): Trigger und Read sind auf zwei
+  // aufeinanderfolgende Zyklen entkoppelt, dazwischen schlaeft der Sensor
+  // (Selbsterwaermung minimiert). Kein blockierendes Warten: bmp280Read()
+  // liest immer eine laengst abgeschlossene Messung (Konversionszeit ~6 ms
+  // << BARO_FORCED_CYCLE_MS, s. bmp280_driver.cpp).
+  static uint32_t t_cycle = 0;
+  static bool measurement_pending = false;
+
+  const uint32_t now = millis();
+  if (now - t_cycle < BARO_FORCED_CYCLE_MS) {
+    return;
+  }
+  t_cycle = now;
+
+  if (!drivers::bmp280IsReady()) {
+    return;  // optionaler Sensor (FR-STA-05), kein Effekt auf Licht/Blinker
+  }
+
+  if (measurement_pending) {
+    const drivers::BaroSample baro = drivers::bmp280Read();
+    // TODO(temp debug): entfernen, sobald Telemetrie (M5 Teil B) den Wert
+    // ausgibt. Hinter DEBUG_SERIAL abschaltbar.
+    if (DEBUG_SERIAL) {
+      Serial.printf("[Baro] pressure=%.1f Pa temp=%.2f C\n", baro.pressure_pa,
+                    baro.temperature_c);
+    }
+  }
+  drivers::bmp280TriggerMeasurement();
+  measurement_pending = true;
 }
 
 static void taskGnss() {
@@ -126,18 +157,28 @@ void setup() {
   Serial.begin(115200);
   Serial.println(F("[boot] Smart Bike Rear Light — Firmware-Geruest"));
 
+  // I2C-Bus zentral EINMALIG initialisieren (FR-SNS-03: Timeout an einer
+  // Stelle). imuBegin()/bmp280Begin() sind reine Busnutzer und rufen selbst
+  // kein Wire.begin() auf.
+  Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
+  Wire.setTimeOut(I2C_TIMEOUT_MS);
+
   // R1 INIT: rote LED als Diagnose-Anzeige (FR-TL-03), bis Sensoren bereit.
   // taskLifecycleAndTailLight() treibt die Duty ab dem ersten loop()-Durchlauf.
   drivers::attach(PIN_BRAKE_LIGHT);
   drivers::attach(PIN_BLINK_LEFT);
   drivers::attach(PIN_BLINK_RIGHT);
 
-  // R1-Eingang "kritische Sensoren bereit" (FR-STA-01): IMU-Init, zeitbegrenzt
-  // durch Wire-Timeout (FR-SNS-03). Ergebnis wird pro Tick per imuIsReady()
-  // an lifecycleFsm.update() gereicht (s. taskLifecycleAndTailLight()).
+  // R1-Eingang "kritische Sensoren bereit" (FR-STA-01): IMU-Init. Ergebnis
+  // wird pro Tick per imuIsReady() an lifecycleFsm.update() gereicht
+  // (s. taskLifecycleAndTailLight()).
   const bool imu_ready = drivers::imuBegin();
   Serial.printf("[boot] IMU ready=%d\n", (int)imu_ready);
   t_motion_prev_ms = millis();
+
+  // Optionaler Sensor (FR-STA-05): Ausfall beeinflusst Licht/Blinker nicht.
+  const bool baro_ready = drivers::bmp280Begin();
+  Serial.printf("[boot] BMP280 ready=%d\n", (int)baro_ready);
 
   drivers::rfBegin();  // FR-RF-01: kontinuierlicher Empfang an PIN_RF_DATA
 

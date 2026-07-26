@@ -4,7 +4,6 @@
 #include <Wire.h>
 #include <Adafruit_MPU6050.h>
 #include <Adafruit_Sensor.h>
-#include "pins.h"
 #include "config.h"
 
 namespace drivers {
@@ -15,9 +14,8 @@ bool ready = false;
 }  // namespace
 
 bool imuBegin() {
-  Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL);
-  Wire.setTimeOut(I2C_TIMEOUT_MS);  // FR-SNS-03: nicht-blockierend begrenzt
-
+  // Bus (Wire.begin()/setTimeOut(), FR-SNS-03) wird zentral in main.cpp/
+  // setup() initialisiert; dieser Treiber ist reiner Busnutzer.
   ready = mpu.begin(MPU6050_I2C_ADDR, &Wire);
   return ready;
 }
