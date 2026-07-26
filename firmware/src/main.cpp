@@ -16,16 +16,17 @@
 #include "led_output.h"       // drivers  (R2/R3 Aktorik, CON-02)
 #include "imu_driver.h"       // drivers  (R4 IMU, FR-SNS-01/02/03)
 #include "bmp280_driver.h"    // drivers  (R4 Baro, FR-SNS-01/02/03)
+#include "gnss_driver.h"      // drivers  (R4 GNSS/L86, FR-SNS-01/02)
 #include "rf_input.h"         // drivers  (RF-Empfang, FR-RF-01)
 #include "lifecycle_fsm.h"    // logic    (R1)
 #include "tail_light_fsm.h"   // logic    (R2)
 #include "motion_filter.h"    // logic    (R4->R2, Komplementaerfilter)
 #include "button_decoder.h"   // logic    (RF-Tastenerkennung, FR-RF-02/03/04)
 #include "blinker_fsm.h"      // logic    (R3, FR-BLK-01..09)
+#include "gnss_fix.h"         // logic    (R4 GNSS-Fix-Bewertung, FR-TEL-05)
 
 // PWM-Kanal-Zuordnung erfolgt ueber ledcAttach() (Core v3.x, CON-02).
 // TODO(FR-...): weitere Treiber-/Logikmodule einbinden, sobald angelegt:
-//   #include "gnss_driver.h"    // drivers  (L86, FR-SNS)
 //   #include "telemetry.h"      // drivers  (FR-TEL)
 //   #include "scheduler.h"      // optional Helfer
 
@@ -115,7 +116,20 @@ static void taskBaro() {
 }
 
 static void taskGnss() {
-  // 1 Hz. TODO(FR-SNS-02, FR-TEL-05): NMEA parsen, Fix-Status bestimmen.
+  // 1 Hz (PERIOD_GNSS_MS, s. loop()). NMEA wird nicht hier, sondern jeden
+  // loop()-Durchlauf per gnssPump() geparst (s. loop()) — hier wird nur
+  // der aktuelle Stand gelesen und bewertet. Optionaler Sensor (FR-STA-05):
+  // kein Fix/keine Daten beeinflussen Licht/Blinker nicht.
+  const drivers::GnssData gnss = drivers::gnssRead();
+  const logic::GnssFixStatus fix = logic::gnssFixStatus(
+      gnss.location_valid, gnss.location_age_ms, gnss.sats, gnss.chars_processed);
+
+  // TODO(temp debug): entfernen, sobald Telemetrie (M5 Teil B) den Wert
+  // ausgibt. Hinter DEBUG_SERIAL abschaltbar.
+  if (DEBUG_SERIAL) {
+    Serial.printf("[GNSS] lat=%.6f lon=%.6f sats=%u hdop=%.2f status=%d\n",
+                  gnss.lat, gnss.lon, gnss.sats, gnss.hdop, (int)fix);
+  }
 }
 
 static void taskBlinker() {
@@ -182,6 +196,11 @@ void setup() {
 
   drivers::rfBegin();  // FR-RF-01: kontinuierlicher Empfang an PIN_RF_DATA
 
+  // Optionaler Sensor (FR-STA-05): Ausfall/kein Fix beeinflusst Licht/Blinker
+  // nicht. UART2, 9600 Bd (Bible Kap. 4.1); TinyGPSPlus parst in gnssPump().
+  const bool gnss_ready = drivers::gnssBegin();
+  Serial.printf("[boot] GNSS ready=%d\n", (int)gnss_ready);
+
   // TODO(FR-CFG-03): Konfiguration aus NVS laden (Defaults bei leerem NVS).
   // TODO(FR-SAF-03): Task-Watchdog aktivieren (~2 s) — Hardware, gehoert hier
   // in setup()/loop(), nicht in lifecycle_fsm (s. TODO dort).
@@ -189,6 +208,11 @@ void setup() {
 
 void loop() {
   const uint32_t now = millis();
+
+  // Jeden Durchlauf draint (kein eigener Timer): bei 9600 Bd und loop() bei
+  // ~100 Hz+ (delay(1), keine Task blockiert lange) bleibt der Serial2-RX-
+  // Puffer so sicher leer, ohne dass ein Ueberlauf droht.
+  drivers::gnssPump();
 
   // Feste Reihenfolge, sicherheitsrelevantes zuerst (NFR-RT-03).
   if (now - t_imu  >= PERIOD_IMU_MS)  { t_imu  = now; taskLifecycleAndTailLight(); }

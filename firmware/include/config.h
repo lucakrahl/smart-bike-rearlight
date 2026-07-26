@@ -63,6 +63,15 @@ constexpr uint16_t RINGBUFFER_FRAMES = 600;  // ~60 s @ 10 Hz
 // ---- GNSS-Fix-Kriterien — KALIBRIERWERTE (NVS, FR-TEL-05) -----------------
 constexpr uint32_t GNSS_MAX_AGE_MS = 3000;
 constexpr uint8_t  GNSS_MIN_SATS   = 4;
+// Schwelle fuer "noch nie sinnvolle NMEA-Daten empfangen" (NO_DATA statt
+// NO_FIX) — ein einzelner NMEA-Satz ist bereits > 64 Zeichen lang.
+constexpr uint32_t GNSS_MIN_CHARS_PROCESSED = 64;
+
+// ---- GNSS (fest) -----------------------------------------------------------
+constexpr uint32_t GNSS_BAUD        = 9600;  // Quectel L86 NMEA-Default
+constexpr uint16_t GNSS_UART_RX_BUF = 1024;  // Overflow-Reserve vor Serial2.begin()
+// Debug-Ausgabe in taskGnss() nutzt den bereits vorhandenen PERIOD_GNSS_MS-
+// Task-Takt (~1 Hz) — kein eigener GNSS_DEBUG_CYCLE_MS noetig.
 
 // ---- RF-Codes (fest, FR-RF-01) -------------------------------------------
 constexpr uint32_t RF_CODE_LEFT  = 10967538;  // Taste 1
