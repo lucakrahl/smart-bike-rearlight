@@ -1,10 +1,8 @@
 # Project Bible — Smartes Fahrrad-Rücklicht
 **Bachelorarbeit Krahl · Maschinenbau & Produktentwicklung (B.Eng.)**
-**Version 0.7 · Stand 21.07.2026 · Status: aktiv gepflegt (Single Source of Truth)**
+**Version 0.10 · Stand 26.07.2026 · Status: aktiv gepflegt (Single Source of Truth)**
 
 > Diese Project Bible ist die oberste Wissensinstanz des Projekts. Bei Widersprüchen zwischen Chat-Historie und Project Bible gilt ausschließlich die Project Bible. Chats dienen der Diskussion und Entscheidungsfindung; der offizielle Projektstand steht ausschließlich hier.
->
-> **Hinweis:** Diese Datei ist die Repo-Arbeitskopie. Die kanonische Fassung wird im claude.ai-Projekt „Bachelorarbeit" gepflegt. Änderungen an dieser Datei nur nach den Regeln in `CLAUDE.md` (freigabepflichtig).
 
 ---
 
@@ -25,25 +23,28 @@
 | Version | Datum | Änderung | Anlass |
 |---|---|---|---|
 | 0.1 | 21.07.2026 | Erstkonsolidierung als Analysedokument. | Projektaufnahme |
-| 0.2 | 21.07.2026 | 12-Kapitel-Zielstruktur. SRS-Block A (Systemgrenzen). | Freigabe Block A |
-| 0.3 | 21.07.2026 | SRS-Block B (Zustandsmodell, vier parallele Regionen). | Freigabe Block B |
+| 0.2 | 21.07.2026 | 12-Kapitel-Zielstruktur. SRS-Block A. | Freigabe Block A |
+| 0.3 | 21.07.2026 | SRS-Block B (Zustandsmodell). | Freigabe Block B |
 | 0.4 | 21.07.2026 | SRS-Block C (Detaillogik); Norm-Grundlage § 67/ECE. | Freigabe Block C |
-| 0.5 | 21.07.2026 | SRS-Block D (Präzisierungen) + E (Fehler & Sicherheit). | Freigabe Block D+E |
-| 0.6 | 21.07.2026 | SRS-Block F (nichtfunktional); Akku LP103454 bestätigt. | Freigabe Block F |
-| 0.7 | 21.07.2026 | SRS-Block G (Konfigurierbarkeit: FR-CFG) + H (Testbarkeit/Erweiterbarkeit: NFR-TST/EXT, FR-TEL-06). **SRS (Phase 1) vollständig.** | Freigabe Block G+H |
+| 0.5 | 21.07.2026 | SRS-Block D + E (Fehler & Sicherheit). | Freigabe Block D+E |
+| 0.6 | 21.07.2026 | SRS-Block F (nichtfunktional); Akku LP103454. | Freigabe Block F |
+| 0.7 | 21.07.2026 | SRS-Block G + H. **SRS (Phase 1) vollständig.** | Freigabe Block G+H |
+| 0.8 | 21.07.2026 | Phase 3: Monorepo + PlatformIO angelegt, Umgebung lauffähig (pioarduino, Core 3.3.11). | Setup abgeschlossen |
+| 0.9 | 21.07.2026 | M1 (Rücklicht-Region R2) in Umsetzung: FSM + Host-Tests. Detailklarstellungen FR-TL-03 (Init-Blink 0↔~50 %, Zeit-Duty 50 %), FR-TL-06 (Mindesthaltezeit hält Bremslicht-Helligkeit, kein Sofortabfall), FR-TL-07 (ESS Zeit-Duty 50 %). | Implementierung M1 |
+| 0.10 | 26.07.2026 | Implementierungsstand M1–M4 hardwarevalidiert, M5 Teil A (BMP280) validiert; zentrale I²C-Bus-Initialisierung; BMP280 FORCED-Mode; Modulübersicht Firmware ergänzt; Validierungsbefunde Bremsrichtung + (vorläufig) Temperatur. | Impl. M1–M5A |
 
 ### 0.4 Datengrundlage
 | Quelle | Zeitstempel | Aussagekraft |
 |---|---|---|
 | Projektübergabe-Dokument | „Stand Juni 2026" | Detaillierteste Einzelquelle |
-| `blinker_brake_rf_test.ino` | 22.06.2026 | Neuester Firmware-Stand |
-| `rf_led_blink_test.ino` | 22.06.2026 | RF-Validierung |
+| `blinker_brake_rf_test.ino` | 22.06.2026 | Firmware-Stand (Arduino-IDE-Ära) |
 | `gyrobaro.ino` (sensor_validierung_v3) | 25.05.2026 | Komplementärfilter |
 | Schaltplan v2.pdf | 20.05.2026 | Gesamtübersicht, fehlerbehaftet (Kap. 11) |
 | `Uebersicht.xlsx` (BOM) | 17.02.2026 | Stückliste mit Preisen |
 | Datenblätter (ESP32, BMP280, GY-521, IRLZ44N, MT3608, TP4056, L86) | Herstellerstand | Referenzwerte |
 | Nutzer-Lastenheft Firmware | 21.07.2026 | Funktionaler Zielumfang (Kap. 2) |
 | § 67 StVZO / ECE R6 / ECE R50 (recherchiert) | 07/2026 | Normative Grundlage (Kap. 2.8) |
+| Repo `smart-bike-rearlight` (Monorepo, PlatformIO) | ab 21.07.2026 | Implementierungsstand (Phase 3) |
 
 ---
 
@@ -70,7 +71,7 @@ Anforderungs-IDs: `FR-<Subsystem>-NN` (funktional), `NFR-<Kategorie>-NN`, `CON-N
 Subsystem-Kürzel: `SYS`, `TL`, `BLK`, `RF`, `SNS`, `TEL`, `STA`, `SAF` (Sicherheit), `CFG` (Konfiguration).
 NFR-Kategorien: `RT` (Echtzeit), `RES` (Ressourcen), `PWR` (Energie), `TST` (Testbarkeit), `EXT` (Erweiterbarkeit).
 
-> **Bearbeitungsstand SRS:** **Alle Blöcke A–H freigegeben — SRS vollständig (21.07.2026).** A (2.1), B (2.6), C (2.7), D (Präzisierungen in 2.6/2.7), E (2.9), F (2.10), G (2.11), H (2.12). Normative Grundlage in 2.8.
+> **Bearbeitungsstand SRS:** **Alle Blöcke A–H freigegeben — SRS vollständig (21.07.2026).** A (2.1), B (2.6), C (2.7), D (2.6/2.7), E (2.9), F (2.10), G (2.11), H (2.12). Normative Grundlage in 2.8.
 
 ### 2.1 Systemgrenzen & Kontext — Block A
 
@@ -113,14 +114,14 @@ Vier parallele (orthogonale) Regionen (Statechart nach Harel; Diagramme in Kap. 
 | FR-STA-01 | Power-On → INIT. Übergang INIT→RUN, sobald kritische Sensoren (IMU) initialisiert sind oder Init-Timeout 5 s abgelaufen ist. | gesichert |
 | FR-STA-02 | Bei Init-Timeout → degradierter RUN: rote LED dauerhaft Schlusslicht (§ 67 gewahrt), fehlende Sensoren als Fehler geführt. | gesichert |
 | FR-STA-03 | Regionen 2–4 laufen unabhängig; Sensor-/Systemfehler erzwingt kein regionsübergreifendes Sperren. | gesichert |
-| FR-TL-03 | Während INIT signalisiert die rote LED per Diagnose-Blinken (~2 Hz, 50 % Duty) die Nicht-Bereitschaft. Transienter Zustand vor Betriebsbeginn. | gesichert |
+| FR-TL-03 | Während INIT signalisiert die rote LED per Diagnose-Blinken (~2 Hz, Zeit-Duty 50 %, moduliert zwischen 0 % und ~50 % Helligkeit — bewusst gedämpft, distinkt vom vollhellen Bremslicht; C3.1) die Nicht-Bereitschaft. Transienter Zustand vor Betriebsbeginn. | gesichert |
 | FR-TL-04 | In RUN leuchtet die rote LED dauerhaft mindestens als gedimmtes Schlusslicht (~20 %). | gesichert |
 | FR-TL-05 | Bremslicht ist temporäre Helligkeitsanhebung; nach Bremsende Rückfall auf Schlusslicht (Kennlinie FR-TL-06). | gesichert |
-| FR-BLK-01 | Richtungsblinker per kurzem Tastendruck (T1=links, T2=rechts); erneuter kurzer Druck derselben Taste = aus (Toggle). | gesichert |
+| FR-BLK-01 | Richtungsblinker per kurzem Tastendruck (T1=links, T2=rechts); erneuter kurzer Druck = aus (Toggle). | gesichert |
 | FR-BLK-02 | Umschalten Links↔Rechts durch andere Taste; setzt 60-s-Timeout neu. | gesichert |
-| FR-BLK-03 | Richtungsblinker: maximale Blinkdauer 60 s → automatische Selbstabschaltung. Keine Reaktivierungssperre. | gesichert |
+| FR-BLK-03 | Richtungsblinker: max. Blinkdauer 60 s → automatische Selbstabschaltung. Keine Reaktivierungssperre. | gesichert |
 | FR-BLK-04 | Warnblinker durch Langdruck (≥ 5 s) einer beliebigen Taste; beide Seiten blinken; kein Timeout. | gesichert |
-| FR-BLK-05 | Warnblinker endet durch beliebigen einzelnen kurzen Tastendruck → AUS. Der abschaltende Druck wird verbraucht und startet keinen Richtungsblinker. | gesichert |
+| FR-BLK-05 | Warnblinker endet durch beliebigen einzelnen kurzen Tastendruck → AUS. Druck wird verbraucht, startet keinen Richtungsblinker. | gesichert |
 | FR-BLK-06 | Links/Rechts als Richtung gegenseitig verriegelt; WARN einziger Zustand mit beidseitigem Blinken. | gesichert |
 | FR-BLK-07 | Kurz-/Langdruck-Diskriminierung: Loslassen < 5 s = Kurzdruck; Halten ≥ 5 s = Warnblinker. | gesichert |
 | FR-BLK-09 | RF-Blinkerbefehle werden erst ab RUN wirksam; während INIT verworfen. | gesichert |
@@ -131,8 +132,8 @@ Vier parallele (orthogonale) Regionen (Statechart nach Harel; Diagramme in Kap. 
 
 | ID | Anforderung | Status |
 |---|---|---|
-| FR-TL-06 | Bremslicht-Kennlinie: Schlusslicht-Grundhelligkeit ~20 % PWM. Stetig-linearer Anstieg von 2,0 m/s² bis Sättigung 5,0 m/s² (100 %). Ausschalthysterese: Rückfall unter ~1,5 m/s²; Mindesthaltezeit 300 ms. Anstieg schnell, Rückfall kurzer Fade. Eingang: gravitationskompensierte Verzögerung (Y-Achse, α=0,98). Norm-Anker ECE R50 (§ 67 Abs. 4). Schwellwerte feldzukalibrieren [Annahme]. | gesichert |
-| FR-TL-07 | Notbrems-Blinken (ESS-Konzept), Zustand des roten Kanals: aktiviert ab ≥ 5,0 m/s², deaktiviert bei < 3,0 m/s² (Hysterese). ~4 Hz, Modulation 100 % ↔ Schlusslicht-Grundniveau (nie 0 %). **Experimentalfunktion, standardmäßig DEAKTIVIERT — nicht konform mit § 67 Abs. 4 StVZO.** | gesichert (experimentell) |
+| FR-TL-06 | Bremslicht-Kennlinie: Schlusslicht-Grundhelligkeit ~20 % PWM. Stetig-linearer Anstieg von 2,0 m/s² bis Sättigung 5,0 m/s² (100 %). Ausschalthysterese: Rückfall unter ~1,5 m/s². **Mindesthaltezeit 300 ms: während der Haltezeit wird die Bremslicht-Helligkeit gehalten (kein Sofortabfall auf Schlusslicht); erst danach Rückfall (kurzer Fade).** Anstieg schnell (Sicherheit). Eingang: gravitationskompensierte Verzögerung (Y-Achse, α=0,98). Norm-Anker ECE R50 (§ 67 Abs. 4). Schwellwerte feldzukalibrieren [Annahme]. | gesichert |
+| FR-TL-07 | Notbrems-Blinken (ESS-Konzept), Zustand des roten Kanals: aktiviert ab ≥ 5,0 m/s², deaktiviert bei < 3,0 m/s² (Hysterese). ~4 Hz, Zeit-Duty 50 %, Helligkeits-Modulation 100 % ↔ Schlusslicht-Grundniveau (nie 0 %). **Experimentalfunktion, standardmäßig DEAKTIVIERT — nicht konform mit § 67 Abs. 4 StVZO.** | gesichert (experimentell) |
 | FR-BLK-08 | Blinkfrequenz 1,5 Hz (ECE R6: 1,5 Hz ± 0,5), Duty 50 %, Hellzeit > 0,3 s. | gesichert |
 | CON-02 | PWM-Trägerfrequenz aller LED-Kanäle 5 kHz. | gesichert |
 | FR-RF-01 | Kontinuierliche Überwachung GPIO4 (RCSwitch); nur bekannte Codes (T1=10967538, T2=10967537), sonst ignoriert. | gesichert |
@@ -194,19 +195,19 @@ Hinweis: Sekundärquellen; für die Thesis am Primärtext (§ 67) gegenprüfen. 
 
 | ID | Anforderung | Status |
 |---|---|---|
-| FR-CFG-01 | **Parametrierbar (NVS):** Bremsschwellen (2,0/5,0/3,0/1,5 m/s²), Mindesthaltezeit, GNSS-Fix-Kriterien (Alter, Sat-Anzahl), Aktivierungs-Flag FR-TL-07. **Fest im Code (strukturell/sicherheitsrelevant):** Pinbelegung, PWM-Frequenz (5 kHz), Blinkfrequenz (1,5 Hz, normgebunden), Timeouts (60 s, 5 s Init), RF-Codes, Sampling-/Telemetrie-Raten. | gesichert |
-| FR-CFG-02 | Serielles Kalibrier-/Konfigurations-Interface über UART0 (Kommandos get/set/list/reset), nicht-blockierend; Werte in NVS persistiert. Entwickler-/Kalibrierwerkzeug, kein Endnutzer-Feature. | gesichert |
-| FR-CFG-03 | Bei leerem/fehlendem NVS Compile-Zeit-Defaults; `config_version`-Schlüssel für Schema-Migration bzw. Reset auf Defaults nach Firmware-Update. | gesichert |
+| FR-CFG-01 | **Parametrierbar (NVS):** Bremsschwellen (2,0/5,0/3,0/1,5 m/s²), Mindesthaltezeit, GNSS-Fix-Kriterien, Aktivierungs-Flag FR-TL-07. **Fest im Code:** Pinbelegung, PWM-Frequenz (5 kHz), Blinkfrequenz (1,5 Hz), Timeouts (60 s, 5 s), RF-Codes, Sampling-/Telemetrie-Raten. | gesichert |
+| FR-CFG-02 | Serielles Kalibrier-/Konfigurations-Interface über UART0 (get/set/list/reset), nicht-blockierend; Werte in NVS. Entwickler-/Kalibrierwerkzeug. | gesichert |
+| FR-CFG-03 | Bei leerem/fehlendem NVS Compile-Zeit-Defaults; `config_version`-Schlüssel für Schema-Migration/Reset nach Firmware-Update. | gesichert |
 
 ### 2.12 Testbarkeit & Erweiterbarkeit — Block H
 
 | ID | Anforderung | Status |
 |---|---|---|
-| NFR-TST-01 | Strikte Trennung reine Logik ↔ Hardware-Treiber (Hardware-Abstraktion); Logik host-seitig ohne ESP32/Fahrrad testbar. | gesichert |
-| NFR-TST-02 | Testdaten-Einspeisung (aufgezeichnete/synthetische Sensordaten) als schlanker Hook für reproduzierbare Logik-Tests; tiefergehende Simulation → Future-Work. | gesichert |
-| NFR-TST-03 | Zwei Test-Ebenen: (a) Host-Unit-Tests der Logik (Unity/PlatformIO `native` oder GoogleTest, CI); (b) On-Target-Validierung hardwareabhängiger Teile (Kap. 9). | gesichert |
-| NFR-EXT-01 | Modulare Struktur mit klaren Schnittstellen je Subsystem/Region; neue Sensoren/Telemetriefelder ergänzbar ohne Bruch bestehender Module. | gesichert |
-| FR-TEL-06 | Telemetrie-Frame trägt eine Schema-/Versionskennung, damit Firmware und App unabhängig weiterentwickelbar sind (App erkennt das Frame-Format). | gesichert |
+| NFR-TST-01 | Strikte Trennung reine Logik ↔ Hardware-Treiber; Logik host-seitig ohne ESP32 testbar. | gesichert |
+| NFR-TST-02 | Testdaten-Einspeisung (aufgezeichnete/synthetische Sensordaten) als schlanker Hook; tiefere Simulation → Future-Work. | gesichert |
+| NFR-TST-03 | Zwei Test-Ebenen: (a) Host-Unit-Tests der Logik (Unity/PlatformIO `native`, CI); (b) On-Target-Validierung (Kap. 9). | gesichert |
+| NFR-EXT-01 | Modulare Struktur mit klaren Schnittstellen; neue Sensoren/Telemetriefelder ergänzbar ohne Bruch. | gesichert |
+| FR-TEL-06 | Telemetrie-Frame trägt eine Schema-/Versionskennung (unabhängige Firmware-/App-Entwicklung). | gesichert |
 
 ---
 
@@ -268,7 +269,9 @@ I²C (Sensoren), UART2 (GNSS), UART0 (Debug/Konfig), digitaler GPIO-Eingang (RF)
 | Gate-Widerstand | 100 Ω | alle 3 Gates | gesichert |
 | Gate-Pull-Down | 10 kΩ → GND | alle 3 Gates | real verbaut; fehlt in Schaltplan/BOM |
 
-Hinweis: GPIO4 durch RF belegt → MPU6050-INT-Pin ungenutzt (Polling statt Interrupt).
+Hinweis: GPIO4 durch RF belegt → MPU6050-INT-Pin ungenutzt (Polling statt Interrupt). Pinbelegung im Code: `firmware/include/pins.h`.
+
+**I²C-Bus-Initialisierung [gesichert]:** `Wire.begin(SDA,SCL)` + `Wire.setTimeOut(I2C_TIMEOUT_MS)` erfolgen zentral einmalig in `main.cpp`/`setup()` (Anwendungsebene), nicht in den einzelnen Sensor-Treibern. `imu_driver` und `bmp280_driver` sind reine Bus-Nutzer. Grund: Modularität und Unabhängigkeit optionaler Sensoren — kein Treiber muss wissen, ob/welcher andere Treiber den Bus bereits initialisiert hat (s. Kap. 10). BMP280-Adresse `0x76` als Konstante `BMP280_I2C_ADDR` in `config.h` (analog `MPU6050_I2C_ADDR = 0x68`).
 
 ---
 
@@ -306,6 +309,57 @@ Keine Batteriespannungsmessung (OUT-01). Ladezustand nur über USB-C-/TP4056-Mod
 
 ## 6. Firmware
 
+### 6.1 Entwicklungsumgebung
+**Aktuell (Phase 3, ab 21.07.2026):** VS Code + **PlatformIO** + **Claude Code**. Plattform **pioarduino** (`platform-espressif32`, Release *stable*) → Arduino-ESP32-Core **3.3.11** (ESP-IDF 5.5.x). Board `esp32dev`, Partition `huge_app.csv` (No-OTA, CON-03), Upload 115200/921600 Baud, Monitor 115200. Host-Unit-Tests im `native`-Env (NFR-TST-03). Konfiguration über `Preferences` (NVS). Erster Build erfolgreich: Flash 10,3 %, RAM 7,3 % (großer Puffer, NFR-RES).
+
+**Begründung pioarduino:** Die offizielle PlatformIO-Plattform `espressif32` liefert nur Arduino-Core 2.0.17 (kein `ledcAttach`). Die Community-Plattform pioarduino stellt Core 3.x bereit — Voraussetzung für die SRS-Konvention CON-02/`ledcAttach` (s. Kap. 10).
+
+**Build-Voraussetzung (macOS):** `liblzma` muss vorhanden sein (`brew install xz`), sonst scheitert die Toolchain-Installation der pioarduino-Plattform am Python-`lzma`-Modul. (Lessons Learned im Repo.)
+
+**Vorher (bis Phase 2, überholt):** Arduino IDE (macOS), esp32-Core v3.x, „ESP32 Dev Module", CP2102.
+
+### 6.2 Bibliotheken
+Adafruit MPU6050, Adafruit BMP280, Adafruit Unified Sensor, TinyGPSPlus (Mikal Hart), RCSwitch (sui77). Versionen in `firmware/platformio.ini`.
+
+### 6.3 Konventionen
+PWM ausschließlich über `ledcAttach()`/`ledcWrite()` (Core v3.x). Kooperativer nicht-blockierender Scheduler, kein `delay()` im Betrieb, statische Speicherverwaltung, Trennung Logik ↔ Hardware, ID-Referenzen in Kommentaren. Details: `CLAUDE.md` im Repo.
+
+### 6.4 Repository (Monorepo)
+`firmware/` (PlatformIO), `webapp/` (PWA, später), `docs/` (Bible-Kopie + Wissensdatenbank), `hardware/`, `cad/`, `testdata/`. Logik hardwarefrei in `firmware/lib/logic`, Treiber in `firmware/lib/drivers`. Wissensdatenbank: `decision_log.md`, `current_context.md`, `roadmap.md`, `open_issues.md`, `lessons_learned.md`.
+
+### 6.4a Modulübersicht Firmware
+Ordnerprinzip: `lib/logic` = hardwarefreie, host-testbare Logik (kein `Arduino.h`); `lib/drivers` = Hardwarezugriff (I²C/PWM/RF); `src` = kooperativer Scheduler; `include` = Header/Konstanten.
+
+| Ordner | Modul | Inhalt |
+|---|---|---|
+| `include/` | `pins.h` | GPIO-Zuordnung |
+| `include/` | `config.h` | alle Konstanten |
+| `src/` | `main.cpp` | kooperativer Scheduler, Tasks |
+| `lib/logic/` | `brake_curve` (.h+.cpp) | Bremskennlinie FR-TL-06 |
+| `lib/logic/` | `tail_light_fsm` (.h+.cpp) | Zustandsautomat Rücklicht/Bremslicht (R2) |
+| `lib/logic/` | `lifecycle_fsm` (.h+.cpp) | Lebenszyklus Init→Run, degraded (R1) |
+| `lib/logic/` | `motion_filter` (.h+.cpp) | Komplementärfilter + Schwerkraftkompensation → Verzögerung |
+| `lib/logic/` | `button_decoder` (.h+.cpp) | RF-Signale → Tastenereignisse (kurz/lang, entprellt) |
+| `lib/logic/` | `blinker_fsm` (.h+.cpp) | Zustandsautomat Blinker L/R/Warn (R3) |
+| `lib/logic/` | `system_state.h` | nur Header: Typ `SystemState{Init,Run}` |
+| `lib/drivers/` | `led_output` (.h+.cpp) | PWM-Ansteuerung LEDs |
+| `lib/drivers/` | `imu_driver` (.h+.cpp) | MPU6050 über I²C |
+| `lib/drivers/` | `rf_input` (.h+.cpp) | 433-MHz-Empfänger |
+| `lib/drivers/` | `bmp280_driver` (.h+.cpp) | BMP280 Barometer über I²C (M5) |
+| `test/` (native, Unity) | `test_brake_curve`, `test_tail_light_fsm`, `test_lifecycle_fsm`, `test_motion_filter`, `test_button_decoder`, `test_blinker_fsm` | 38/38 grün |
+
+**Architekturhinweis — zentrale I²C-Bus-Initialisierung:** `Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL)` + `Wire.setTimeOut(I2C_TIMEOUT_MS)` laufen einmalig in `main.cpp`/`setup()`; `imu_driver` und `bmp280_driver` rufen selbst kein `Wire.begin()` mehr auf (reine Busnutzer, FR-SNS-03 an einer Stelle). IMU-Regressionstest nach dem Umbau bestanden (`degraded=0`, Bremslicht reagiert weiterhin korrekt).
+
+### 6.5 Implementierungsstand
+- **M0 Grundgerüst** ✅
+- **M1 Rücklicht/Bremslicht R2** (`tail_light_fsm`, `brake_curve`, `led_output`) ✅ HW-validiert; Mindesthaltezeit hält die Bremslicht-Helligkeit (FR-TL-06).
+- **M2 Lebenszyklus R1** (`lifecycle_fsm`, `system_state`) ✅ HW-validiert (RUN, `degraded=0`).
+- **M3 Sensorik/Bremserkennung** (`imu_driver`, `motion_filter`) ✅ HW-validiert; Fahrtrichtung feldkalibriert (nur Verzögerung in Fahrtrichtung löst aus, Vorzeichen `MOTION_BRAKE_SIGN`).
+- **M4 Blinker + RF** (`rf_input`, `button_decoder`, `blinker_fsm`) ✅ Funktion HW-validiert (physische L/R-Zuordnung offen, s. Kap. 11).
+- **M5 Teil A Barometer** (`bmp280_driver`, FORCED-Mode) ✅ validiert; zentrale I²C-Bus-Init.
+- **Host-Unit-Tests:** 38/38 grün (native).
+- **Nächste:** M5 Teil B (GNSS L86), dann M6 (Konfiguration/NVS), M7 (Integration/Messungen). Roadmap: `docs/roadmap.md`.
+
 ### 6.6 Zustandsmodell (vier parallele Regionen) [Block B/C/D]
 
 Statechart mit vier orthogonalen Regionen (nach Harel). Additive statt multiplikative Zustandsanzahl, je Region testbar. Ausführung über kooperativen Scheduler (NFR-RT-03).
@@ -319,7 +373,7 @@ Statechart mit vier orthogonalen Regionen (nach Harel). Additive statt multiplik
 
 **R2 — zwei Ebenen:** Innerhalb des roten Kanals gegenseitig ausschließend; `TL_NOTBREMS_BLINKEN` hat Vorrang vor `TL_BREMSLICHT` (ab |a| ≥ 5,0). Roter Kanal (R2) und gelbe Blinker (R3) auf getrennten LEDs, unabhängig.
 
-**R2 Übergänge:** INIT → `TL_INIT_BLINK` (2 Hz). RUN → `TL_SCHLUSSLICHT` (~20 %). `→ TL_BREMSLICHT` bei |a| ≥ 2,0; linear bis 100 % bei 5,0. `→ TL_SCHLUSSLICHT` bei |a| < 1,5 (300 ms). `→ TL_NOTBREMS_BLINKEN` bei |a| ≥ 5,0 (nur experimentell); zurück bei |a| < 3,0.
+**R2 Übergänge:** INIT → `TL_INIT_BLINK` (2 Hz, 0↔~50 %). RUN → `TL_SCHLUSSLICHT` (~20 %). `→ TL_BREMSLICHT` bei |a| ≥ 2,0; linear bis 100 % bei 5,0. `→ TL_SCHLUSSLICHT` bei |a| < 1,5 (Helligkeit gehalten, dann Rückfall nach 300 ms). `→ TL_NOTBREMS_BLINKEN` bei |a| ≥ 5,0 (nur experimentell); zurück bei |a| < 3,0.
 
 **R3:** s. FR-BLK-01…09; Blinktakt 1,5 Hz, 50 % Duty. RF-Befehle erst ab RUN.
 
@@ -328,6 +382,43 @@ Statechart mit vier orthogonalen Regionen (nach Harel). Additive statt multiplik
 IDLE ──Code (≥2×)──▶ GEDRÜCKT ──(Lücke > ~150 ms)──▶ Loslassen
                         │                                └─ < 5 s: SHORT-Event
                         └──(gehalten ≥ 5 s)──▶ LONG-Event (Warnblinker), warten auf Loslassen
+```
+
+**Zustandsdiagramm — Lebenszyklus + Rücklicht:**
+
+```mermaid
+stateDiagram-v2
+    [*] --> INIT
+    INIT --> RUN: krit. Sensoren ok ODER 5s Timeout
+    note right of INIT
+        rote LED = Diagnose-Blinken 2 Hz (0 bis 50 Prozent)
+    end note
+    state RUN {
+        [*] --> SCHLUSSLICHT
+        SCHLUSSLICHT --> BREMSLICHT: |a| >= 2.0
+        BREMSLICHT --> SCHLUSSLICHT: |a| < 1.5 (Halten, dann 300ms)
+        BREMSLICHT --> NOTBREMS: |a| >= 5.0 (experimentell)
+        NOTBREMS --> BREMSLICHT: |a| < 3.0
+    }
+```
+
+**Zustandsdiagramm — Blinker (R3):**
+
+```mermaid
+stateDiagram-v2
+    [*] --> AUS
+    AUS --> LINKS: kurz Taste1
+    AUS --> RECHTS: kurz Taste2
+    LINKS --> RECHTS: kurz Taste2 / Timer reset
+    RECHTS --> LINKS: kurz Taste1 / Timer reset
+    LINKS --> AUS: kurz Taste1 (Toggle)
+    RECHTS --> AUS: kurz Taste2 (Toggle)
+    LINKS --> AUS: 60s Timeout
+    RECHTS --> AUS: 60s Timeout
+    AUS --> WARN: Langdruck 5s
+    LINKS --> WARN: Langdruck 5s
+    RECHTS --> WARN: Langdruck 5s
+    WARN --> AUS: kurzer Tastendruck
 ```
 
 ### 6.7 Fehlerbehandlung & Sicherheit [Block E]
@@ -339,24 +430,185 @@ Kooperativer, nicht-blockierender Scheduler: schnelle `loop()`, `millis()`-getak
 ### 6.9 Konfiguration, Test & Erweiterbarkeit [Block G/H]
 Konfiguration: Kalibrierwerte in NVS, Struktur-/Sicherheitswerte fest im Code; serielles Kalibrier-Interface (UART0); `config_version`. Testbarkeit: Trennung Logik ↔ Hardware, Host-Unit-Tests + On-Target-Validierung. Erweiterbarkeit: modulare Schnittstellen, versioniertes Telemetrie-Frame.
 
-*(Vollständige Zustandsdiagramme und Detailtabellen s. kanonische Bible im claude.ai-Projekt.)*
+---
+
+## 7. Web-App
+
+### 7.1 Zielarchitektur
+PWA mit Web Bluetooth API. Rolle (FR-SYS-01): Rechen- und Datsenke — empfängt Telemetrie (10 Hz, versioniert FR-TEL-06), berechnet Statistik/Sensorfusion (Kap. 2.3), speichert die Fahrt (CON-01), visualisiert MVP-Kennzahlen (Kap. 2.4), zeigt Warnungen (GNSS-Verlust, Future-Work).
+
+### 7.2 Kommunikationsmodell
+Unidirektional ESP32 → App (FR-SYS-04). Kein Steuerkanal App → Gerät.
+
+### 7.3 Stand
+Nicht begonnen. Offen: „HSD ESP32 IoT Base" als mögliche Basis (Kap. 11).
 
 ---
 
-## 9. Validierung (Auszug offener Punkte)
-Offen/Messung: RF-Kurz-/Langdruck-Timing (FR-RF-03/04), Bremskennlinie-Feldkalibrierung, Reaktionszeit ≤ 50 ms, Loop-Zeit/RAM-CPU, Energie/Laufzeit, I²C-Recovery, Watchdog-Reset, Brown-Out, MOSFET mit realer LED-Last, GPS-Fix, Host-Unit-Tests.
+## 8. Konstruktion
+
+Nicht begonnen. Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/Wartung, Kabelführung, Bauraum, Wärmeabfuhr (PLA-Grenzen), Schraubverbindungen, Vibrationsfestigkeit, Feuchtigkeit/Outdoor. Kein Gehäusekonzept/CAD. Bauraum-Referenz Akku: LP103454 (10,3 × 34 × 54 mm).
 
 ---
 
-## 10. Entwicklungsentscheidungen
-Siehe `docs/decision_log.md` (Arbeitskopie) bzw. kanonische Bible Kap. 10.
+## 9. Validierung
+
+| Funktion | Status |
+|---|---|
+| ESP32-Grundfunktion | ✅ validiert |
+| SRX882S RF-Empfang | ✅ validiert |
+| Fernbedienungscodes (Taste 1/2) | ✅ validiert |
+| Fernbedienung Kurz-/Langdruck- & Wiederhol-Timing | ❌ offen — Verifikation FR-RF-03/04 |
+| BMP280 (I²C 0x76), FORCED-Mode | ✅ validiert (Befund s. 9.1) |
+| MPU6050 (I²C 0x68) | ✅ validiert |
+| Komplementärfilter/Bremserkennung (`motion_filter`, `imu_driver`) | ✅ HW-validiert; Fahrtrichtung feldkalibriert (`MOTION_BRAKE_SIGN`, nur Verzögerung in Fahrtrichtung löst aus) |
+| GPS L86 – NMEA/UART | ✅ Daten fließen |
+| GPS-Fix | ⏳ noch nicht erreicht |
+| PlatformIO-Umgebung (Build + Host-Tests) | ✅ eingerichtet (Core 3.3.11; ESP32-Build grün) |
+| Host-Unit-Tests (native, Unity) | ✅ 38/38 grün |
+| R1-Lebenszyklus (`lifecycle_fsm`) | ✅ HW-validiert (RUN erreicht, `degraded=0`) |
+| R2-Zustandslogik + Bremskennlinie (`tail_light_fsm`, `brake_curve`) | ✅ HW-validiert |
+| Bremslicht-Kennlinie (FR-TL-06) inkl. Feldkalibrierung der Schwellwerte | ❌ offen (Feld) |
+| Blinker-Funktion (Ereignis → Blinken, Takt, Warnblinker) | ✅ HW-validiert; physische L/R-Zuordnung ❌ offen (LED-Anordnung noch nicht festgelegt) |
+| Bremslicht-Reaktionszeit ≤ 50 ms (NFR-RT-01) | ❌ offen — Messung |
+| Loop-Zykluszeit < 10 ms & RAM-/CPU-Budget | ❌ offen — Messung |
+| Energiebilanz/Laufzeit unter realen Lastfällen | ❌ offen — Messung |
+| I²C-Bus-Recovery | ❌ offen |
+| Watchdog-Reset | ❌ offen |
+| Brown-Out unter realer LED-Lastspitze | ❌ offen |
+| MOSFET mit realer LED-Last | ❌ noch nicht getestet |
+| Ladeinfrastruktur unter Last | ❌ nicht verifiziert |
+| Gehäuse | ❌ nicht begonnen |
+| BLE/Web-App | ❌ nicht begonnen |
+
+### 9.1 Validierungsbefunde M5A
+
+**Druck:** Sensor 1002,5–1002,6 hPa vs. Referenz 1000,8 hPa (+1,6 hPa) → innerhalb Absoluttoleranz ±1 hPa zzgl. QFE-/Meereshöhen-Differenz; relative Genauigkeit ±0,12 hPa ausreichend für Höhenänderungen (Absolutkalibrierung app-seitig, FR-SYS-01).
+
+**Temperatur [Annahme/vorläufig]:** Messung ~29,0 °C bei 25,8 °C Raumreferenz direkt nach Umstellung auf FORCED-Mode — Chip war vermutlich noch aus dem vorherigen Dauerbetrieb erwärmt, Messung NICHT thermisch eingeschwungen. Aussage zur Wirkung des FORCED-Mode auf die Temperatur daher noch offen; Re-Test im eingeschwungenen Zustand ausstehend. Gesichert ist bereits: deutlich reduziertes Rauschen (±0,03 hPa / ±0,05 °C @ 1 Hz).
+
+### 9.2 Akkubetrieb-Freeze (aufgeklärt)
+
+Bremslicht fror ein, wenn das USB-Kabel im ESP32 steckte, aber am Host-Ende getrennt war (floatende VBUS-Leitung → unruhige 3,3-V-Schiene → I²C-/IMU-Aussetzer; Blinker unbeeinträchtigt). Im echten Akkubetrieb (Kabel komplett ab) nicht reproduzierbar. **Lesson Learned:** „Debug-Setup ≠ Feldbedingung — Validierung stets im realen Betriebszustand." (s. auch `docs/lessons_learned.md`.)
+
+Projektphase: **Phase 3 (Implementierung)**, Modul M5.
+
+---
+
+## 10. Entwicklungsentscheidungen (lebend gepflegt)
+
+| Entscheidung | Begründung | Verworfene Alternative |
+|---|---|---|
+| SRX882S statt XY-MK-5V | Superheterodyn, −114 dBm, störfest | XY-MK-5V (störanfällig) |
+| RF-DATA auf GPIO4 | Kein Strapping-Pin | GPIO15 (Boot-Probleme) |
+| UART2 (GPIO16/17) für GNSS | UART0 für Debug/Konfig reserviert | — |
+| Y-Achse als Fahrtrichtung | Physikalische Einbaulage | X-Achse |
+| α = 0,98 (Komplementärfilter) | bewährt für Fahrrad-IMU | — |
+| TP4056 OUT+ statt B+ | Tiefentlade-/Kurzschlussschutz | B+ als Lastausgang |
+| `ledcAttach()`-API | einzige unterstützte PWM-API v3.x | deprecated APIs |
+| Komplementärfilter statt DMP | transparenter dokumentierbar | MPU6050-DMP |
+| Rechenlast in Web-App (Variante 2) | ESP32 deterministisch, geringer RAM/CPU | Firmware rechnet alles |
+| Rote LED = Schluss-+Bremslicht | § 67-konform + Bremslicht-Mehrwert | binäres Bremslicht |
+| Web-App als alleinige Datsenke, RAM-Ringpuffer | keine SD/Flash nötig | Flash-Voll-Logging |
+| App-Schnittstelle unidirektional | reduzierte Komplexität | bidirektionale BLE-Steuerung |
+| Keine Batteriemessung in FW | Anzeige über USB-C-Modul | ADC-Spannungsteiler |
+| Zustandsmodell 4 parallele Regionen | additive Zustandsanzahl, testbar | flache FSM (Explosion) |
+| Warnblinker per Langdruck (≥5 s) | ASK-Fernbedienung ohne Kombisignal | gleichzeitiges Drücken |
+| Init-Timeout 5 s → degradierter RUN | garantiert Dauer-Schlusslicht (§ 67) | Warten ohne Fallback |
+| Bremskennlinie stetig-linear + Hysterese | feine Rückmeldung, flackerfrei | starre Stufen |
+| Init-Blink 0↔~50 %, Zeit-Duty 50 % | gedämpft/distinkt vom vollhellen Bremslicht (C3.1) | 0↔100 % |
+| Notbrems-Blinken (ESS) experimentell/deaktiviert | Sicherheitsnutzen vs. § 67 Abs. 4 | aktiv ausliefern (unzulässig) |
+| Blinkfrequenz 1,5 Hz, 50 % Duty | ECE-R6-Mitte, Hellzeit > 0,3 s | 2,5 Hz / 1 Hz |
+| PWM-Träger 5 kHz | flackerfrei/kamerasicher | 1 kHz |
+| RF-Codes fest codiert | robust, deterministisch; kein Bedien-Taster | Anlern-/Pairing-Modus |
+| Sampling ≠ Telemetrie-Rate (100/10 Hz) | BLE-Bandbreite schonen, Echtzeit-Bremse | alles hochratig streamen |
+| Fail-safe auf Schlusslicht | § 67 Minimalsicherheit, robust | Totalabschaltung bei Fehler |
+| Kein harter FAULT im MVP | lieber Teilfunktion als Totalausfall | harter FAULT-Stopp |
+| I²C-Timeout + gestufte Recovery | Bus-Hang behebbar ohne Blockade | blockierendes Warten |
+| Task-Watchdog ~2 s | Selbstheilung bei Hang | kein Watchdog |
+| Kooperativer millis()-Scheduler | deterministisch, testbar | eigene FreeRTOS-App-Tasks im MVP |
+| Reaktionszeit-Ziel ≤ 50 ms | bei 100 Hz IMU erreichbar | ≤ 100 ms |
+| No-OTA-Partition + NVS-Konfig | BLE-Firmware passt; NVS reicht | OTA-Schema / LittleFS |
+| Statische Speicherallokation, kein Sleep im MVP | Heap-Fragmentierung vermeiden | dynamische Allokation / Sleep |
+| Serielles Kalibrier-Interface (UART0) + NVS | schnelle Feldkalibrierung ohne Neuflashen | nur per Neuflashen |
+| `config_version` + Defaults | robuste Konfig nach Firmware-Update | ungeschützte NVS-Werte |
+| Trennung Logik ↔ Hardware | Host-Unit-Tests möglich | Logik an Treiber gekoppelt |
+| Versioniertes Telemetrie-Frame | Firmware/App unabhängig weiterentwickelbar | unversioniertes Format |
+| Build-Umgebung: PlatformIO + pioarduino-Plattform (Arduino-Core 3.3.x) | Core 3.x nötig für `ledcAttach` (CON-02); offizielle `espressif32`-Plattform liefert nur Core 2.0.17 | Arduino IDE / offizielle espressif32-Plattform (Core 2.x) |
+| Zentrale I²C-Bus-Init (Anwendungsebene) | Modularität, Unabhängigkeit optionaler Sensoren, keine Reihenfolge-Abhängigkeit | `Wire.begin()` im Sensor-Treiber |
+| BMP280 FORCED-Mode (Weather Monitoring ×1/×1/IIR aus) | geringes Rauschen @1 Hz, geringere Stromaufnahme, Bosch-Empfehlung | NORMAL-Dauerbetrieb ×16 |
+| Keine feste Temperatur-Korrektur in der Firmware | Offset noch nicht abschließend charakterisiert, umgebungs-/lastabhängig; Rohdaten-Integrität; verfälscht sonst Druckkompensation | fester Offset im Code |
+| Bremslicht nur bei Verzögerung in Fahrtrichtung (`MOTION_BRAKE_SIGN`, feldkalibriert) | Sprint/Beschleunigung darf kein Bremslicht auslösen; reale Einbaulage | \|a\| via `fabs()` (richtungsblind) |
+
+*Hinweis: Kalendertage einzelner Altentscheidungen nicht durchgängig belegt ([Annahme]).*
 
 ---
 
 ## 11. Offene Punkte
-Siehe `docs/open_issues.md` (Arbeitskopie) bzw. kanonische Bible Kap. 11.
+
+### 11.1 Kritisch
+- **LED-Kanalzuordnung / Datenblatt** (3-W-COB 590–595 nm): welche LED? Voraussetzung für Vorwiderstands-Dimensionierung und FR-TL-06-Kalibrierung. Kein Hersteller-Datenblatt.
+- **Rechtliche Zulässigkeit FR-TL-07:** nach § 67 Abs. 4 unzulässig → default deaktiviert; für die Thesis als Zielkonflikt dokumentieren.
+
+### 11.2 Wichtig
+- **RF-Verifikationstest (FR-RF-03/04):** Wiederhol-Intervall der Fernbedienung messen → finaler Release-Timeout.
+- **Brown-Out unter LED-Lastspitzen:** Pufferkondensator am Vin / MT3608-Auslegung, Messpunkt Validierung.
+- **Schaltplan-Korrekturen:** RF GPIO34→GPIO4; GPIO25↔GPIO26; 3× 10-kΩ-Pull-Down; SW1; Entkopplungskondensatoren.
+- **BOM-Ergänzungen:** 10-kΩ-Pull-Down (3×), Drucktaster IP65 8 mm, Akku LP103454.
+- **RF-Empfänger-Bezeichnung:** BOM „PT2262" vs. real SRX882S vereinheitlichen.
+- **Geplante Härtung vor Thesis-Abgabe:** FR-SNS-04 (I²C-Recovery), FR-SNS-05 (Plausibilitätsprüfung), FR-SAF-03 (Watchdog) weiterhin offen — empirisch motiviert durch die Akkubetrieb-Freeze-Beobachtung (Kap. 9.2).
+- **LED-Anordnung/Verdrahtung noch nicht festgelegt** → physische Blinker-L/R-Zuordnung (welche Taste welche LED-Seite ansteuert) erst danach validierbar; s. auch Kanalzuordnung Kap. 11.1.
+
+### 11.3 Zu verifizieren / offen
+- **„HSD ESP32 IoT Base":** als Basis für Kap. 7 berücksichtigen?
+- **Fehlende Nachweise:** Lichtstärke (cd) § 67, Messprotokolle, Feld-Kalibrierdaten Bremsschwelle.
+- **BMP280-Temperatur im eingeschwungenen Zustand erneut messen** (FORCED-Mode-Wirkung verifizieren, s. Kap. 9.1); danach ggf. app-/konfigseitige Kalibrierung, nur auf die ausgegebene, nie die kompensationsrelevante Temperatur.
+- **Debug-Ausgaben hinter `DEBUG_SERIAL`** (derzeit `true`) vor Abgabe auf `false` / entfernen.
 
 ---
 
-## 12. Risiken
-Siehe kanonische Bible Kap. 12.
+## 12. Risiken (technisch / Projekt / Thesis)
+
+| Risiko | Wirkung | Gegenmaßnahme |
+|---|---|---|
+| Vorwiderstands-Strombegrenzung der 3-W-COB-LED | thermisches Weglaufen; PLA gefährdet | Konstantstromquelle abwägen; Betrieb unter Nennstrom (~224 mA) |
+| Stromreduktion vs. § 67-Mindestlichtstärke | ggf. nicht zulassungsfähig | photometrische Prüfung nach Klärung Kanalzuordnung |
+| FR-TL-07 verstößt gegen § 67 Abs. 4 | im Auslieferzustand unzulässig | standardmäßig deaktiviert, dokumentiert |
+| RF-Halte-Erkennung nicht realisierbar | Warnblinker nicht auslösbar | Verifikationstest; sonst Ersatz-Trigger / Future-Work |
+| LED-Lastspitzen → Brown-Out-Reset | ungewollter Neustart | Pufferkondensator/MT3608-Auslegung, Messung; Watchdog-Wiederanlauf |
+| Kein Tiefentlade-/Unterspannungsschutz über DW01 hinaus | Akkuschädigung | systemseitigen Schutz bewerten |
+| Keine Sicherung/Strombegrenzung 5 V-/Akkuseite | Kurzschlussrisiko | Sicherungskonzept |
+| Firmware-Hang | Systemausfall | Task-Watchdog (~2 s), Auto-Reset |
+| Blinklogik noch blockierend (`delay()`, Alt-Sketch) | verletzt NFR nicht-blockierend | Neuimplementierung als State-Machine (NFR-RT-03) |
+| GPS-Fix bisher nicht erreicht | GNSS-Kennzahlen nicht validierbar | Feldtest mit Himmelssicht |
+| Energiebilanz nur geschätzt | Laufzeitangabe unbelegt | Messung unter Last (NFR-PWR-02) |
+
+---
+
+## Anhang A — Glossar / Abkürzungsverzeichnis
+
+| Abk. | Bedeutung |
+|---|---|
+| BLE | Bluetooth Low Energy |
+| BOM | Bill of Materials (Stückliste) |
+| CI | Continuous Integration |
+| COB | Chip on Board (LED-Bauform) |
+| DMP | Digital Motion Processor (MPU6050) |
+| ECE R6 | UN-Regelung Fahrtrichtungsanzeiger |
+| ECE R48 | UN-Regelung Lichtanbau Kfz (inkl. ESS) |
+| ECE R50 | UN-Regelung Positions-/Brems-/Schlussleuchten |
+| ESS | Emergency Stop Signal (Notbrems-Blinken) |
+| FSM | Finite State Machine |
+| GNSS | Global Navigation Satellite System |
+| HDOP | Horizontal Dilution of Precision |
+| IMU | Inertial Measurement Unit |
+| MVP | Minimum Viable Product |
+| NMEA | GNSS-Datenprotokoll |
+| NVS | Non-Volatile Storage (ESP32-Schlüssel-Wert-Speicher, `Preferences`) |
+| OTA | Over-the-Air (drahtloses Firmware-Update) |
+| pioarduino | Community-PlatformIO-Plattform mit Arduino-ESP32-Core 3.x |
+| PWA | Progressive Web App |
+| PWM | Pulsweitenmodulation |
+| SRS | Software Requirements Specification |
+| StVZO | Straßenverkehrs-Zulassungs-Ordnung (§ 54 Blinker, § 67 Fahrradbeleuchtung) |
+| WDT / TWDT | (Task) Watchdog Timer |
