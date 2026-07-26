@@ -18,6 +18,7 @@ constexpr uint32_t PWM_FREQ_HZ          = 5000;   // CON-02
 constexpr uint8_t  PWM_RESOLUTION_BITS  = 8;      // 0..255
 constexpr uint8_t  TAILLIGHT_DUTY_PCT   = 20;     // FR-TL-04 Schlusslicht-Grundhelligkeit
 constexpr float    BLINK_FREQ_HZ        = 1.5f;   // FR-BLK-08 (ECE R6)
+constexpr uint8_t  BLINK_DUTY_PCT       = 50;     // FR-BLK-08 Zeit-Duty-Cycle
 constexpr float    INIT_BLINK_FREQ_HZ   = 2.0f;   // FR-TL-03 Diagnose-Blinken
 constexpr uint8_t  INIT_BLINK_DUTY_PCT  = 50;     // FR-TL-03 Zeit-Duty-Cycle
 constexpr uint8_t  INIT_BLINK_HIGH_PCT  = 50;     // FR-TL-03, C3.1 Helligkeits-Amplitude oben (unten 0 %)

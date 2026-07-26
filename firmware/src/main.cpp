@@ -14,14 +14,15 @@
 #include "config.h"
 #include "led_output.h"       // drivers  (R2/R3 Aktorik, CON-02)
 #include "imu_driver.h"       // drivers  (R4 IMU, FR-SNS-01/02/03)
+#include "rf_input.h"         // drivers  (RF-Empfang, FR-RF-01)
 #include "lifecycle_fsm.h"    // logic    (R1)
 #include "tail_light_fsm.h"   // logic    (R2)
 #include "motion_filter.h"    // logic    (R4->R2, Komplementaerfilter)
+#include "button_decoder.h"   // logic    (RF-Tastenerkennung, FR-RF-02/03/04)
+#include "blinker_fsm.h"      // logic    (R3, FR-BLK-01..09)
 
 // PWM-Kanal-Zuordnung erfolgt ueber ledcAttach() (Core v3.x, CON-02).
 // TODO(FR-...): weitere Treiber-/Logikmodule einbinden, sobald angelegt:
-//   #include "rf_input.h"       // drivers  (FR-RF-01)
-//   #include "button_decoder.h" // logic    (FR-RF-03/04)
 //   #include "sensors.h"        // drivers  (BMP280/L86, FR-SNS)
 //   #include "telemetry.h"      // drivers  (FR-TEL)
 //   #include "scheduler.h"      // optional Helfer
@@ -35,6 +36,19 @@ static logic::LifecycleFsm lifecycleFsm;
 static logic::TailLightFsm tailLightFsm;
 static logic::MotionFilter motionFilter;
 static uint32_t t_motion_prev_ms = 0;  // fuer dt_s der Komplementaerfilter-Eingabe
+
+// Letzter von taskLifecycleAndTailLight() ermittelter Lebenszyklus-Zustand.
+// Vorbelegt mit Init: Tastendruecke werden verworfen, bis R1 erstmals RUN
+// liefert (FR-BLK-09-Gating, s. taskBlinker()).
+static logic::SystemState lastSystemState = logic::SystemState::Init;
+
+// RF-Tastenerkennung (Sub-FSM vor R3) + Blinker-FSM (R3).
+static logic::ButtonDecoder buttonDecoder;
+static logic::BlinkerFsm    blinkerFsm;
+
+// Von taskRf() gesetztes, von taskBlinker() im selben loop()-Durchlauf genau
+// einmal konsumiertes Ereignis (taskRf laeuft vor taskBlinker, s. loop()).
+static logic::ButtonEvent pendingButtonEvent = logic::ButtonEvent::NONE;
 
 // ------------------------------------------------------------------------
 // Task-Stubs — hier kommt die Logik der jeweiligen Region hinein.
@@ -54,6 +68,7 @@ static void taskLifecycleAndTailLight() {
   const logic::LifecycleOutput sys = lifecycleFsm.update(critical_sensors_ready, now);
   const logic::TailLightOutput tl  = tailLightFsm.update(decel_ms2, sys.state, now);
   drivers::setDutyPercent(PIN_BRAKE_LIGHT, tl.duty_pct);
+  lastSystemState = sys.state;  // fuer FR-BLK-09-Gating in taskBlinker()
 
   // TODO(temp debug): entfernen, sobald Telemetrie (M5) den Zustand ausgibt.
   static uint32_t t_debug = 0;
@@ -73,12 +88,27 @@ static void taskGnss() {
 }
 
 static void taskBlinker() {
-  // TODO(FR-BLK-01..09): Blinker-State-Machine (R3), Blinktakt 1,5 Hz.
+  // Kein fester Task-Takt: laeuft jeden loop()-Durchlauf, direkt nach taskRf()
+  // (s. loop()), damit ein erkanntes Ereignis genau einmal verarbeitet wird.
+  const uint32_t now = millis();
+
+  // FR-BLK-09: RF-Blinkerbefehle erst ab RUN wirksam, waehrend INIT verworfen.
+  const logic::ButtonEvent event =
+      (lastSystemState == logic::SystemState::Run) ? pendingButtonEvent
+                                                      : logic::ButtonEvent::NONE;
+  pendingButtonEvent = logic::ButtonEvent::NONE;  // genau einmal konsumiert
+
+  const logic::BlinkerOutput out = blinkerFsm.update(event, now);
+  drivers::setDutyPercent(PIN_BLINK_LEFT,  out.left_on  ? 100 : 0);
+  drivers::setDutyPercent(PIN_BLINK_RIGHT, out.right_on ? 100 : 0);
 }
 
 static void taskRf() {
-  // TODO(FR-RF-01..06): RF-Codes lesen, Tastenerkennung (kurz/lang),
-  // Events an die Blinker-State-Machine.
+  // Kein fester Task-Takt: laeuft jeden loop()-Durchlauf (FR-RF-01,
+  // kontinuierliche Ueberwachung). Laeuft vor taskBlinker() (s. loop()).
+  const uint32_t now = millis();
+  const drivers::RfSignal rf = drivers::rfRead();
+  pendingButtonEvent = buttonDecoder.update(rf.has_code, rf.code, now);
 }
 
 static void taskTelemetry() {
@@ -108,6 +138,8 @@ void setup() {
   const bool imu_ready = drivers::imuBegin();
   Serial.printf("[boot] IMU ready=%d\n", (int)imu_ready);
   t_motion_prev_ms = millis();
+
+  drivers::rfBegin();  // FR-RF-01: kontinuierlicher Empfang an PIN_RF_DATA
 
   // TODO(FR-CFG-03): Konfiguration aus NVS laden (Defaults bei leerem NVS).
   // TODO(FR-SAF-03): Task-Watchdog aktivieren (~2 s) — Hardware, gehoert hier
