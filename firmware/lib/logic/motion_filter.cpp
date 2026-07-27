@@ -29,4 +29,8 @@ float MotionFilter::update(const MotionInput& in) {
   return braking_accel_ms2 > 0.0f ? braking_accel_ms2 : 0.0f;
 }
 
+void MotionFilter::reset() {
+  pitch_rad_ = 0.0f;
+}
+
 }  // namespace logic

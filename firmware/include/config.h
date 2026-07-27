@@ -87,6 +87,32 @@ constexpr uint32_t WATCHDOG_TIMEOUT_MS = 2000;  // FR-SAF-03
 constexpr uint32_t I2C_TIMEOUT_MS   = 50;    // FR-SNS-03 (~25-50 ms Budget)
 constexpr uint8_t  MPU6050_I2C_ADDR = 0x68;  // Bible Kap. 4.2
 constexpr uint8_t  BMP280_I2C_ADDR  = 0x76;  // Bible Kap. 4.2
+constexpr uint8_t  MPU6050_WHOAMI_REG = 0x75;  // MPU6050-Datenblatt Reg. 117
+constexpr uint8_t  MPU6050_WHOAMI_VAL = 0x68;  // erwarteter Fixwert (s. dort)
+
+// ---- IMU-Gesundheit / Recovery (fest, FR-SNS-04/05, FR-STA-04) ------------
+constexpr uint8_t  IMU_FAIL_LIMIT               = 5;    // ~50 ms @ 100 Hz, NFR-RT-01-Budget
+constexpr uint16_t IMU_FROZEN_LIMIT             = 30;   // ~300 ms @ 100 Hz [TODO(offen): Feldverifikation]
+constexpr float    IMU_ACCEL_MIN_MAGNITUDE_MS2  = 3.0f; // deutlich < 1 g, schliesst "alle Achsen ~0" aus
+// FSR +-16 g (s. imuBegin()): Fahrrad-Stoesse (Bordstein, Schlagloch) bis
+// ~20 g moeglich, ein engeres FSR wuerde dort saettigen und die
+// Plausibilitaetspruefung faelschlich ansprechen lassen. Schwelle dicht am
+// Anschlag (0,95 * 16 g). [TODO(offen): Feldverifikation]
+constexpr float    IMU_ACCEL_MAX_MAGNITUDE_MS2  = 149.0f;
+constexpr uint8_t  IMU_RECOVERY_MAX_ATTEMPTS    = 3;
+constexpr uint32_t IMU_RECOVERY_MIN_INTERVAL_MS = 5000; // Hintergrund-Reinit-Rate im FAILED-Zustand
+
+// Sprung-/Slew-Plausibilitaet: ein einzelnes Muell-aber-in-Range-Sample darf
+// keine Bremseskalation ausloesen (Fehlerinjektionstest SDA-Kurzschluss,
+// s. lessons_learned.md). Vergleichsbasis ist das jeweils letzte GELESENE
+// (nicht nur plausible) Sample, s. imu_health.cpp. [TODO(offen): Feldverifikation]
+constexpr float    IMU_ACCEL_MAX_SLEW_MS2        = 80.0f; // ~8 g Sprung/10 ms
+constexpr float    IMU_GYRO_MAX_SLEW_RADS        = 4.0f;
+// Eskalation (hoehere Bremslicht-Duty) erst nach N aufeinanderfolgenden
+// plausiblen Zyklen vertrauen; De-Eskalation bleibt sofort wirksam (main.cpp
+// erzwingt 0 = sicheres Dauer-Schlusslicht, solange nicht vertraut wird).
+// [TODO(offen): Feldverifikation]
+constexpr uint8_t  IMU_ESCALATION_CONFIRM_CYCLES = 3;
 
 // ---- Debug (temporaer) -----------------------------------------------------
 constexpr bool DEBUG_SERIAL = true;  // schaltet TODO(temp debug)-Ausgaben; vor Auslieferung false

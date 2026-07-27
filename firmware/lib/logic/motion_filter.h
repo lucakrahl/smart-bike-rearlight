@@ -34,6 +34,12 @@ class MotionFilter {
   // damit Sprints/Antritte nicht das Bremslicht ausloesen.
   float update(const MotionInput& in);
 
+  // Setzt den internen Neigungswinkel zurueck (z. B. nach einer IMU-Ausfall-
+  // Phase, s. main.cpp): verhindert, dass der naechste update()-Aufruf einen
+  // waehrend des Ausfalls veralteten Winkel fortschreibt und dadurch eine
+  // falsche Brems-Beschleunigung vortaeuscht.
+  void reset();
+
  private:
   MotionParams params_;
   float pitch_rad_ = 0.0f;

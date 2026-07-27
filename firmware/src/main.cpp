@@ -21,6 +21,7 @@
 #include "lifecycle_fsm.h"    // logic    (R1)
 #include "tail_light_fsm.h"   // logic    (R2)
 #include "motion_filter.h"    // logic    (R4->R2, Komplementaerfilter)
+#include "imu_health.h"       // logic    (R4 IMU-Gesundheit, FR-SNS-04/05, FR-STA-04)
 #include "button_decoder.h"   // logic    (RF-Tastenerkennung, FR-RF-02/03/04)
 #include "blinker_fsm.h"      // logic    (R3, FR-BLK-01..09)
 #include "gnss_fix.h"         // logic    (R4 GNSS-Fix-Bewertung, FR-TEL-05)
@@ -39,6 +40,17 @@ static logic::LifecycleFsm lifecycleFsm;
 static logic::TailLightFsm tailLightFsm;
 static logic::MotionFilter motionFilter;
 static uint32_t t_motion_prev_ms = 0;  // fuer dt_s der Komplementaerfilter-Eingabe
+
+// IMU-Gesundheit (FR-SNS-04/05, FR-STA-04): getrennt von R1/lifecycleFsm
+// gefuehrt, da dessen degraded-Flag laut lifecycle_fsm.h bewusst nur das
+// INIT-Ergebnis abbildet (FR-STA-06: kein Ruecksprung nach RUN). Ein
+// Laufzeit-Sensorausfall gated hier ausschliesslich R2 (s. u.).
+static logic::ImuHealth imuHealth;
+static bool imu_was_healthy_last_cycle_ = false;  // fuer motionFilter-Reset beim Uebergang
+
+// Letzter IMU-Gesundheitsstatus, vorgehalten fuer die spaetere Telemetrie
+// (FR-TEL-03), die Sensor-Fehler als eigenes Flag an die App melden soll.
+static logic::ImuHealthOutput lastImuHealth{};
 
 // Letzter von taskLifecycleAndTailLight() ermittelter Lebenszyklus-Zustand.
 // Vorbelegt mit Init: Tastendruecke werden verworfen, bis R1 erstmals RUN
@@ -61,15 +73,60 @@ static void taskLifecycleAndTailLight() {
   // Reaktionszeit <= 50 ms (NFR-RT-01).
   const uint32_t now = millis();
 
-  const float dt_s = (now - t_motion_prev_ms) / 1000.0f;
-  t_motion_prev_ms = now;
-  const drivers::ImuSample raw = drivers::imuRead();
-  const float decel_ms2 = motionFilter.update(
-      {raw.accel_x_ms2, raw.accel_y_ms2, raw.accel_z_ms2, raw.gyro_x_rads, dt_s});
-  const bool critical_sensors_ready = drivers::imuIsReady();
+  drivers::ImuSample raw{};
+  const bool read_ok = drivers::imuRead(raw);
+  const logic::ImuHealthOutput health = imuHealth.update(
+      read_ok, raw.accel_x_ms2, raw.accel_y_ms2, raw.accel_z_ms2, raw.gyro_x_rads, now);
+  lastImuHealth = health;  // fuer spaetere Telemetrie (FR-TEL-03/FR-STA-04)
 
+  // Zwei bewusst getrennte Gates, auch wenn sie sich aktuell pro Zyklus
+  // decken: motionFilter wird an der reinen Zyklus-Gesundheit (read_ok &&
+  // plausible) gespeist, R2 weiter unten dagegen am state-basierten
+  // degraded-Flag -- so bleibt ein spaeterer Debounce-/Hysterese-Umbau von
+  // "degraded" ohne Wirkung auf die Filter-Fuetterung.
+  const bool healthy_this_cycle = read_ok && health.plausible;
+
+  float decel_ms2 = 0.0f;
+  if (healthy_this_cycle) {
+    if (!imu_was_healthy_last_cycle_) {
+      // Nach einer Ausfall-/Recovery-Phase: alten Neigungswinkel verwerfen
+      // und Zeitbasis neu setzen, sonst wuerde ein grosser dt_s-Sprung bzw.
+      // ein waehrenddessen veralteter Winkel eine falsche Brems-
+      // Beschleunigung vortaeuschen (s. motion_filter::reset()).
+      motionFilter.reset();
+      t_motion_prev_ms = now;
+    }
+    const float dt_s = (now - t_motion_prev_ms) / 1000.0f;
+    t_motion_prev_ms = now;
+    decel_ms2 = motionFilter.update(
+        {raw.accel_x_ms2, raw.accel_y_ms2, raw.accel_z_ms2, raw.gyro_x_rads, dt_s});
+  }
+  imu_was_healthy_last_cycle_ = healthy_this_cycle;
+
+  if (health.request_recovery) {
+    drivers::imuRecoverStage(health.recovery_stage);
+  }
+
+  const bool critical_sensors_ready = drivers::imuIsReady();
   const logic::LifecycleOutput sys = lifecycleFsm.update(critical_sensors_ready, now);
-  const logic::TailLightOutput tl  = tailLightFsm.update(decel_ms2, sys.state, now);
+
+  // FR-STA-04 Fail-Safe: auf JEDEM ungesunden Zyklus explizit 0 -- nicht
+  // erst ab "degraded" (das kippt erst nach IMU_FAIL_LIMIT Zyklen). Schon
+  // waehrend dieser Zaehlphase soll tail_light_fsm keinen frischen Wert
+  // bekommen. Zusaetzlich: escalation_trusted verlangt IMU_ESCALATION_
+  // CONFIRM_CYCLES aufeinanderfolgende plausible Zyklen, bevor ein
+  // Bremswert ueberhaupt durchgereicht wird -- ein einzelnes Muell-aber-
+  // plausibles Sample (Fehlerinjektionstest SDA-Kurzschluss) darf sonst
+  // sofort eine Bremseskalation ausloesen. decel_ms2 ist strukturell
+  // bereits 0, wenn !healthy_this_cycle (frische lokale Variable, nur im
+  // healthy_this_cycle-Zweig oben befuellt) -- hier trotzdem explizit an
+  // beide Bedingungen gebunden, damit die Zusicherung im Code sichtbar ist.
+  // tail_light_fsm faellt dadurch ueber seine bestehende Hysterese/
+  // Mindesthaltezeit von selbst sicher auf Dauer-Schlusslicht zurueck --
+  // R2 selbst bleibt unveraendert, muss vom IMU-Zustand nichts wissen.
+  const float tail_input =
+      (healthy_this_cycle && health.escalation_trusted) ? decel_ms2 : 0.0f;
+  const logic::TailLightOutput tl = tailLightFsm.update(tail_input, sys.state, now);
   drivers::setDutyPercent(PIN_BRAKE_LIGHT, tl.duty_pct);
   lastSystemState = sys.state;  // fuer FR-BLK-09-Gating in taskBlinker()
 
@@ -77,8 +134,9 @@ static void taskLifecycleAndTailLight() {
   static uint32_t t_debug = 0;
   if (now - t_debug >= 1000) {
     t_debug = now;
-    Serial.printf("[R1/R2] sys=%d degraded=%d tl=%d duty=%u%%\n",
-                  (int)sys.state, (int)sys.degraded, (int)tl.state, tl.duty_pct);
+    Serial.printf("[R1/R2] sys=%d init_degraded=%d tl=%d duty=%u%% imu_health=%d imu_plausible=%d\n",
+                  (int)sys.state, (int)sys.degraded, (int)tl.state, tl.duty_pct,
+                  (int)health.state, (int)health.plausible);
   }
 }
 
