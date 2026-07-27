@@ -12,15 +12,17 @@ pioarduino, Arduino-ESP32-Core 3.3.11. R1 (`lifecycle_fsm`), R2
 
 **Aktueller Fokus:** Firmware-Implementierung nach SRS fortsetzen.
 
-**Nächster Schritt:** Härtung Teil 2 (Roadmap M5) — Watchdog (FR-SAF-03)
-aktivieren (~2 s, `main.cpp`/`setup()`/`loop()`). Danach der Telemetrie-
-+BLE-Rest von M5 (FR-TEL-02/03/06, FR-SYS-04, FR-TEL-04/NFR-RES-01).
+**Nächster Schritt:** M5-Rest — Telemetrie + BLE (R4): versioniertes Frame
+(FR-TEL-02/03/06), BLE-Notify unidirektional (FR-SYS-04), RAM-Ringpuffer
+(FR-TEL-04, NFR-RES-01).
 
-**Zuletzt erledigt:** M5 Teil A (BMP280, FORCED-Mode) + Teil B (`gnss_driver`
-+ `gnss_fix`, Fix-Status FR-TEL-05) validiert; Härtung Teil 1 — I²C-Recovery
-+ Plausibilität + Fail-Safe (`imu_health`, FR-SNS-04/05, FR-STA-04) committet
-(`4096d4d`), per SDA-Kurzschluss-Fehlerinjektion am Board verifiziert
-(Recovery wirksam, kein Fehl-Bremslicht, Fail-Safe auf Schlusslicht).
+**Zuletzt erledigt:** Härtung Teil 2 — Task-Watchdog + Reset-Reason-Diagnose
+(FR-SAF-03) committet (`17d18bc`), per 'H'-Hang-Hook am Board verifiziert
+(Auto-Reset nach ~2 s, Reset-Grund korrekt erkannt). Davor: M5 Teil A
+(BMP280, FORCED-Mode) + Teil B (`gnss_driver`+`gnss_fix`, Fix-Status
+FR-TEL-05) validiert; Härtung Teil 1 — I²C-Recovery + Plausibilität +
+Fail-Safe (`imu_health`, FR-SNS-04/05, FR-STA-04) committet (`4096d4d`),
+per SDA-Kurzschluss-Fehlerinjektion am Board verifiziert.
 
 **Blocker/offene Klärungen:** LED-Kanalzuordnung/Datenblatt (Bible 11.1);
 RF-Release-Timeout vorläufig (FR-RF-03); IMU-Plausibilitäts-/Recovery-

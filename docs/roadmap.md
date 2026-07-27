@@ -61,11 +61,15 @@ WHO_AM_I-Liveness-Check statt `getEvent()`, FSR ±16 g, Recovery über rohe
 SDA-Kurzschluss-Fehlerinjektion am Board verifiziert (Recovery wirksam,
 kein Fehl-Bremslicht, Fail-Safe fällt sicher auf Schlusslicht zurück).
 
-**Härtung Teil 2 — Watchdog (FR-SAF-03)  ☐ ← als Nächstes**
-Task-Watchdog (~2 s) aktivieren (`main.cpp`/`setup()`/`loop()`, s. TODO in
-`lifecycle_fsm.h`).
+**Härtung Teil 2 — Watchdog (FR-SAF-03)  ✅**
+`esp_task_wdt_reconfigure()` (Fallback `esp_task_wdt_init()`) auf
+`WATCHDOG_TIMEOUT_MS`, `enableLoopWDT()` registriert den `loopTask` beim
+TWDT (Arduino-Core fuettert automatisch vor jedem `loop()`). Boot-Diagnose
+per `esp_reset_reason()` (WDT-/Panic-Reset-Flag, hinter `DEBUG_SERIAL`,
+vorgehalten für Telemetrie). Per 'H'-Hang-Hook am Board verifiziert:
+Auto-Reset nach ~2 s, Reset-Grund korrekt erkannt (Commit `17d18bc`).
 
-**Telemetrie + BLE  ☐ (danach)**
+**Telemetrie + BLE  ☐ ← als Nächstes**
 Versioniertes Frame (FR-TEL-02/03/06), BLE-Notify unidirektional (FR-SYS-04),
 RAM-Ringpuffer (FR-TEL-04, NFR-RES-01).
 
