@@ -16,7 +16,22 @@
   Pull-Down; SW1; Entkopplungskondensatoren.
 - [ ] **BOM-Ergänzungen:** 10-kΩ-Pull-Down (3×), Drucktaster IP65 8 mm, LP103454.
 - [ ] **RF-Empfänger-Bezeichnung:** BOM „PT2262" vs. real SRX882S vereinheitlichen.
+- [ ] **IMU-Plausibilitäts-/Recovery-Schwellen (`TODO(offen)` in `config.h`):**
+  `IMU_ACCEL_MAX_SLEW_MS2`, `IMU_GYRO_MAX_SLEW_RADS`,
+  `IMU_ESCALATION_CONFIRM_CYCLES`, `IMU_FROZEN_LIMIT`,
+  `IMU_ACCEL_MIN_MAGNITUDE_MS2`/`IMU_ACCEL_MAX_MAGNITUDE_MS2` — Erstschätzungen,
+  Feldverifikation ausstehend.
+- [ ] **SCL-Release-Timing real verifizieren** (Bit-Bang-Pulsbreite/-Anzahl am
+  tatsächlich hängenden Bus, nicht nur am Kurzschlussfall). Direkter
+  `i2c_del_master_bus`/`i2c_new_master_bus`-Fallback (Umgehung von `Wire`)
+  nur bei Bedarf implementieren, falls `Wire.end()` nach dem PeriMan-Fix
+  noch scheitert.
 
 ## Zu verifizieren
 - [ ] „HSD ESP32 IoT Base" als Web-App-Basis?
 - [ ] Nachweise: Lichtstärke (cd) § 67, Messprotokolle, Feld-Kalibrierdaten.
+- [ ] **GNSS-Fix-Feldtest** im Freien (freie Himmelssicht) — Indoor-Test zeigte
+  nur `NO_FIX` (UART/Parsing bestätigt, echter Fix indoor nicht möglich).
+- [ ] **BMP280-Temperatur-Retest** im thermisch eingeschwungenen Zustand
+  (FORCED-Mode-Umstellung reduzierte Selbsterwärmung; finale Validierung
+  gegen Referenzinstrument steht noch aus).

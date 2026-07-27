@@ -21,5 +21,10 @@ Auszug der zentralen Architekturentscheidungen (Vollständige Liste: Bible Kap. 
 | BMP280 FORCED-Mode (Weather Monitoring ×1/×1/IIR aus) | geringes Rauschen @1 Hz, geringere Stromaufnahme, Bosch-Empfehlung | NORMAL-Dauerbetrieb ×16 |
 | Keine feste Temperatur-Korrektur in der Firmware | Offset noch nicht abschließend charakterisiert, umgebungs-/lastabhängig; Rohdaten-Integrität; verfälscht sonst Druckkompensation | fester Offset im Code |
 | Bremslicht nur bei Verzögerung in Fahrtrichtung (`MOTION_BRAKE_SIGN`, feldkalibriert) | Sprint/Beschleunigung darf kein Bremslicht auslösen; reale Einbaulage | \|a\| via `fabs()` (richtungsblind) |
+| Getrennte IMU-Health-/Lifecycle-Init-Signale | `lifecycle_fsm.degraded` bleibt INIT-Ergebnis (FR-STA-06: kein Rücksprung nach RUN); Laufzeit-Sensorausfall gated nur R2 über ein eigenes Signal (`imu_health`) | `degraded` in `lifecycle_fsm` um Laufzeit-Gesundheit erweitern |
+| WHO_AM_I-Liveness-Check statt `getEvent()`-Rückgabewert | Adafruit-Wrapper reicht I²C-Fehler nicht zuverlässig durch | `getEvent()`-Rückgabewert vertrauen |
+| IMU-FSR ±16 g (statt Library-Default) | Fahrrad-Stöße bis ~20 g möglich, engeres FSR sättigt fälschlich und triggert die Plausibilitätsprüfung | Default-Bereich (±8 g) belassen |
+| Sprung-Plausibilität + Eskalations-Vertrauen (N konsekutive plausible Zyklen) | einzelnes Müll-aber-in-Range-Sample darf keine Bremseskalation auslösen (Fehlerinjektionstest SDA-Kurzschluss) | einzelnem plausiblen Sample sofort vertrauen |
+| I²C-Bus-Recovery über rohe `gpio_*`-Calls statt `pinMode()`/`digitalWrite()` | PeriMan blockiert bei hängendem I²C-Bus selbst (`i2c_del_master_bus()`-Fehlschlag verhindert Pin-Freigabe, verifiziert im Core-Quelltext) | Arduino-`pinMode()`/`digitalWrite()` |
 
 *Nächste Entscheidungen ab hier eintragen (nach Freigabe).*

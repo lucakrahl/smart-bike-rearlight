@@ -20,3 +20,34 @@ unbeeinträchtigt — das Symptom war also regionsspezifisch, nicht global.
 **Erkenntnis:** Im echten Akkubetrieb (Kabel komplett ab) nicht reproduzierbar.
 „Debug-Setup ≠ Feldbedingung — Validierung stets im realen Betriebszustand."
 (s. auch Project Bible Kap. 9.2.)
+
+### ESP32-Core: `Wire.end()` scheitert bei blockiertem I²C-Bus still (No-Recovery-Falle)
+**Problem:** Im SDA-Kurzschluss-Fehlerinjektionstest wirkte die I²C-Recovery
+(Soft-Reinit, SCL-Clock-Release) zunächst nicht — Log zeigte wiederholt
+„Bus already started in Master Mode".
+**Ursache:** Im installierten Core (`Wire.cpp`/`esp32-hal-i2c-ng.c`)
+verifiziert: `Wire.end()` → `i2cDeinit()` → ESP-IDFs
+`i2c_del_master_bus()`; nur bei Erfolg wird der Bus als deinitialisiert
+markiert und die Pins per `perimanClearPinBus()` freigegeben. Bei
+elektrisch blockiertem Bus kann `i2c_del_master_bus()` fehlschlagen — der
+nächste `Wire.begin()` sieht den Bus fälschlich als „schon gestartet" und
+wird zum wirkungslosen No-op. Zusätzlich bleiben die Pins dabei
+PeriMan-seitig I²C-besessen, wodurch `pinMode()`/`digitalWrite()` in der
+SCL-Release-Routine ebenfalls kommentarlos nichts bewirken (PeriMan ruft
+vor der Neuzuweisung selbst den — am gleichen Fehler scheiternden —
+I²C-Deinit-Callback auf).
+**Lösung:** Bus-Recovery mit rohen ESP-IDF-`gpio_*`-Calls (umgehen PeriMan
+vollständig) **vor** dem `Wire.end()`-Versuch physisch freimachen; danach
+gelingt die eigentliche Deinitialisierung zuverlässig.
+
+### Host-Tests allein finden keine Fehlerfall-Bugs am realen Bus
+**Problem:** Alle 61 Host-Unit-Tests liefen grün, trotzdem zeigte der reale
+SDA-Kurzschluss-Fehlerinjektionstest zwei Bugs (Fehl-Bremslicht durch ein
+einzelnes Müll-Sample; wirkungslose I²C-Recovery), die kein Test vorher
+gefangen hatte.
+**Erkenntnis:** Host-Tests prüfen nur die modellierte Fehlerannahme mit
+synthetischen Eingaben, nicht das tatsächliche Verhalten der Hardware-/
+Treiberschicht unter einem physischen Fehler. „Debug-Setup ≠ Feldbedingung"
+gilt also nicht nur für die Stromversorgung (s. o.), sondern ebenso für
+Bus-Fehlerfälle — echte Fehlerinjektion am Gerät bleibt für
+sicherheitskritische Pfade unverzichtbar.

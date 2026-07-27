@@ -38,11 +38,36 @@ AUS/LINKS/RECHTS/WARN (FR-BLK-01..09), 1,5-Hz-Takt (FR-BLK-08). In `main.cpp`
 verdrahtet (FR-BLK-09-Gate gegen `SystemState`, Event genau einmal
 konsumiert). Tests der Tastenerkennung/Blinklogik.
 
-## M5 — Telemetrie + BLE (R4)  ☐ ← als Nächstes
+## M5 — Sensorik-Vervollständigung + Härtung + Telemetrie/BLE (R4)  ☐
+**Teil A — BMP280 (Luftdruck)  ✅**
+Rohdaten-Treiber (FR-SYS-01: Höhe wird in der App berechnet), FORCED-Mode
+(Weather-Monitoring-Profil ×1/×1, IIR aus — Selbsterwärmung reduziert),
+zentrale I²C-Bus-Init (`Wire.begin()` einmalig in `main.cpp`/`setup()`). Am
+Board validiert.
+
+**Teil B — L86/GNSS  ✅**
+`gnss_driver` (UART2, TinyGPSPlus, nicht-blockierendes `gnssPump()`) +
+`gnss_fix` (Fix-Status FR-TEL-05: NO_DATA/NO_FIX/FIX_OK), Host-Tests.
+UART/Parsing am Board validiert (Indoor korrekt NO_FIX; echter Fix braucht
+Freilandtest, s. `open_issues.md`).
+
+**Härtung Teil 1 — I²C-Recovery + Plausibilität + Fail-Safe  ✅**
+`imu_health` (FR-SNS-04/05, FR-STA-04): Wertebereich-/Frozen-/Sprung-
+Plausibilität, gestufte Recovery (Soft-Reinit, SCL-Clock-Release),
+Eskalations-Vertrauen über N konsekutive plausible Zyklen (verhindert
+Fehl-Bremslicht durch ein einzelnes Müll-Sample). `imu_driver`:
+WHO_AM_I-Liveness-Check statt `getEvent()`, FSR ±16 g, Recovery über rohe
+`gpio_*`-Calls (PeriMan-Umgehung bei hängendem I²C-Bus). Per
+SDA-Kurzschluss-Fehlerinjektion am Board verifiziert (Recovery wirksam,
+kein Fehl-Bremslicht, Fail-Safe fällt sicher auf Schlusslicht zurück).
+
+**Härtung Teil 2 — Watchdog (FR-SAF-03)  ☐ ← als Nächstes**
+Task-Watchdog (~2 s) aktivieren (`main.cpp`/`setup()`/`loop()`, s. TODO in
+`lifecycle_fsm.h`).
+
+**Telemetrie + BLE  ☐ (danach)**
 Versioniertes Frame (FR-TEL-02/03/06), BLE-Notify unidirektional (FR-SYS-04),
-RAM-Ringpuffer (FR-TEL-04, NFR-RES-01). **Zusätzlich aus M3 übernommen:**
-BMP280 + L86/GNSS-Fix-Status (FR-TEL-05), I²C-Recovery (FR-SNS-04),
-Plausibilitätsprüfung (FR-SNS-05).
+RAM-Ringpuffer (FR-TEL-04, NFR-RES-01).
 
 ## M6 — Konfiguration  ☐
 NVS/`Preferences` + serielles Kalibrier-Interface (FR-CFG-01/02/03).
