@@ -11,6 +11,8 @@
 
 #include <Arduino.h>
 #include <Wire.h>
+#include <esp_task_wdt.h>     // FR-SAF-03 (Task-Watchdog)
+#include <esp_system.h>       // FR-SAF-03 (esp_reset_reason())
 #include "pins.h"
 #include "config.h"
 #include "led_output.h"       // drivers  (R2/R3 Aktorik, CON-02)
@@ -64,6 +66,13 @@ static logic::BlinkerFsm    blinkerFsm;
 // Von taskRf() gesetztes, von taskBlinker() im selben loop()-Durchlauf genau
 // einmal konsumiertes Ereignis (taskRf laeuft vor taskBlinker, s. loop()).
 static logic::ButtonEvent pendingButtonEvent = logic::ButtonEvent::NONE;
+
+// FR-SAF-03: true, wenn dieser Boot durch einen Watchdog-/Panic-Reset
+// ausgeloest wurde (in setup() einmalig gesetzt). Vorgehalten fuer die
+// spaetere Telemetrie (FR-TEL-03) -- ein WDT-Reset im Fahrbetrieb bedeutet
+// einen kurzen Neustart (Init-Blink -> Schlusslicht), akzeptierte
+// Fail-Safe-Ausnahme (FR-SAF-01).
+static bool bootRecoveredFromWatchdog = false;
 
 // ------------------------------------------------------------------------
 // Task-Stubs — hier kommt die Logik der jeweiligen Region hinein.
@@ -220,6 +229,15 @@ static void taskTelemetry() {
 }
 
 static void taskConfigConsole() {
+  // TODO(temp debug): Watchdog-Verifikationshook -- 'H' ueber den Serial-
+  // Monitor sendet das Board absichtlich in einen Hang; der Task-Watchdog
+  // (FR-SAF-03) muss es binnen WATCHDOG_TIMEOUT_MS selbst neustarten. Nur
+  // hinter DEBUG_SERIAL, vor Auslieferung entfernen.
+  if (DEBUG_SERIAL && Serial.available() && Serial.read() == 'H') {
+    Serial.println(F("[debug] simulating hang for WDT test"));
+    while (true) {}
+  }
+
   // TODO(FR-CFG-02): nicht-blockierendes serielles Kalibrier-Interface
   // (get/set/list/reset) ueber Serial (UART0).
 }
@@ -228,6 +246,15 @@ static void taskConfigConsole() {
 void setup() {
   Serial.begin(115200);
   Serial.println(F("[boot] Smart Bike Rear Light — Firmware-Geruest"));
+
+  // FR-SAF-03 Diagnose: moeglichst frueh in setup(), damit der Log-Eintrag
+  // garantiert den tatsaechlichen Boot-Grund widerspiegelt.
+  const esp_reset_reason_t reset_reason = esp_reset_reason();
+  bootRecoveredFromWatchdog = reset_reason == ESP_RST_TASK_WDT || reset_reason == ESP_RST_INT_WDT ||
+                              reset_reason == ESP_RST_WDT || reset_reason == ESP_RST_PANIC;
+  if (DEBUG_SERIAL && bootRecoveredFromWatchdog) {
+    Serial.println(F("[boot] recovered from watchdog reset"));
+  }
 
   // I2C-Bus zentral EINMALIG initialisieren (FR-SNS-03: Timeout an einer
   // Stelle). imuBegin()/bmp280Begin() sind reine Busnutzer und rufen selbst
@@ -259,9 +286,25 @@ void setup() {
   const bool gnss_ready = drivers::gnssBegin();
   Serial.printf("[boot] GNSS ready=%d\n", (int)gnss_ready);
 
+  // FR-SAF-03: Task-Watchdog. Dieser Core initialisiert den TWDT bereits
+  // vor setup() (sdkconfig: CONFIG_ESP_TASK_WDT_INIT=y, Default 5 s) --
+  // esp_task_wdt_init() wuerde daher ESP_ERR_INVALID_STATE liefern.
+  // esp_task_wdt_reconfigure() passt stattdessen den bereits laufenden TWDT
+  // auf WATCHDOG_TIMEOUT_MS an; idle_core_mask=1 erhaelt die bestehende
+  // Core-0-Idle-Ueberwachung. Fallback auf esp_task_wdt_init(), falls der
+  // TWDT (z. B. nach einer Core-Konfigurationsaenderung) doch nicht
+  // vorinitialisiert sein sollte.
+  esp_task_wdt_config_t wdt_cfg = {WATCHDOG_TIMEOUT_MS, /*idle_core_mask=*/1, /*trigger_panic=*/true};
+  if (esp_task_wdt_reconfigure(&wdt_cfg) != ESP_OK) {
+    esp_task_wdt_init(&wdt_cfg);
+  }
+  // Registriert loopTaskHandle beim TWDT UND laesst den Arduino-Core dessen
+  // eigenen loopTask-Wrapper vor jedem loop()-Aufruf automatisch
+  // esp_task_wdt_reset() ausfuehren (esp32-hal-misc.c) -- kein manueller
+  // Reset-Aufruf in unserem loop() noetig.
+  enableLoopWDT();
+
   // TODO(FR-CFG-03): Konfiguration aus NVS laden (Defaults bei leerem NVS).
-  // TODO(FR-SAF-03): Task-Watchdog aktivieren (~2 s) — Hardware, gehoert hier
-  // in setup()/loop(), nicht in lifecycle_fsm (s. TODO dort).
 }
 
 void loop() {
@@ -281,7 +324,8 @@ void loop() {
   if (now - t_tele >= PERIOD_TELE_MS) { t_tele = now; taskTelemetry(); }
   taskConfigConsole();
 
-  // TODO(FR-SAF-03): Watchdog fuettern.
+  // FR-SAF-03: kein manueller Watchdog-Reset noetig -- der Arduino-Core
+  // fuettert den TWDT automatisch vor jedem loop()-Aufruf (s. setup()).
   // Optionaler CPU-Idle (NFR-PWR-01); haelt 100 Hz problemlos.
   delay(1);
 }

@@ -4,8 +4,8 @@
 // entgegen; kennt nicht die konkrete IMU-Anbindung (liefert das Flag ab M3).
 // Host-testbar (siehe firmware/test/test_lifecycle_fsm/).
 //
-// TODO(FR-SAF-03, M2/main): Watchdog-Aktivierung ist Hardware — gehoert in
-// main.cpp/Treiber, nicht in diese Logik.
+// FR-SAF-03: Watchdog-Aktivierung ist Hardware und liegt bewusst NICHT hier,
+// sondern in main.cpp/setup() (Haertung Teil 2, esp_task_wdt).
 #pragma once
 #include <cstdint>
 #include "system_state.h"
