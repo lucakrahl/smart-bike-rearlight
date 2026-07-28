@@ -1,6 +1,6 @@
 # Project Bible — Smartes Fahrrad-Rücklicht
 **Bachelorarbeit Krahl · Maschinenbau & Produktentwicklung (B.Eng.)**
-**Version 0.10 · Stand 26.07.2026 · Status: aktiv gepflegt (Single Source of Truth)**
+**Version 0.11 · Stand 29.07.2026 · Status: aktiv gepflegt (Single Source of Truth)**
 
 > Diese Project Bible ist die oberste Wissensinstanz des Projekts. Bei Widersprüchen zwischen Chat-Historie und Project Bible gilt ausschließlich die Project Bible. Chats dienen der Diskussion und Entscheidungsfindung; der offizielle Projektstand steht ausschließlich hier.
 
@@ -32,6 +32,7 @@
 | 0.8 | 21.07.2026 | Phase 3: Monorepo + PlatformIO angelegt, Umgebung lauffähig (pioarduino, Core 3.3.11). | Setup abgeschlossen |
 | 0.9 | 21.07.2026 | M1 (Rücklicht-Region R2) in Umsetzung: FSM + Host-Tests. Detailklarstellungen FR-TL-03 (Init-Blink 0↔~50 %, Zeit-Duty 50 %), FR-TL-06 (Mindesthaltezeit hält Bremslicht-Helligkeit, kein Sofortabfall), FR-TL-07 (ESS Zeit-Duty 50 %). | Implementierung M1 |
 | 0.10 | 26.07.2026 | Implementierungsstand M1–M4 hardwarevalidiert, M5 Teil A (BMP280) validiert; zentrale I²C-Bus-Initialisierung; BMP280 FORCED-Mode; Modulübersicht Firmware ergänzt; Validierungsbefunde Bremsrichtung + (vorläufig) Temperatur. | Impl. M1–M5A |
+| 0.11 | 29.07.2026 | App-Plattform: native iOS-App (Core Bluetooth) statt Web-App/PWA; Grund: kein Web Bluetooth auf iOS + Betreuer-Vorgabe. Firmware/BLE unverändert. | Plattform-Entscheidung App |
 
 ### 0.4 Datengrundlage
 | Quelle | Zeitstempel | Aussagekraft |
@@ -51,10 +52,10 @@
 ## 1. Projektübersicht
 
 ### 1.1 Ziel
-Entwicklung eines funktionsfähigen Prototyps eines *Smart Bike Rear Light*. Das System fungiert als IoT-Gerät, das mittels IMU-gesteuerter Bremslichtfunktion, Funk-Blinkern (433 MHz) und einer Live-Datenschnittstelle (BLE → Web-App) die Verkehrssicherheit und Datenaufzeichnung für Radfahrer verbessert.
+Entwicklung eines funktionsfähigen Prototyps eines *Smart Bike Rear Light*. Das System fungiert als IoT-Gerät, das mittels IMU-gesteuerter Bremslichtfunktion, Funk-Blinkern (433 MHz) und einer Live-Datenschnittstelle (BLE → iOS-App) die Verkehrssicherheit und Datenaufzeichnung für Radfahrer verbessert.
 
 ### 1.2 Kurzbeschreibung
-Ein ESP32 erfasst zyklisch Daten von GNSS (Quectel L86), Barometer (BMP280) und IMU (MPU-6050), steuert ein rotes Schluss-/Bremslicht (PWM) sowie gelbe Funk-Blinker und streamt Live-Telemetrie an eine Web-App (PWA), die Statistik, Sensorfusion und Visualisierung übernimmt.
+Ein ESP32 erfasst zyklisch Daten von GNSS (Quectel L86), Barometer (BMP280) und IMU (MPU-6050), steuert ein rotes Schluss-/Bremslicht (PWM) sowie gelbe Funk-Blinker und streamt Live-Telemetrie an eine native iOS-App, die Statistik, Sensorfusion und Visualisierung übernimmt.
 
 ### 1.3 MVP
 Zuverlässige Sensorerfassung und -Streaming, funktionierendes Schluss-/Bremslicht (intensitätsabhängig), Funk-Blinker, BLE-Live-Anzeige der Basis-Kennzahlen. Details s. Kap. 2.4.
@@ -77,14 +78,14 @@ NFR-Kategorien: `RT` (Echtzeit), `RES` (Ressourcen), `PWR` (Energie), `TST` (Tes
 
 | ID | Anforderung | Status |
 |---|---|---|
-| FR-SYS-01 | Firmware = Datenerfassungs- und Echtzeitknoten. Alle kumulativen/fusionierten Kennzahlen werden in der Web-App berechnet (Variante 2). | gesichert |
+| FR-SYS-01 | Firmware = Datenerfassungs- und Echtzeitknoten. Alle kumulativen/fusionierten Kennzahlen werden in der App berechnet (Variante 2). App-seitig aktuell als native iOS-App realisiert (s. Kap. 7); die Anforderung selbst bleibt client-agnostisch. | gesichert |
 | FR-SYS-02 | Firmware liest GNSS, BMP280, MPU6050 zyklisch aus und stellt Rohmesswerte als Telemetrie bereit. | gesichert |
 | FR-SYS-03 | Lokal nur echtzeit-/sicherheitsrelevante Größen: Bremslichtintensität aus IMU-Verzögerung, Blinkerzustand. | gesichert |
 | FR-SYS-04 | Schnittstelle zur App unidirektional (ESP32 → App); keine Steuerbefehle über BLE. | gesichert |
 | FR-SYS-05 | Blinkersteuerung ausschließlich über 433-MHz-Fernbedienung. | gesichert |
 | FR-TL-01 | Rote LED = kombiniertes Schluss-/Bremslicht; Grundzustand dauerhaft gedimmtes Schlusslicht. | gesichert |
 | FR-TL-02 | Bremslicht-Helligkeit steigt mit der Bremsintensität (Kennlinie FR-TL-06). | gesichert |
-| CON-01 | Datsenke = Web-App; Firmware speichert nicht dauerhaft, nur flüchtiger RAM-Ringpuffer (FR-TEL-04). | gesichert |
+| CON-01 | Datsenke = App (aktuell native iOS-App, s. Kap. 7); Firmware speichert nicht dauerhaft, nur flüchtiger RAM-Ringpuffer (FR-TEL-04). | gesichert |
 | OUT-01 | Keine Akkustandsanzeige/Batteriespannungsmessung in HW/FW. | gesichert |
 | OUT-02 | Nicht im MVP: Auto-Helligkeit, Standlicht, Auto-Blinker-Rückstellung, Flash-Voll-Logging. | gesichert |
 
@@ -215,7 +216,7 @@ Hinweis: Sekundärquellen; für die Thesis am Primärtext (§ 67) gegenprüfen. 
 
 ### 3.1 Architektur (Variante 2 — verteilte Berechnung)
 ```
-[Sensorik]                [ESP32 Firmware]                 [Web-App / PWA]
+[Sensorik]                [ESP32 Firmware]                 [iOS-App]
  GNSS L86  ─UART2─┐        ┌───────────────────────┐       ┌────────────────────┐
  BMP280    ─I²C──┼──────▶ │ Erfassung + Echtzeit-  │──BLE─▶│ Statistik, Fusion, │
  MPU6050   ─I²C──┘        │ logik (Bremse/Blinker) │ (uni) │ Speicherung, UI    │
@@ -325,7 +326,7 @@ Adafruit MPU6050, Adafruit BMP280, Adafruit Unified Sensor, TinyGPSPlus (Mikal H
 PWM ausschließlich über `ledcAttach()`/`ledcWrite()` (Core v3.x). Kooperativer nicht-blockierender Scheduler, kein `delay()` im Betrieb, statische Speicherverwaltung, Trennung Logik ↔ Hardware, ID-Referenzen in Kommentaren. Details: `CLAUDE.md` im Repo.
 
 ### 6.4 Repository (Monorepo)
-`firmware/` (PlatformIO), `webapp/` (PWA, später), `docs/` (Bible-Kopie + Wissensdatenbank), `hardware/`, `cad/`, `testdata/`. Logik hardwarefrei in `firmware/lib/logic`, Treiber in `firmware/lib/drivers`. Wissensdatenbank: `decision_log.md`, `current_context.md`, `roadmap.md`, `open_issues.md`, `lessons_learned.md`.
+`firmware/` (PlatformIO), `webapp/` (ursprünglich für eine PWA vorgesehen — seit v0.11 durch die native iOS-App abgelöst, s. Kap. 7/10; Ordner bleibt bestehen, endgültiger Ablageort des iOS-App-Codes noch offen), `docs/` (Bible-Kopie + Wissensdatenbank), `hardware/`, `cad/`, `testdata/`. Logik hardwarefrei in `firmware/lib/logic`, Treiber in `firmware/lib/drivers`. Wissensdatenbank: `decision_log.md`, `current_context.md`, `roadmap.md`, `open_issues.md`, `lessons_learned.md`.
 
 ### 6.4a Modulübersicht Firmware
 Ordnerprinzip: `lib/logic` = hardwarefreie, host-testbare Logik (kein `Arduino.h`); `lib/drivers` = Hardwarezugriff (I²C/PWM/RF); `src` = kooperativer Scheduler; `include` = Header/Konstanten.
@@ -432,16 +433,25 @@ Konfiguration: Kalibrierwerte in NVS, Struktur-/Sicherheitswerte fest im Code; s
 
 ---
 
-## 7. Web-App
+## 7. App (iOS)
 
 ### 7.1 Zielarchitektur
-PWA mit Web Bluetooth API. Rolle (FR-SYS-01): Rechen- und Datsenke — empfängt Telemetrie (10 Hz, versioniert FR-TEL-06), berechnet Statistik/Sensorfusion (Kap. 2.3), speichert die Fahrt (CON-01), visualisiert MVP-Kennzahlen (Kap. 2.4), zeigt Warnungen (GNSS-Verlust, Future-Work).
+Native iOS-App — kein PWA-/Web-Bluetooth-Ansatz mehr (Grund s. Kap. 10, Entscheidung „Native iOS-App statt Web-App/PWA"). Rolle (FR-SYS-01) unverändert: Rechen- und Datensenke — empfängt das versionierte 80-Byte-Telemetrie-Frame (10 Hz, FR-TEL-06) per BLE, berechnet Statistik/Sensorfusion (Kap. 2.3), speichert die Fahrt (CON-01), visualisiert die MVP-Kennzahlen (Kap. 2.4), zeigt Warnungen (GNSS-Verlust, Future-Work).
 
 ### 7.2 Kommunikationsmodell
-Unidirektional ESP32 → App (FR-SYS-04). Kein Steuerkanal App → Gerät.
+Unidirektional ESP32 → App (FR-SYS-04): ein GATT-Service mit einer einzigen NOTIFY-Characteristic, kein Steuerkanal App → Gerät. Firmware und BLE-Schnittstelle (GATT-Service, 80-Byte-Frame) sind bewusst client-agnostisch gehalten und durch den Plattformwechsel **unverändert** — die bereits umgesetzte Firmware-Telemetrie (M5 Teil C2) ist vollständig wiederverwendbar.
 
-### 7.3 Stand
-Nicht begonnen. Offen: „HSD ESP32 IoT Base" als mögliche Basis (Kap. 11).
+### 7.3 Technik
+Swift/SwiftUI (nativer iOS-Look), SF Symbols (Icons), Swift Charts (Diagramme/Visualisierung), Core Bluetooth (BLE-Zentrale, Ersatz für die auf iOS nicht verfügbare Web Bluetooth API).
+
+### 7.4 Entwicklung
+iOS-App-Entwicklung in Xcode (26.3+) mit eingebautem, agentischem Claude-Assistenten. Firmware weiterhin in VS Code + Claude Code (PlatformIO) — zwei getrennte Toolchains, verbunden über den gemeinsamen BLE-Frame-Vertrag (Kap. 7.2).
+
+### 7.5 Signierung & Verteilung (Eigennutzung)
+Gratis-Weg über ein Personal Team (Apple-ID, „Automatically manage signing" in Xcode). Installation einmalig per USB-Kabel aus Xcode; danach kabellose Nutzung (die BLE-Verbindung App↔Rücklicht ist unabhängig vom Installationsweg). Das Provisioning-Profil läuft nach 7 Tagen ab → erneutes Deploy aus Xcode nötig. **Kein** Apple Developer Program (99 $/Jahr), **kein** App Store Connect, **kein** TestFlight erforderlich. TestFlight (90-Tage-Laufzeit, drahtlose Verteilung) wäre nur relevant, falls die App später an Dritte verteilt werden soll — hier nur als Option vermerkt, nicht als aktueller Bedarf.
+
+### 7.6 Stand
+Noch nicht begonnen — eigener Arbeitsblock nach M5 Teil C2 (Firmware-BLE-Transport, s. `docs/roadmap.md`). Voraussetzungen: aktuelles Xcode (26.3+) mit Claude-Assistent eingerichtet; physisches iPhone zum Testen (Core Bluetooth erfordert reale Hardware — der iOS-Simulator unterstützt kein BLE).
 
 ---
 
@@ -479,7 +489,7 @@ Nicht begonnen. Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/War
 | MOSFET mit realer LED-Last | ❌ noch nicht getestet |
 | Ladeinfrastruktur unter Last | ❌ nicht verifiziert |
 | Gehäuse | ❌ nicht begonnen |
-| BLE/Web-App | ❌ nicht begonnen |
+| BLE/iOS-App | ❌ nicht begonnen |
 
 ### 9.1 Validierungsbefunde M5A
 
@@ -507,9 +517,9 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 | TP4056 OUT+ statt B+ | Tiefentlade-/Kurzschlussschutz | B+ als Lastausgang |
 | `ledcAttach()`-API | einzige unterstützte PWM-API v3.x | deprecated APIs |
 | Komplementärfilter statt DMP | transparenter dokumentierbar | MPU6050-DMP |
-| Rechenlast in Web-App (Variante 2) | ESP32 deterministisch, geringer RAM/CPU | Firmware rechnet alles |
+| Rechenlast in App statt Firmware (Variante 2) | ESP32 deterministisch, geringer RAM/CPU | Firmware rechnet alles |
 | Rote LED = Schluss-+Bremslicht | § 67-konform + Bremslicht-Mehrwert | binäres Bremslicht |
-| Web-App als alleinige Datsenke, RAM-Ringpuffer | keine SD/Flash nötig | Flash-Voll-Logging |
+| App als alleinige Datsenke, RAM-Ringpuffer | keine SD/Flash nötig | Flash-Voll-Logging |
 | App-Schnittstelle unidirektional | reduzierte Komplexität | bidirektionale BLE-Steuerung |
 | Keine Batteriemessung in FW | Anzeige über USB-C-Modul | ADC-Spannungsteiler |
 | Zustandsmodell 4 parallele Regionen | additive Zustandsanzahl, testbar | flache FSM (Explosion) |
@@ -539,6 +549,9 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 | BMP280 FORCED-Mode (Weather Monitoring ×1/×1/IIR aus) | geringes Rauschen @1 Hz, geringere Stromaufnahme, Bosch-Empfehlung | NORMAL-Dauerbetrieb ×16 |
 | Keine feste Temperatur-Korrektur in der Firmware | Offset noch nicht abschließend charakterisiert, umgebungs-/lastabhängig; Rohdaten-Integrität; verfälscht sonst Druckkompensation | fester Offset im Code |
 | Bremslicht nur bei Verzögerung in Fahrtrichtung (`MOTION_BRAKE_SIGN`, feldkalibriert) | Sprint/Beschleunigung darf kein Bremslicht auslösen; reale Einbaulage | \|a\| via `fabs()` (richtungsblind) |
+| Native iOS-App statt Web-App/PWA | Web Bluetooth auf iOS nicht unterstützt; Betreuer-Vorgabe; Firmware/BLE unverändert | PWA / Web Bluetooth |
+| Gratis-Signierung (Personal Team, 7 Tage) statt TestFlight | reine Eigennutzung, kein 99-$-Account nötig | TestFlight / Apple Developer Program |
+| iOS-App in Xcode mit eingebautem Claude | eine Toolchain (Code+Build+Vorschau+Deploy) | VS Code + Claude Code für iOS (kann iOS nicht bauen/rendern) |
 
 *Hinweis: Kalendertage einzelner Altentscheidungen nicht durchgängig belegt ([Annahme]).*
 
@@ -560,7 +573,10 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 - **LED-Anordnung/Verdrahtung noch nicht festgelegt** → physische Blinker-L/R-Zuordnung (welche Taste welche LED-Seite ansteuert) erst danach validierbar; s. auch Kanalzuordnung Kap. 11.1.
 
 ### 11.3 Zu verifizieren / offen
-- **„HSD ESP32 IoT Base":** als Basis für Kap. 7 berücksichtigen?
+- **„HSD ESP32 IoT Base":** *obsolet seit v0.11* — bezog sich auf eine mögliche PWA-Basis; durch die Entscheidung für eine native iOS-App (Kap. 7/10) hinfällig.
+- **iOS-App noch nicht begonnen** — eigener Arbeitsblock nach M5 Teil C2 (Firmware-BLE-Transport), s. Kap. 7.6.
+- **Aktuelles Xcode (26.3+) + Claude-Assistent einrichten; physisches iPhone zum Testen** (Core Bluetooth erfordert reale Hardware, kein BLE im Simulator).
+- **Apple Developer Program / TestFlight** nur relevant bei späterer externer Verteilung der App (Eigennutzung kommt ohne aus, s. Kap. 7.5).
 - **Fehlende Nachweise:** Lichtstärke (cd) § 67, Messprotokolle, Feld-Kalibrierdaten Bremsschwelle.
 - **BMP280-Temperatur im eingeschwungenen Zustand erneut messen** (FORCED-Mode-Wirkung verifizieren, s. Kap. 9.1); danach ggf. app-/konfigseitige Kalibrierung, nur auf die ausgegebene, nie die kompensationsrelevante Temperatur.
 - **Debug-Ausgaben hinter `DEBUG_SERIAL`** (derzeit `true`) vor Abgabe auf `false` / entfernen.
@@ -593,6 +609,7 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 | BOM | Bill of Materials (Stückliste) |
 | CI | Continuous Integration |
 | COB | Chip on Board (LED-Bauform) |
+| Core Bluetooth | Apples natives BLE-Framework (iOS/macOS) — Ersatz für Web Bluetooth auf iOS (s. Kap. 7.3) |
 | DMP | Digital Motion Processor (MPU6050) |
 | ECE R6 | UN-Regelung Fahrtrichtungsanzeiger |
 | ECE R48 | UN-Regelung Lichtanbau Kfz (inkl. ESS) |
@@ -607,8 +624,14 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 | NVS | Non-Volatile Storage (ESP32-Schlüssel-Wert-Speicher, `Preferences`) |
 | OTA | Over-the-Air (drahtloses Firmware-Update) |
 | pioarduino | Community-PlatformIO-Plattform mit Arduino-ESP32-Core 3.x |
-| PWA | Progressive Web App |
+| PWA | Progressive Web App — als Client-Weg entfallen: iOS/Safari unterstützt kein Web Bluetooth (s. 0.3 v0.11, Kap. 7/10) |
 | PWM | Pulsweitenmodulation |
+| SF Symbols | Apples Icon-Bibliothek für natives iOS-UI |
 | SRS | Software Requirements Specification |
 | StVZO | Straßenverkehrs-Zulassungs-Ordnung (§ 54 Blinker, § 67 Fahrradbeleuchtung) |
+| Swift Charts | Apples natives Diagramm-Framework (SwiftUI) |
+| SwiftUI | Apples deklaratives UI-Framework für native Apps (iOS/macOS) |
+| TestFlight | Apples Beta-Verteilungsdienst (App Store Connect, 90-Tage-Laufzeit); für dieses Projekt nur bei externer Verteilung relevant, nicht für die Eigennutzung (s. Kap. 7.5) |
 | WDT / TWDT | (Task) Watchdog Timer |
+| Web Bluetooth | Browser-API für BLE — auf iOS/Safari nicht unterstützt; deshalb kein PWA-Ansatz für die App (s. 0.3 v0.11) |
+| Xcode | Apples IDE für iOS-/macOS-Entwicklung (Build, Simulator/Vorschau, Signierung, Deploy) |
