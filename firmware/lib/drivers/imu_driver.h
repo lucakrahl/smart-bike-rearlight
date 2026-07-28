@@ -9,7 +9,10 @@ namespace drivers {
 
 struct ImuSample {
   float accel_x_ms2, accel_y_ms2, accel_z_ms2;  // inkl. Erdbeschleunigung g
-  float gyro_x_rads;                             // Drehrate um die Nickachse (X)
+  // Drehrate [rad/s]. Nur gyro_x wird von motion_filter genutzt (Nickachse);
+  // gyro_y/gyro_z werden zusaetzlich erfasst, weil FR-TEL-03 alle 6 Achsen
+  // im Telemetrie-Frame verlangt (s. lib/logic/telemetry_frame.h).
+  float gyro_x_rads, gyro_y_rads, gyro_z_rads;
 };
 
 // Initialisiert den MPU6050 (I2C, Adresse aus config.h, FSR +-16 g wegen

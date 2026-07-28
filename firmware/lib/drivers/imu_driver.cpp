@@ -96,6 +96,8 @@ bool imuRead(ImuSample& out) {
     accel.acceleration.y,
     accel.acceleration.z,
     gyro.gyro.x,
+    gyro.gyro.y,
+    gyro.gyro.z,
   };
   return true;
 }
