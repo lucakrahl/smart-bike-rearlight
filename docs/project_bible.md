@@ -1,6 +1,6 @@
 # Project Bible — Smartes Fahrrad-Rücklicht
 **Bachelorarbeit Krahl · Maschinenbau & Produktentwicklung (B.Eng.)**
-**Version 0.11 · Stand 29.07.2026 · Status: aktiv gepflegt (Single Source of Truth)**
+**Version 0.12 · Stand 30.07.2026 · Status: aktiv gepflegt (Single Source of Truth)**
 
 > Diese Project Bible ist die oberste Wissensinstanz des Projekts. Bei Widersprüchen zwischen Chat-Historie und Project Bible gilt ausschließlich die Project Bible. Chats dienen der Diskussion und Entscheidungsfindung; der offizielle Projektstand steht ausschließlich hier.
 
@@ -33,6 +33,7 @@
 | 0.9 | 21.07.2026 | M1 (Rücklicht-Region R2) in Umsetzung: FSM + Host-Tests. Detailklarstellungen FR-TL-03 (Init-Blink 0↔~50 %, Zeit-Duty 50 %), FR-TL-06 (Mindesthaltezeit hält Bremslicht-Helligkeit, kein Sofortabfall), FR-TL-07 (ESS Zeit-Duty 50 %). | Implementierung M1 |
 | 0.10 | 26.07.2026 | Implementierungsstand M1–M4 hardwarevalidiert, M5 Teil A (BMP280) validiert; zentrale I²C-Bus-Initialisierung; BMP280 FORCED-Mode; Modulübersicht Firmware ergänzt; Validierungsbefunde Bremsrichtung + (vorläufig) Temperatur. | Impl. M1–M5A |
 | 0.11 | 29.07.2026 | App-Plattform: native iOS-App (Core Bluetooth) statt Web-App/PWA; Grund: kein Web Bluetooth auf iOS + Betreuer-Vorgabe. Firmware/BLE unverändert. | Plattform-Entscheidung App |
+| 0.12 | 30.07.2026 | BLE-Brownout-Fallstudie (`docs/ble_brownout_fallstudie.md`): Bootloop bei `NimBLEDevice::init()` auf zehn Tests systematisch eingegrenzt; Root Cause = Spannungsregler des Altboards liefert RF-Kalibrierungs-Transiente nicht. Board-Wechsel auf Espressif ESP32-DevKitC-32E (WROOM-32E) beschlossen, Entkopplungskondensatoren bleiben. | Root-Cause-Analyse BLE-Brownout |
 
 ### 0.4 Datengrundlage
 | Quelle | Zeitstempel | Aussagekraft |
@@ -43,6 +44,8 @@
 | Schaltplan v2.pdf | 20.05.2026 | Gesamtübersicht, fehlerbehaftet (Kap. 11) |
 | `Uebersicht.xlsx` (BOM) | 17.02.2026 | Stückliste mit Preisen |
 | Datenblätter (ESP32, BMP280, GY-521, IRLZ44N, MT3608, TP4056, L86) | Herstellerstand | Referenzwerte |
+| ESP32-DevKitC Getting Started Guide (Espressif) | Herstellerstand | Board/Pinbelegung/Maße Ersatzboard (s. Kap. 4, 10) |
+| ESP32-WROOM-32E Datasheet v2.0 (Espressif) | v2.0 | Modul/BLE/elektr. Daten Ersatzboard (s. Kap. 4, 10) |
 | Nutzer-Lastenheft Firmware | 21.07.2026 | Funktionaler Zielumfang (Kap. 2) |
 | § 67 StVZO / ECE R6 / ECE R50 (recherchiert) | 07/2026 | Normative Grundlage (Kap. 2.8) |
 | Repo `smart-bike-rearlight` (Monorepo, PlatformIO) | ab 21.07.2026 | Implementierungsstand (Phase 3) |
@@ -239,7 +242,7 @@ I²C (Sensoren), UART2 (GNSS), UART0 (Debug/Konfig), digitaler GPIO-Eingang (RF)
 ### 4.1 Bauteilübersicht
 | Ref. | Bauteil | Hersteller/Typ | Funktion | Schnittstelle | Status |
 |---|---|---|---|---|---|
-| U3 | ESP32 NodeMCU DevKit C V2 | AZ-Delivery | Hauptrechner | 3,3 V GPIO | in Betrieb |
+| U3 | ESP32 NodeMCU DevKit C V2 → **Espressif ESP32-DevKitC-32E (WROOM-32E)** (Wechsel beschlossen) | AZ-Delivery → Espressif | Hauptrechner | 3,3 V GPIO | Board-Tausch beschlossen (Root Cause BLE-Brownout: Regler des Altboards liefert RF-Kalibrierungs-Transiente nicht, s. `docs/ble_brownout_fallstudie.md`); neues Board bestellt, pin-kompatibel (38-Pin-DevKitC-Layout), Tausch aussteht |
 | IC2 | MPU-6050 (GY-521) | AZ-Delivery | IMU | I²C 0x68 | validiert |
 | IC3 | BMP280 | AZ-Delivery | Barometer | I²C 0x76 | validiert |
 | IC4 | Quectel L86 | Quectel | GNSS | UART2, 9600 Bd | teilvalidiert (Fix offen) |
@@ -286,6 +289,14 @@ USB-C 5V → TP4056 (1A Ladung) → LiPo LP103454, 3,7–4,2V, 2000 mAh
                                    ↓ (über Einschalter SW1)
                             ESP32 Vin → onboard AMS1117-3.3 → 3,3V Sensorik
 ```
+
+**Entkopplungs-/Pufferkondensatoren [gesichert, verbaut]:** Je ein 1000-µF-Elektrolyt-
+kondensator an Vin/5V↔GND (Reglereingang) und an 3V3↔GND (Reglerausgang, direkt an den
+Modul-Pins, Zuleitungswiderstand < 1 Ω). Ursprünglich als Gegenmaßnahme zum BLE-Brownout-
+Bootloop verlötet, dort ohne Wirkung (Root Cause liegt am Regler selbst, s.
+`docs/ble_brownout_fallstudie.md`); bleiben als Bestandteil eines robusten
+Stromversorgungsdesigns verbaut (verbesserte Transienten-/EMV-Robustheit bei
+Lastspitzen, z. B. LED-Schaltvorgänge).
 
 ### 5.2 Energiebilanz [Annahme — keine Messwerte]
 Akku: LiPo **LP103454**, 3,7 V nominal, **2000 mAh** (gesichert).
@@ -358,7 +369,8 @@ Ordnerprinzip: `lib/logic` = hardwarefreie, host-testbare Logik (kein `Arduino.h
 - **M3 Sensorik/Bremserkennung** (`imu_driver`, `motion_filter`) ✅ HW-validiert; Fahrtrichtung feldkalibriert (nur Verzögerung in Fahrtrichtung löst aus, Vorzeichen `MOTION_BRAKE_SIGN`).
 - **M4 Blinker + RF** (`rf_input`, `button_decoder`, `blinker_fsm`) ✅ Funktion HW-validiert (physische L/R-Zuordnung offen, s. Kap. 11).
 - **M5 Teil A Barometer** (`bmp280_driver`, FORCED-Mode) ✅ validiert; zentrale I²C-Bus-Init.
-- **Host-Unit-Tests:** 38/38 grün (native).
+- **M5 Teil C2 BLE-Telemetrie** (`ble_telemetry`, NimBLE-Arduino) ✅ implementiert + host-getestet (75/75), Build grün — ❌ **HW-blockiert:** Brownout-Bootloop bei `NimBLEDevice::init()` (Root-Cause-Analyse `docs/ble_brownout_fallstudie.md`), BLE-Verifikation vertagt bis Board-Tausch (Espressif ESP32-DevKitC-32E).
+- **Host-Unit-Tests:** 38/38 grün (native, Stand M5A; s. `docs/current_context.md` für aktuellen Zählerstand).
 - **Nächste:** M5 Teil B (GNSS L86), dann M6 (Konfiguration/NVS), M7 (Integration/Messungen). Roadmap: `docs/roadmap.md`.
 
 ### 6.6 Zustandsmodell (vier parallele Regionen) [Block B/C/D]
@@ -489,7 +501,7 @@ Nicht begonnen. Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/War
 | MOSFET mit realer LED-Last | ❌ noch nicht getestet |
 | Ladeinfrastruktur unter Last | ❌ nicht verifiziert |
 | Gehäuse | ❌ nicht begonnen |
-| BLE/iOS-App | ❌ nicht begonnen |
+| BLE/iOS-App | ❌ hardwareblockiert (Brownout-Bootloop bei `NimBLEDevice::init()`, Root-Cause-Analyse + Board-Tausch-Entscheidung s. `docs/ble_brownout_fallstudie.md`); Firmware M5 Teil C2 selbst host-getestet (75/75) und baut grün |
 
 ### 9.1 Validierungsbefunde M5A
 
@@ -591,7 +603,7 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 | Stromreduktion vs. § 67-Mindestlichtstärke | ggf. nicht zulassungsfähig | photometrische Prüfung nach Klärung Kanalzuordnung |
 | FR-TL-07 verstößt gegen § 67 Abs. 4 | im Auslieferzustand unzulässig | standardmäßig deaktiviert, dokumentiert |
 | RF-Halte-Erkennung nicht realisierbar | Warnblinker nicht auslösbar | Verifikationstest; sonst Ersatz-Trigger / Future-Work |
-| LED-Lastspitzen → Brown-Out-Reset | ungewollter Neustart | Pufferkondensator/MT3608-Auslegung, Messung; Watchdog-Wiederanlauf |
+| Brown-Out unter Lastspitzen | ungewollter Neustart/Bootloop | **REALISIERT** (BLE-Start: reproduzierbarer Bootloop bei `NimBLEDevice::init()`, s. `docs/ble_brownout_fallstudie.md`). Root Cause: Spannungsregler des Altboards liefert die RF-Kalibrierungs-Transiente nicht (Pufferkondensatoren an 3V3 UND Vin sowie Software-Gegenmaßnahmen nachweislich wirkungslos). Gegenmaßnahme: Board-Tausch auf Espressif ESP32-DevKitC-32E (WROOM-32E) + Entkopplungskondensatoren bleiben verbaut. |
 | Kein Tiefentlade-/Unterspannungsschutz über DW01 hinaus | Akkuschädigung | systemseitigen Schutz bewerten |
 | Keine Sicherung/Strombegrenzung 5 V-/Akkuseite | Kurzschlussrisiko | Sicherungskonzept |
 | Firmware-Hang | Systemausfall | Task-Watchdog (~2 s), Auto-Reset |

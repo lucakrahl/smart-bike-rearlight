@@ -40,6 +40,32 @@ I²C-Deinit-Callback auf).
 vollständig) **vor** dem `Wire.end()`-Versuch physisch freimachen; danach
 gelingt die eigentliche Deinitialisierung zuverlässig.
 
+### Systematische Hardware-vs-Firmware-Eingrenzung: der BOD-Abschalt-Test als Unterscheidungskriterium
+**Problem:** BLE-Start (M5 Teil C2) löste reproduzierbar den Brownout-Detektor
+aus (Bootloop bei `NimBLEDevice::init()`). Unklar war lange, ob es sich um
+eine Fehlauslösung des Detektors auf einem harmlosen Transienten handelt
+oder um einen echten Spannungskollaps — beide Erklärungen erzeugen dasselbe
+Symptom (wiederholtes „E BOD" + Reset).
+**Vorgehen:** Erst messen, dann schließen — Firmware wurde durch Host-Tests
+(75/75) und Bracket-Logging als Ursache ausgeschlossen, bevor an der
+Hardware getestet wurde; jede Gegenmaßnahme (Sendeleistung, CPU-Takt,
+Kondensatoren an zwei Schienen, geänderte Spannungsquelle) wurde einzeln
+getestet und das Ergebnis dokumentiert, auch wenn wirkungslos. Reproduzierbare
+Negativergebnisse waren dabei genauso wertvoll wie ein positiver Befund, weil
+sie den Hypothesenraum eingrenzen.
+**Entscheidendes Unterscheidungskriterium:** Die testweise Deaktivierung des
+Brownout-Detektors selbst. Eine reine Fehlauslösung hätte nach dem Wegfall
+des Detektors zu unauffälligem Weiterlaufen führen müssen; stattdessen hing
+sich das Board an derselben Stelle auf und wurde erst später vom
+RTC-/Task-Watchdog zurückgesetzt — ein Beweis für einen echten
+Spannungskollaps, nicht für eine überempfindliche Detektion.
+**Erkenntnis:** Wenn zwei Erklärungen (Fehlauslösung vs. reales Versagen)
+dasselbe Symptom erzeugen, hilft kein weiteres Beobachten des Symptoms
+selbst — sondern ein gezielter Kontrollversuch, der die scheinbar
+schützende Instanz (hier: den Detektor) selbst entfernt, um zu sehen, ob
+das dahinterliegende System tatsächlich versagt. Details:
+`docs/ble_brownout_fallstudie.md`.
+
 ### Host-Tests allein finden keine Fehlerfall-Bugs am realen Bus
 **Problem:** Alle 61 Host-Unit-Tests liefen grün, trotzdem zeigte der reale
 SDA-Kurzschluss-Fehlerinjektionstest zwei Bugs (Fehl-Bremslicht durch ein
