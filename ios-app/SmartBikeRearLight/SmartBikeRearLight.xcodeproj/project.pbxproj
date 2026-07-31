@@ -1,0 +1,814 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 77;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		304AF21E301C052A001F8A01 /* Info-Setup.md in Resources */ = {isa = PBXBuildFile; fileRef = 304AF210301C052A001F8A01 /* Info-Setup.md */; };
+		304AF21F301C052A001F8A01 /* SwiftDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF21B301C052A001F8A01 /* SwiftDataStore.swift */; };
+		304AF220301C052A001F8A01 /* HistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF208301C052A001F8A01 /* HistoryViewModel.swift */; };
+		304AF221301C052A001F8A01 /* RideRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF21A301C052A001F8A01 /* RideRepository.swift */; };
+		304AF222301C052A001F8A01 /* MetricTile.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF1FD301C052A001F8A01 /* MetricTile.swift */; };
+		304AF223301C052A001F8A01 /* TelemetrySource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF213301C052A001F8A01 /* TelemetrySource.swift */; };
+		304AF224301C052A001F8A01 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF20C301C052A001F8A01 /* SettingsView.swift */; };
+		304AF225301C052A001F8A01 /* RootTabView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF1FA301C052A001F8A01 /* RootTabView.swift */; };
+		304AF226301C052A001F8A01 /* RideManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF215301C052A001F8A01 /* RideManager.swift */; };
+		304AF227301C052A001F8A01 /* PersistenceModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF218301C052A001F8A01 /* PersistenceModels.swift */; };
+		304AF228301C052A001F8A01 /* PreviewRideRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF219301C052A001F8A01 /* PreviewRideRepository.swift */; };
+		304AF229301C052A001F8A01 /* BLEConnectionService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF212301C052A001F8A01 /* BLEConnectionService.swift */; };
+		304AF22A301C052A001F8A01 /* EditorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF205301C052A001F8A01 /* EditorViewModel.swift */; };
+		304AF22B301C052A001F8A01 /* StatusBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF1FE301C052A001F8A01 /* StatusBar.swift */; };
+		304AF22C301C052A001F8A01 /* TelemetryStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF216301C052A001F8A01 /* TelemetryStore.swift */; };
+		304AF22D301C052A001F8A01 /* HistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF207301C052A001F8A01 /* HistoryView.swift */; };
+		304AF22E301C052A001F8A01 /* SmartBikeRearLightApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF1FB301C052A001F8A01 /* SmartBikeRearLightApp.swift */; };
+		304AF22F301C052A001F8A01 /* AppEnvironment.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF1F9301C052A001F8A01 /* AppEnvironment.swift */; };
+		304AF230301C052A001F8A01 /* CockpitEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF202301C052A001F8A01 /* CockpitEditorView.swift */; };
+		304AF231301C052A001F8A01 /* CockpitView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF203301C052A001F8A01 /* CockpitView.swift */; };
+		304AF232301C052A001F8A01 /* SettingsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF20D301C052A001F8A01 /* SettingsViewModel.swift */; };
+		304AF233301C052A001F8A01 /* Theme.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF200301C052A001F8A01 /* Theme.swift */; };
+		304AF234301C052A001F8A01 /* RideDetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF20A301C052A001F8A01 /* RideDetailViewModel.swift */; };
+		304AF235301C052A001F8A01 /* RideDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF209301C052A001F8A01 /* RideDetailView.swift */; };
+		304AF236301C052A001F8A01 /* CockpitViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF204301C052A001F8A01 /* CockpitViewModel.swift */; };
+		3076400D301C0EBB00E45188 /* MockTelemetrySource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3076400C301C0EBB00E45188 /* MockTelemetrySource.swift */; };
+		30764013301C120A00E45188 /* SmartBikeCore in Frameworks */ = {isa = PBXBuildFile; productRef = 30764012301C120A00E45188 /* SmartBikeCore */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		304AF19E301C02A9001F8A01 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 304AF186301C02A8001F8A01 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 304AF18D301C02A8001F8A01;
+			remoteInfo = SmartBikeRearLight;
+		};
+		304AF1A8301C02A9001F8A01 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 304AF186301C02A8001F8A01 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 304AF18D301C02A8001F8A01;
+			remoteInfo = SmartBikeRearLight;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXFileReference section */
+		304AF18E301C02A8001F8A01 /* SmartBikeRearLight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmartBikeRearLight.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		304AF19D301C02A9001F8A01 /* SmartBikeRearLightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartBikeRearLightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		304AF1A7301C02A9001F8A01 /* SmartBikeRearLightUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartBikeRearLightUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		304AF1F9301C052A001F8A01 /* AppEnvironment.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppEnvironment.swift; sourceTree = "<group>"; };
+		304AF1FA301C052A001F8A01 /* RootTabView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RootTabView.swift; sourceTree = "<group>"; };
+		304AF1FB301C052A001F8A01 /* SmartBikeRearLightApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SmartBikeRearLightApp.swift; sourceTree = "<group>"; };
+		304AF1FD301C052A001F8A01 /* MetricTile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MetricTile.swift; sourceTree = "<group>"; };
+		304AF1FE301C052A001F8A01 /* StatusBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StatusBar.swift; sourceTree = "<group>"; };
+		304AF200301C052A001F8A01 /* Theme.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Theme.swift; sourceTree = "<group>"; };
+		304AF202301C052A001F8A01 /* CockpitEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CockpitEditorView.swift; sourceTree = "<group>"; };
+		304AF203301C052A001F8A01 /* CockpitView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CockpitView.swift; sourceTree = "<group>"; };
+		304AF204301C052A001F8A01 /* CockpitViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CockpitViewModel.swift; sourceTree = "<group>"; };
+		304AF205301C052A001F8A01 /* EditorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EditorViewModel.swift; sourceTree = "<group>"; };
+		304AF207301C052A001F8A01 /* HistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryView.swift; sourceTree = "<group>"; };
+		304AF208301C052A001F8A01 /* HistoryViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HistoryViewModel.swift; sourceTree = "<group>"; };
+		304AF209301C052A001F8A01 /* RideDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideDetailView.swift; sourceTree = "<group>"; };
+		304AF20A301C052A001F8A01 /* RideDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideDetailViewModel.swift; sourceTree = "<group>"; };
+		304AF20C301C052A001F8A01 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		304AF20D301C052A001F8A01 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
+		304AF210301C052A001F8A01 /* Info-Setup.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Info-Setup.md"; sourceTree = "<group>"; };
+		304AF212301C052A001F8A01 /* BLEConnectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEConnectionService.swift; sourceTree = "<group>"; };
+		304AF213301C052A001F8A01 /* TelemetrySource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetrySource.swift; sourceTree = "<group>"; };
+		304AF215301C052A001F8A01 /* RideManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideManager.swift; sourceTree = "<group>"; };
+		304AF216301C052A001F8A01 /* TelemetryStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetryStore.swift; sourceTree = "<group>"; };
+		304AF218301C052A001F8A01 /* PersistenceModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PersistenceModels.swift; sourceTree = "<group>"; };
+		304AF219301C052A001F8A01 /* PreviewRideRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreviewRideRepository.swift; sourceTree = "<group>"; };
+		304AF21A301C052A001F8A01 /* RideRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideRepository.swift; sourceTree = "<group>"; };
+		304AF21B301C052A001F8A01 /* SwiftDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataStore.swift; sourceTree = "<group>"; };
+		3076400C301C0EBB00E45188 /* MockTelemetrySource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockTelemetrySource.swift; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedRootGroup section */
+		304AF190301C02A8001F8A01 /* SmartBikeRearLight */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SmartBikeRearLight;
+			sourceTree = "<group>";
+		};
+		304AF1A0301C02A9001F8A01 /* SmartBikeRearLightTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SmartBikeRearLightTests;
+			sourceTree = "<group>";
+		};
+		304AF1AA301C02A9001F8A01 /* SmartBikeRearLightUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SmartBikeRearLightUITests;
+			sourceTree = "<group>";
+		};
+/* End PBXFileSystemSynchronizedRootGroup section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		304AF18B301C02A8001F8A01 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				30764013301C120A00E45188 /* SmartBikeCore in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		304AF19A301C02A9001F8A01 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		304AF1A4301C02A9001F8A01 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		304AF185301C02A8001F8A01 = {
+			isa = PBXGroup;
+			children = (
+				304AF190301C02A8001F8A01 /* SmartBikeRearLight */,
+				304AF1A0301C02A9001F8A01 /* SmartBikeRearLightTests */,
+				304AF1AA301C02A9001F8A01 /* SmartBikeRearLightUITests */,
+				304AF18F301C02A8001F8A01 /* Products */,
+				304AF1FC301C052A001F8A01 /* App */,
+				304AF201301C052A001F8A01 /* DesignSystem */,
+				304AF20F301C052A001F8A01 /* Features */,
+				304AF211301C052A001F8A01 /* Resources */,
+				304AF21D301C052A001F8A01 /* Services */,
+				304AF237301C0892001F8A01 /* Frameworks */,
+			);
+			sourceTree = "<group>";
+		};
+		304AF18F301C02A8001F8A01 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				304AF18E301C02A8001F8A01 /* SmartBikeRearLight.app */,
+				304AF19D301C02A9001F8A01 /* SmartBikeRearLightTests.xctest */,
+				304AF1A7301C02A9001F8A01 /* SmartBikeRearLightUITests.xctest */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		304AF1FC301C052A001F8A01 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				304AF1F9301C052A001F8A01 /* AppEnvironment.swift */,
+				304AF1FA301C052A001F8A01 /* RootTabView.swift */,
+				304AF1FB301C052A001F8A01 /* SmartBikeRearLightApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		304AF1FF301C052A001F8A01 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				304AF1FD301C052A001F8A01 /* MetricTile.swift */,
+				304AF1FE301C052A001F8A01 /* StatusBar.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		304AF201301C052A001F8A01 /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				304AF1FF301C052A001F8A01 /* Components */,
+				304AF200301C052A001F8A01 /* Theme.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		304AF206301C052A001F8A01 /* Cockpit */ = {
+			isa = PBXGroup;
+			children = (
+				304AF202301C052A001F8A01 /* CockpitEditorView.swift */,
+				304AF203301C052A001F8A01 /* CockpitView.swift */,
+				304AF204301C052A001F8A01 /* CockpitViewModel.swift */,
+				304AF205301C052A001F8A01 /* EditorViewModel.swift */,
+			);
+			path = Cockpit;
+			sourceTree = "<group>";
+		};
+		304AF20B301C052A001F8A01 /* History */ = {
+			isa = PBXGroup;
+			children = (
+				304AF207301C052A001F8A01 /* HistoryView.swift */,
+				304AF208301C052A001F8A01 /* HistoryViewModel.swift */,
+				304AF209301C052A001F8A01 /* RideDetailView.swift */,
+				304AF20A301C052A001F8A01 /* RideDetailViewModel.swift */,
+			);
+			path = History;
+			sourceTree = "<group>";
+		};
+		304AF20E301C052A001F8A01 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				304AF20C301C052A001F8A01 /* SettingsView.swift */,
+				304AF20D301C052A001F8A01 /* SettingsViewModel.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		304AF20F301C052A001F8A01 /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				304AF206301C052A001F8A01 /* Cockpit */,
+				304AF20B301C052A001F8A01 /* History */,
+				304AF20E301C052A001F8A01 /* Settings */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		304AF211301C052A001F8A01 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				304AF210301C052A001F8A01 /* Info-Setup.md */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		304AF214301C052A001F8A01 /* BLE */ = {
+			isa = PBXGroup;
+			children = (
+				304AF212301C052A001F8A01 /* BLEConnectionService.swift */,
+				304AF213301C052A001F8A01 /* TelemetrySource.swift */,
+				3076400C301C0EBB00E45188 /* MockTelemetrySource.swift */,
+			);
+			path = BLE;
+			sourceTree = "<group>";
+		};
+		304AF217301C052A001F8A01 /* Live */ = {
+			isa = PBXGroup;
+			children = (
+				304AF215301C052A001F8A01 /* RideManager.swift */,
+				304AF216301C052A001F8A01 /* TelemetryStore.swift */,
+			);
+			path = Live;
+			sourceTree = "<group>";
+		};
+		304AF21C301C052A001F8A01 /* Persistence */ = {
+			isa = PBXGroup;
+			children = (
+				304AF218301C052A001F8A01 /* PersistenceModels.swift */,
+				304AF219301C052A001F8A01 /* PreviewRideRepository.swift */,
+				304AF21A301C052A001F8A01 /* RideRepository.swift */,
+				304AF21B301C052A001F8A01 /* SwiftDataStore.swift */,
+			);
+			path = Persistence;
+			sourceTree = "<group>";
+		};
+		304AF21D301C052A001F8A01 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				304AF214301C052A001F8A01 /* BLE */,
+				304AF217301C052A001F8A01 /* Live */,
+				304AF21C301C052A001F8A01 /* Persistence */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		304AF237301C0892001F8A01 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		304AF18D301C02A8001F8A01 /* SmartBikeRearLight */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 304AF1B1301C02A9001F8A01 /* Build configuration list for PBXNativeTarget "SmartBikeRearLight" */;
+			buildPhases = (
+				304AF18A301C02A8001F8A01 /* Sources */,
+				304AF18B301C02A8001F8A01 /* Frameworks */,
+				304AF18C301C02A8001F8A01 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				304AF190301C02A8001F8A01 /* SmartBikeRearLight */,
+			);
+			name = SmartBikeRearLight;
+			packageProductDependencies = (
+				30764012301C120A00E45188 /* SmartBikeCore */,
+			);
+			productName = SmartBikeRearLight;
+			productReference = 304AF18E301C02A8001F8A01 /* SmartBikeRearLight.app */;
+			productType = "com.apple.product-type.application";
+		};
+		304AF19C301C02A9001F8A01 /* SmartBikeRearLightTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 304AF1B4301C02A9001F8A01 /* Build configuration list for PBXNativeTarget "SmartBikeRearLightTests" */;
+			buildPhases = (
+				304AF199301C02A9001F8A01 /* Sources */,
+				304AF19A301C02A9001F8A01 /* Frameworks */,
+				304AF19B301C02A9001F8A01 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				304AF19F301C02A9001F8A01 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				304AF1A0301C02A9001F8A01 /* SmartBikeRearLightTests */,
+			);
+			name = SmartBikeRearLightTests;
+			packageProductDependencies = (
+			);
+			productName = SmartBikeRearLightTests;
+			productReference = 304AF19D301C02A9001F8A01 /* SmartBikeRearLightTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		304AF1A6301C02A9001F8A01 /* SmartBikeRearLightUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 304AF1B7301C02A9001F8A01 /* Build configuration list for PBXNativeTarget "SmartBikeRearLightUITests" */;
+			buildPhases = (
+				304AF1A3301C02A9001F8A01 /* Sources */,
+				304AF1A4301C02A9001F8A01 /* Frameworks */,
+				304AF1A5301C02A9001F8A01 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				304AF1A9301C02A9001F8A01 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				304AF1AA301C02A9001F8A01 /* SmartBikeRearLightUITests */,
+			);
+			name = SmartBikeRearLightUITests;
+			packageProductDependencies = (
+			);
+			productName = SmartBikeRearLightUITests;
+			productReference = 304AF1A7301C02A9001F8A01 /* SmartBikeRearLightUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		304AF186301C02A8001F8A01 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 2660;
+				LastUpgradeCheck = 2660;
+				TargetAttributes = {
+					304AF18D301C02A8001F8A01 = {
+						CreatedOnToolsVersion = 26.6;
+					};
+					304AF19C301C02A9001F8A01 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = 304AF18D301C02A8001F8A01;
+					};
+					304AF1A6301C02A9001F8A01 = {
+						CreatedOnToolsVersion = 26.6;
+						TestTargetID = 304AF18D301C02A8001F8A01;
+					};
+				};
+			};
+			buildConfigurationList = 304AF189301C02A8001F8A01 /* Build configuration list for PBXProject "SmartBikeRearLight" */;
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 304AF185301C02A8001F8A01;
+			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				30764011301C120A00E45188 /* XCLocalSwiftPackageReference "Core" */,
+			);
+			preferredProjectObjectVersion = 77;
+			productRefGroup = 304AF18F301C02A8001F8A01 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				304AF18D301C02A8001F8A01 /* SmartBikeRearLight */,
+				304AF19C301C02A9001F8A01 /* SmartBikeRearLightTests */,
+				304AF1A6301C02A9001F8A01 /* SmartBikeRearLightUITests */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		304AF18C301C02A8001F8A01 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				304AF21E301C052A001F8A01 /* Info-Setup.md in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		304AF19B301C02A9001F8A01 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		304AF1A5301C02A9001F8A01 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		304AF18A301C02A8001F8A01 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				304AF21F301C052A001F8A01 /* SwiftDataStore.swift in Sources */,
+				304AF220301C052A001F8A01 /* HistoryViewModel.swift in Sources */,
+				304AF221301C052A001F8A01 /* RideRepository.swift in Sources */,
+				304AF222301C052A001F8A01 /* MetricTile.swift in Sources */,
+				304AF223301C052A001F8A01 /* TelemetrySource.swift in Sources */,
+				304AF224301C052A001F8A01 /* SettingsView.swift in Sources */,
+				304AF225301C052A001F8A01 /* RootTabView.swift in Sources */,
+				3076400D301C0EBB00E45188 /* MockTelemetrySource.swift in Sources */,
+				304AF226301C052A001F8A01 /* RideManager.swift in Sources */,
+				304AF227301C052A001F8A01 /* PersistenceModels.swift in Sources */,
+				304AF228301C052A001F8A01 /* PreviewRideRepository.swift in Sources */,
+				304AF229301C052A001F8A01 /* BLEConnectionService.swift in Sources */,
+				304AF22A301C052A001F8A01 /* EditorViewModel.swift in Sources */,
+				304AF22B301C052A001F8A01 /* StatusBar.swift in Sources */,
+				304AF22C301C052A001F8A01 /* TelemetryStore.swift in Sources */,
+				304AF22D301C052A001F8A01 /* HistoryView.swift in Sources */,
+				304AF22E301C052A001F8A01 /* SmartBikeRearLightApp.swift in Sources */,
+				304AF22F301C052A001F8A01 /* AppEnvironment.swift in Sources */,
+				304AF230301C052A001F8A01 /* CockpitEditorView.swift in Sources */,
+				304AF231301C052A001F8A01 /* CockpitView.swift in Sources */,
+				304AF232301C052A001F8A01 /* SettingsViewModel.swift in Sources */,
+				304AF233301C052A001F8A01 /* Theme.swift in Sources */,
+				304AF234301C052A001F8A01 /* RideDetailViewModel.swift in Sources */,
+				304AF235301C052A001F8A01 /* RideDetailView.swift in Sources */,
+				304AF236301C052A001F8A01 /* CockpitViewModel.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		304AF199301C02A9001F8A01 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		304AF1A3301C02A9001F8A01 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		304AF19F301C02A9001F8A01 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 304AF18D301C02A8001F8A01 /* SmartBikeRearLight */;
+			targetProxy = 304AF19E301C02A9001F8A01 /* PBXContainerItemProxy */;
+		};
+		304AF1A9301C02A9001F8A01 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 304AF18D301C02A8001F8A01 /* SmartBikeRearLight */;
+			targetProxy = 304AF1A8301C02A9001F8A01 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		304AF1AF301C02A9001F8A01 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				DEVELOPMENT_TEAM = 432MQA9KQY;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		304AF1B0301C02A9001F8A01 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				DEVELOPMENT_TEAM = 432MQA9KQY;
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = iphoneos;
+				SWIFT_COMPILATION_MODE = wholemodule;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		304AF1B2301C02A9001F8A01 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 432MQA9KQY;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.lucakrahl.SmartBikeRearLight;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		304AF1B3301C02A9001F8A01 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 432MQA9KQY;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
+				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
+				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.lucakrahl.SmartBikeRearLight;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		304AF1B5301C02A9001F8A01 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 432MQA9KQY;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.lucakrahl.SmartBikeRearLightTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SmartBikeRearLight.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SmartBikeRearLight";
+			};
+			name = Debug;
+		};
+		304AF1B6301C02A9001F8A01 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 432MQA9KQY;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 26.5;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.lucakrahl.SmartBikeRearLightTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SmartBikeRearLight.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SmartBikeRearLight";
+			};
+			name = Release;
+		};
+		304AF1B8301C02A9001F8A01 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 432MQA9KQY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.lucakrahl.SmartBikeRearLightUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = SmartBikeRearLight;
+			};
+			name = Debug;
+		};
+		304AF1B9301C02A9001F8A01 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 432MQA9KQY;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = de.lucakrahl.SmartBikeRearLightUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = SmartBikeRearLight;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		304AF189301C02A8001F8A01 /* Build configuration list for PBXProject "SmartBikeRearLight" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				304AF1AF301C02A9001F8A01 /* Debug */,
+				304AF1B0301C02A9001F8A01 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		304AF1B1301C02A9001F8A01 /* Build configuration list for PBXNativeTarget "SmartBikeRearLight" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				304AF1B2301C02A9001F8A01 /* Debug */,
+				304AF1B3301C02A9001F8A01 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		304AF1B4301C02A9001F8A01 /* Build configuration list for PBXNativeTarget "SmartBikeRearLightTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				304AF1B5301C02A9001F8A01 /* Debug */,
+				304AF1B6301C02A9001F8A01 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		304AF1B7301C02A9001F8A01 /* Build configuration list for PBXNativeTarget "SmartBikeRearLightUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				304AF1B8301C02A9001F8A01 /* Debug */,
+				304AF1B9301C02A9001F8A01 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		30764011301C120A00E45188 /* XCLocalSwiftPackageReference "Core" */ = {
+			isa = XCLocalSwiftPackageReference;
+			relativePath = Core;
+		};
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		30764012301C120A00E45188 /* SmartBikeCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			productName = SmartBikeCore;
+		};
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 304AF186301C02A8001F8A01 /* Project object */;
+}
