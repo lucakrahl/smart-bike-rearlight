@@ -32,4 +32,26 @@ final class StatisticsEngineTests: XCTestCase {
     func testEmptyIsZero() {
         XCTAssertEqual(StatisticsEngine().computeStatistics(from: []).distanceKm, 0)
     }
+
+    func testCumulativeDistance() {
+        // 36 km/h konstant über 10 s -> je Sekunde +0,01 km, kumuliert 0…0,10 km.
+        let points = (0...10).map { i in
+            TrackPoint(t: Double(i), lat: 0, lon: 0, altitudeM: 0, speedKmph: 36,
+                       courseDeg: 0, sats: 9, hdop: 1, gnssFix: .fixOK)
+        }
+        let cum = StatisticsEngine().cumulativeDistanceKm(for: points)
+        XCTAssertEqual(cum.count, points.count)
+        XCTAssertEqual(cum.first!, 0, accuracy: 1e-9)
+        XCTAssertEqual(cum[5], 0.05, accuracy: 1e-6)
+        XCTAssertEqual(cum.last!, 0.10, accuracy: 1e-6)
+        // monoton steigend
+        XCTAssertTrue(zip(cum, cum.dropFirst()).allSatisfy { $0 <= $1 })
+    }
+
+    func testCumulativeDistanceEmptyAndSingle() {
+        XCTAssertEqual(StatisticsEngine().cumulativeDistanceKm(for: []), [])
+        let one = [TrackPoint(t: 0, lat: 0, lon: 0, altitudeM: 0, speedKmph: 10,
+                              courseDeg: 0, sats: 9, hdop: 1, gnssFix: .fixOK)]
+        XCTAssertEqual(StatisticsEngine().cumulativeDistanceKm(for: one), [0])
+    }
 }

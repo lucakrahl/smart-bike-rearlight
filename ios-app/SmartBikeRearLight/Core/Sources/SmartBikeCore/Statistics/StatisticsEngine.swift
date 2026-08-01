@@ -31,4 +31,21 @@ public struct StatisticsEngine: Sendable {
                               maxSpeedKmph: maxSpeed, ascentM: ascent, descentM: descent,
                               minAltitudeM: minAlt, maxAltitudeM: maxAlt)
     }
+
+    /// Kumulierte Distanz (km) bis zu jedem Punkt — gleiche Geschwindigkeits-
+    /// Integration wie `computeStatistics` (robust gegen float32-Quantisierung von
+    /// lat/lon). Ergebnis hat dieselbe Länge wie `points`; das erste Element ist 0.
+    /// X-Achse für die Detaildiagramme (AR-VIS-*).
+    public func cumulativeDistanceKm(for points: [TrackPoint]) -> [Double] {
+        guard !points.isEmpty else { return [] }
+        var result = [Double](repeating: 0, count: points.count)
+        var acc = 0.0
+        for i in 1..<points.count {
+            let dt = points[i].t - points[i - 1].t                       // s
+            let vAvg = (points[i - 1].speedKmph + points[i].speedKmph) / 2.0
+            acc += vAvg * (dt / 3600.0)
+            result[i] = acc
+        }
+        return result
+    }
 }

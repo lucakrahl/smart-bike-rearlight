@@ -53,15 +53,21 @@ struct CockpitView: View {
         }
     }
 
-    /// „Fahrt starten" — einfacher Tap (AR-UX-02).
+    /// „Fahrt starten" — einfacher Tap (AR-UX-02), prominentes Liquid-Glass-Control.
+    @ViewBuilder
     private func startButton(_ action: @escaping () -> Void) -> some View {
-        Button(action: action) {
+        let button = Button(action: action) {
             Label("Fahrt starten", systemImage: "record.circle")
                 .font(.headline)
                 .frame(maxWidth: .infinity, minHeight: Theme.minTapTarget + 16)
         }
-        .buttonStyle(.borderedProminent)
         .controlSize(.large)
+
+        if #available(iOS 26.0, *) {
+            button.buttonStyle(.glassProminent).tint(.accentColor)
+        } else {
+            button.buttonStyle(.borderedProminent)
+        }
     }
 }
 
@@ -92,6 +98,9 @@ private struct HoldToStopButton: View {
             Text("Zum Stoppen halten")
                 .font(.subheadline).foregroundStyle(.secondary)
         }
+        .padding(.horizontal, 24)
+        .padding(.vertical, 16)
+        .floatingGlass(interactive: true, in: .capsule)   // interaktives Glas-Control
         .gesture(
             // DragGesture(minimumDistance: 0) erkennt Druck (onChanged) und Loslassen (onEnded).
             DragGesture(minimumDistance: 0)

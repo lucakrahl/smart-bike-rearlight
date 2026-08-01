@@ -69,7 +69,15 @@ actor MockTelemetrySource: TelemetrySource {
         let speed = Float((sin(tick * 0.05) * 0.5 + 0.5) * 35.0)
         writeF32(speed, at: 50)
 
-        writeF32(200, at: 58)                           // altitude_m ~200 (Offset 58)
+        // Route: sanft gekrümmter Pfad um Düsseldorf. Amplituden deutlich über der
+        // float32-Auflösung bei ~51° Breite, damit die Linie glatt bleibt.
+        let angle = tick * 0.004
+        writeF32(Float(51.2277 + sin(angle) * 0.006), at: 42)          // lat (Offset 42)
+        writeF32(Float(6.7735 + (1 - cos(angle)) * 0.009), at: 46)     // lon (Offset 46)
+
+        // Höhe sanft um ~200 m (±15 m, Periode ~31 s) für ein sichtbares Höhenprofil.
+        writeF32(Float(200 + sin(tick * 0.02) * 15), at: 58)           // altitude_m (Offset 58)
+
         bytes[62] = 9                                   // sats = 9 (Offset 62)
         bytes[78] = GnssFixStatus.fixOK.rawValue        // gnss_fix = 2 (Offset 78)
 

@@ -34,6 +34,7 @@
 		304AF236301C052A001F8A01 /* CockpitViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF204301C052A001F8A01 /* CockpitViewModel.swift */; };
 		3076400D301C0EBB00E45188 /* MockTelemetrySource.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3076400C301C0EBB00E45188 /* MockTelemetrySource.swift */; };
 		30764013301C120A00E45188 /* SmartBikeCore in Frameworks */ = {isa = PBXBuildFile; productRef = 30764012301C120A00E45188 /* SmartBikeCore */; };
+		30764017301D224400E45188 /* GlassBackground.swift in Sources */ = {isa = PBXBuildFile; fileRef = 30764016301D224400E45188 /* GlassBackground.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -83,6 +84,7 @@
 		304AF21A301C052A001F8A01 /* RideRepository.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideRepository.swift; sourceTree = "<group>"; };
 		304AF21B301C052A001F8A01 /* SwiftDataStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwiftDataStore.swift; sourceTree = "<group>"; };
 		3076400C301C0EBB00E45188 /* MockTelemetrySource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MockTelemetrySource.swift; sourceTree = "<group>"; };
+		30764016301D224400E45188 /* GlassBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassBackground.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -179,6 +181,7 @@
 			children = (
 				304AF1FF301C052A001F8A01 /* Components */,
 				304AF200301C052A001F8A01 /* Theme.swift */,
+				30764016301D224400E45188 /* GlassBackground.swift */,
 			);
 			path = DesignSystem;
 			sourceTree = "<group>";
@@ -430,6 +433,7 @@
 			files = (
 				304AF21F301C052A001F8A01 /* SwiftDataStore.swift in Sources */,
 				304AF220301C052A001F8A01 /* HistoryViewModel.swift in Sources */,
+				30764017301D224400E45188 /* GlassBackground.swift in Sources */,
 				304AF221301C052A001F8A01 /* RideRepository.swift in Sources */,
 				304AF222301C052A001F8A01 /* MetricTile.swift in Sources */,
 				304AF223301C052A001F8A01 /* TelemetrySource.swift in Sources */,

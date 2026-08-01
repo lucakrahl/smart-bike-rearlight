@@ -14,7 +14,11 @@ struct HistoryView: View {
                 if let vm {
                     List {
                         ForEach(vm.rides) { ride in
-                            RideRow(ride: ride)
+                            NavigationLink {
+                                RideDetailView(rideId: ride.id)
+                            } label: {
+                                RideRow(ride: ride)
+                            }
                         }
                         .onDelete { offsets in
                             let ids = offsets.map { vm.rides[$0].id }

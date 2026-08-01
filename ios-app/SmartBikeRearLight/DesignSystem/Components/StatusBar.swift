@@ -15,5 +15,8 @@ struct StatusBar: View {
                 .foregroundStyle(fix == .fixOK ? Theme.Semantic.ok : Theme.Semantic.searching)
         }
         .font(.caption)
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .floatingGlass(in: .capsule)   // schwebende Glas-Pille (Chrome), nicht interaktiv
     }
 }
