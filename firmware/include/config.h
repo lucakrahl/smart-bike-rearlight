@@ -114,5 +114,29 @@ constexpr float    IMU_GYRO_MAX_SLEW_RADS        = 4.0f;
 // [TODO(offen): Feldverifikation]
 constexpr uint8_t  IMU_ESCALATION_CONFIRM_CYCLES = 3;
 
+// ---- BLE-Telemetrie (fest, FR-TEL-01/02, FR-SYS-04) ------------------------
+// UUIDs frisch generiert (v4, uuidgen), keine Bedeutung ausser Eindeutigkeit.
+constexpr const char* BLE_DEVICE_NAME        = "SmartBikeRearLight";
+constexpr const char* BLE_SERVICE_UUID       = "587bb505-9f9d-4ae0-96fd-0b29adfc4b03";
+constexpr const char* BLE_CHARACTERISTIC_UUID = "8c604d09-743f-4850-9109-19604a17f358";
+// Bevorzugtes MTU (Server-Wunsch); tatsaechlich ausgehandelter Wert haengt vom
+// Client (Web-Bluetooth-Stack) ab, s. onMTUChange in ble_telemetry.cpp. Fuer
+// ein 80-Byte-Frame in einer einzigen Notification werden mindestens 83
+// (Frame + 3 Byte ATT-Overhead) benoetigt. [TODO(offen): Feldverifikation
+// mit der spaeteren Web-App]
+constexpr uint16_t BLE_PREFERRED_MTU = 185;
+// Gesendete Funkleistung. Reduziert (statt Werkseinstellung), weil der
+// Stromspitze des BLE-Radios beim Senden bei marginaler Versorgung den
+// Brownout-Detektor ausgeloest hat (Bootloop direkt nach BLE-Start,
+// Fehlerbild "E BOD"). Der Brownout-Detektor selbst bleibt aktiv -- er
+// maskiert das Problem nicht, sondern zeigt es korrekt an; Ursache ist die
+// Stromspitze, nicht der Detektor. [TODO(offen): Feldverifikation --
+// haengt von der tatsaechlichen Netzteil-/Kabel-Guete ab]
+constexpr int8_t BLE_TX_POWER_DBM = -12;
+// Anzahl gepufferter Frames, die taskTelemetry() nach einem Reconnect pro
+// 10-Hz-Tick zusaetzlich zum Live-Frame nachliefert (Backfill, FR-TEL-01/04).
+// [TODO(offen): Feldverifikation -- Kompromiss Aufholtempo vs. BLE-Stack-Last]
+constexpr uint8_t BLE_BACKFILL_FRAMES_PER_TICK = 5;
+
 // ---- Debug (temporaer) -----------------------------------------------------
 constexpr bool DEBUG_SERIAL = true;  // schaltet TODO(temp debug)-Ausgaben; vor Auslieferung false

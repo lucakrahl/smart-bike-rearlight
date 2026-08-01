@@ -20,6 +20,7 @@
 #include "bmp280_driver.h"    // drivers  (R4 Baro, FR-SNS-01/02/03)
 #include "gnss_driver.h"      // drivers  (R4 GNSS/L86, FR-SNS-01/02)
 #include "rf_input.h"         // drivers  (RF-Empfang, FR-RF-01)
+#include "ble_telemetry.h"    // drivers  (R4 BLE-Transport, FR-TEL-01, FR-SYS-04)
 #include "lifecycle_fsm.h"    // logic    (R1)
 #include "tail_light_fsm.h"   // logic    (R2)
 #include "motion_filter.h"    // logic    (R4->R2, Komplementaerfilter)
@@ -27,11 +28,28 @@
 #include "button_decoder.h"   // logic    (RF-Tastenerkennung, FR-RF-02/03/04)
 #include "blinker_fsm.h"      // logic    (R3, FR-BLK-01..09)
 #include "gnss_fix.h"         // logic    (R4 GNSS-Fix-Bewertung, FR-TEL-05)
+#include "telemetry_frame.h"  // logic    (R4 Telemetrie-Frame, FR-TEL-02/03/06)
+#include "telemetry_buffer.h" // logic    (R4 RAM-Ringpuffer, FR-TEL-04)
 
 // PWM-Kanal-Zuordnung erfolgt ueber ledcAttach() (Core v3.x, CON-02).
-// TODO(FR-...): weitere Treiber-/Logikmodule einbinden, sobald angelegt:
-//   #include "telemetry.h"      // drivers  (FR-TEL)
-//   #include "scheduler.h"      // optional Helfer
+
+// TODO(temp)/Diagnose-Werkzeug, s. docs/ble_brownout_fallstudie.md:
+// Isolationstest -- bleBegin() als ALLERERSTES, vor jeder anderen Hardware-
+// Initialisierung (Wire/I2C, IMU/BMP280/GNSS, RF, LEDs, Watchdog), damit ein
+// nackter BLE-Controller-Hochlauf mit minimaler Grundlast entsteht. Diente
+// der Eingrenzung des Brownout-Bootloops auf dem Altboard (s. Fallstudie);
+// auf dem Ersatzboard (Espressif ESP32-DevKitC-32E) hardware-verifiziert
+// (Advertising, Verbindung, MTU=185) ohne Brownout. AUS (auskommentiert)
+// fuer den Normalbetrieb; zum Reaktivieren die naechste Zeile einkommentieren.
+// #define BLE_ISOLATION_TEST
+
+// BLE-Transport (FR-TEL-01) auf dem Ersatzboard hardware-verifiziert:
+// Advertising, Verbindung, MTU-Verhandlung (185, > Mindestwert 83 fuer ein
+// 80-Byte-Frame) laufen ohne Brownout, s. docs/ble_brownout_fallstudie.md.
+// Noch AUS: Vollbetriebstest (alle Sensoren/Aktoren + BLE gleichzeitig,
+// insb. R1-R4-Timing/Stromaufnahme unter Last) steht noch aus, s.
+// open_issues.md. Zum Testen einkommentieren.
+// #define BLE_ENABLED
 
 // ---- kooperativer Scheduler: einfache Task-Zeitstempel -------------------
 static uint32_t t_imu = 0, t_baro = 0, t_gnss = 0, t_tele = 0;
@@ -74,6 +92,26 @@ static logic::ButtonEvent pendingButtonEvent = logic::ButtonEvent::NONE;
 // Fail-Safe-Ausnahme (FR-SAF-01).
 static bool bootRecoveredFromWatchdog = false;
 
+// ---- Telemetrie (M5 Teil C2, FR-TEL-01..04) -------------------------------
+// Letzte Sensor-/Statuswerte, file-scope vorgehalten (Muster wie
+// lastImuHealth oben) -- taskTelemetry() liest hieraus, statt Sensoren
+// erneut/asynchron abzufragen. accel/gyro werden nur bei read_ok
+// aktualisiert (letzte tatsaechliche Messung, keine Nullen bei einem
+// transienten I2C-Blip, s. taskLifecycleAndTailLight()); brake_decel_ms2
+// dagegen bewusst jeden Zyklus (roher motion_filter-Wert inkl. der durch
+// !healthy_this_cycle erzwungenen 0, s. telemetry_frame.h Feld-Kommentar).
+static drivers::ImuSample lastImuSample{};
+static float lastDecelMs2 = 0.0f;
+static bool lastInitDegraded = false;
+static drivers::BaroSample lastBaroSample{};
+static bool lastBaroValid = false;
+static drivers::GnssData lastGnssData{};
+static logic::GnssFixStatus lastGnssFix = logic::GnssFixStatus::NO_DATA;
+
+// RAM-Ringpuffer (FR-TEL-04, NFR-RES-01) fuer Frames ohne BLE-Verbindung
+// bzw. als Reconnect-Backfill-Quelle (s. taskTelemetry()).
+static logic::TelemetryBuffer telemetryBuffer;
+
 // ------------------------------------------------------------------------
 // Task-Stubs — hier kommt die Logik der jeweiligen Region hinein.
 // ------------------------------------------------------------------------
@@ -87,6 +125,9 @@ static void taskLifecycleAndTailLight() {
   const logic::ImuHealthOutput health = imuHealth.update(
       read_ok, raw.accel_x_ms2, raw.accel_y_ms2, raw.accel_z_ms2, raw.gyro_x_rads, now);
   lastImuHealth = health;  // fuer spaetere Telemetrie (FR-TEL-03/FR-STA-04)
+  if (read_ok) {
+    lastImuSample = raw;  // letzte tatsaechliche Messung, s. Kommentar oben
+  }
 
   // Zwei bewusst getrennte Gates, auch wenn sie sich aktuell pro Zyklus
   // decken: motionFilter wird an der reinen Zyklus-Gesundheit (read_ok &&
@@ -111,6 +152,7 @@ static void taskLifecycleAndTailLight() {
         {raw.accel_x_ms2, raw.accel_y_ms2, raw.accel_z_ms2, raw.gyro_x_rads, dt_s});
   }
   imu_was_healthy_last_cycle_ = healthy_this_cycle;
+  lastDecelMs2 = decel_ms2;  // fuer Telemetrie: roher Filterwert, s. Feld-Kommentar telemetry_frame.h
 
   if (health.request_recovery) {
     drivers::imuRecoverStage(health.recovery_stage);
@@ -118,6 +160,7 @@ static void taskLifecycleAndTailLight() {
 
   const bool critical_sensors_ready = drivers::imuIsReady();
   const logic::LifecycleOutput sys = lifecycleFsm.update(critical_sensors_ready, now);
+  lastInitDegraded = sys.degraded;  // fuer Telemetrie (FR-TEL-03)
 
   // FR-STA-04 Fail-Safe: auf JEDEM ungesunden Zyklus explizit 0 -- nicht
   // erst ab "degraded" (das kippt erst nach IMU_FAIL_LIMIT Zyklen). Schon
@@ -166,16 +209,18 @@ static void taskBaro() {
   t_cycle = now;
 
   if (!drivers::bmp280IsReady()) {
-    return;  // optionaler Sensor (FR-STA-05), kein Effekt auf Licht/Blinker
+    lastBaroValid = false;  // optionaler Sensor (FR-STA-05), fuer Telemetrie
+    return;                 // kein Effekt auf Licht/Blinker
   }
 
   if (measurement_pending) {
-    const drivers::BaroSample baro = drivers::bmp280Read();
+    lastBaroSample = drivers::bmp280Read();
+    lastBaroValid = true;
     // TODO(temp debug): entfernen, sobald Telemetrie (M5 Teil B) den Wert
     // ausgibt. Hinter DEBUG_SERIAL abschaltbar.
     if (DEBUG_SERIAL) {
-      Serial.printf("[Baro] pressure=%.1f Pa temp=%.2f C\n", baro.pressure_pa,
-                    baro.temperature_c);
+      Serial.printf("[Baro] pressure=%.1f Pa temp=%.2f C\n", lastBaroSample.pressure_pa,
+                    lastBaroSample.temperature_c);
     }
   }
   drivers::bmp280TriggerMeasurement();
@@ -187,15 +232,15 @@ static void taskGnss() {
   // loop()-Durchlauf per gnssPump() geparst (s. loop()) — hier wird nur
   // der aktuelle Stand gelesen und bewertet. Optionaler Sensor (FR-STA-05):
   // kein Fix/keine Daten beeinflussen Licht/Blinker nicht.
-  const drivers::GnssData gnss = drivers::gnssRead();
-  const logic::GnssFixStatus fix = logic::gnssFixStatus(
-      gnss.location_valid, gnss.location_age_ms, gnss.sats, gnss.chars_processed);
+  lastGnssData = drivers::gnssRead();
+  lastGnssFix = logic::gnssFixStatus(lastGnssData.location_valid, lastGnssData.location_age_ms,
+                                      lastGnssData.sats, lastGnssData.chars_processed);
 
   // TODO(temp debug): entfernen, sobald Telemetrie (M5 Teil B) den Wert
   // ausgibt. Hinter DEBUG_SERIAL abschaltbar.
   if (DEBUG_SERIAL) {
-    Serial.printf("[GNSS] lat=%.6f lon=%.6f sats=%u hdop=%.2f status=%d\n",
-                  gnss.lat, gnss.lon, gnss.sats, gnss.hdop, (int)fix);
+    Serial.printf("[GNSS] lat=%.6f lon=%.6f sats=%u hdop=%.2f status=%d\n", lastGnssData.lat,
+                  lastGnssData.lon, lastGnssData.sats, lastGnssData.hdop, (int)lastGnssFix);
   }
 }
 
@@ -224,8 +269,80 @@ static void taskRf() {
 }
 
 static void taskTelemetry() {
-  // 10 Hz. TODO(FR-TEL-02..06): Frame (versioniert) bauen, per BLE senden
-  // oder in den RAM-Ringpuffer schreiben (NFR-RES-01).
+  // 10 Hz (FR-TEL-02). Frame aus den zuletzt gesampelten Werten bauen und je
+  // nach BLE-Zustand direkt senden oder puffern (FR-TEL-01/04).
+  const uint32_t now = millis();
+
+  logic::TelemetryFrame frame{};
+  frame.timestamp_ms = now;
+
+  frame.accel_x_ms2 = lastImuSample.accel_x_ms2;
+  frame.accel_y_ms2 = lastImuSample.accel_y_ms2;
+  frame.accel_z_ms2 = lastImuSample.accel_z_ms2;
+  frame.gyro_x_rads = lastImuSample.gyro_x_rads;
+  frame.gyro_y_rads = lastImuSample.gyro_y_rads;
+  frame.gyro_z_rads = lastImuSample.gyro_z_rads;
+  frame.brake_decel_ms2 = lastDecelMs2;
+
+  frame.pressure_pa = lastBaroSample.pressure_pa;
+  frame.temperature_c = lastBaroSample.temperature_c;
+
+  frame.lat = lastGnssData.lat;
+  frame.lon = lastGnssData.lon;
+  frame.speed_kmph = lastGnssData.speed_kmph;
+  frame.course_deg = lastGnssData.course_deg;
+  frame.altitude_m = lastGnssData.altitude_m;
+  frame.sats = lastGnssData.sats;
+  frame.hdop = lastGnssData.hdop;
+  frame.utc_year = lastGnssData.year;
+  frame.utc_month = lastGnssData.month;
+  frame.utc_day = lastGnssData.day;
+  frame.utc_hour = lastGnssData.hour;
+  frame.utc_minute = lastGnssData.minute;
+  frame.utc_second = lastGnssData.second;
+
+  frame.system_state = static_cast<uint8_t>(lastSystemState);
+  frame.init_degraded = lastInitDegraded;
+  frame.imu_health_state = static_cast<uint8_t>(lastImuHealth.state);
+  frame.baro_valid = lastBaroValid;
+  frame.gnss_fix_status = static_cast<uint8_t>(lastGnssFix);
+  frame.watchdog_recovered = bootRecoveredFromWatchdog;
+
+  uint8_t bytes[logic::TELEMETRY_FRAME_SIZE];
+  logic::telemetryFrameSerialize(frame, bytes);
+
+  if (!drivers::bleIsConnected()) {
+    telemetryBuffer.push(bytes);  // FR-TEL-04: ohne Verbindung puffern
+    return;
+  }
+
+  if (telemetryBuffer.empty()) {
+    drivers::bleNotify(bytes, logic::TELEMETRY_FRAME_SIZE);  // Live-Fall: direkt senden
+    return;
+  }
+
+  // Reconnect-Backfill: frisches Frame hinten anstellen (haelt die FIFO-
+  // Chronologie strikt, kein zweiter Strom noetig), dann bis zu
+  // BLE_BACKFILL_FRAMES_PER_TICK aelteste Frames nachliefern -- das holt
+  // 60 s Backlog binnen weniger Sekunden auf, ohne die Live-Rate zu stoeren
+  // (dieser Block laeuft weiterhin nur einmal pro 100-ms-Tick).
+  telemetryBuffer.push(bytes);
+  uint8_t backlog[logic::TELEMETRY_FRAME_SIZE];
+  for (uint8_t i = 0; i < BLE_BACKFILL_FRAMES_PER_TICK; ++i) {
+    if (telemetryBuffer.empty()) {
+      break;
+    }
+    telemetryBuffer.pop(backlog);
+    if (!drivers::bleNotify(backlog, logic::TELEMETRY_FRAME_SIZE)) {
+      // Sende-Queue des BLE-Stacks voll (selten): Frame nicht verlieren,
+      // aber auch nicht auf einen Retry innerhalb dieses Ticks warten
+      // (NFR-RT-04). Wird ans Pufferende zurueckgelegt -- unter dieser
+      // seltenen Kongestion nicht mehr streng chronologisch, dafuer ohne
+      // eigene peek()-Erweiterung der bereits getesteten TelemetryBuffer-API.
+      telemetryBuffer.push(backlog);
+      break;
+    }
+  }
 }
 
 static void taskConfigConsole() {
@@ -255,6 +372,19 @@ void setup() {
   if (DEBUG_SERIAL && bootRecoveredFromWatchdog) {
     Serial.println(F("[boot] recovered from watchdog reset"));
   }
+
+#ifdef BLE_ISOLATION_TEST
+  // TODO(temp) Isolationstest, s. Kommentar bei #define BLE_ISOLATION_TEST
+  // oben: bleBegin() als allererste Hardware-Aktion, VOR Wire/I2C,
+  // IMU/BMP280/GNSS, RF, LEDs und Watchdog -- minimale Grundlast, um zu
+  // pruefen, ob der Brownout beim nackten BLE-Hochlauf ausbleibt (Bracket-
+  // Logs "[BLE] vor/nach init()" in ble_telemetry.cpp unveraendert).
+  // Saemtliche Sensoren/Aktoren bleiben in diesem Modus komplett aus.
+  // NICHT COMMITTEN.
+  drivers::bleBegin();
+  Serial.println(F("[ISOLATION-TEST] Sensor-/Aktor-Init uebersprungen -- nur BLE aktiv"));
+  return;
+#endif
 
   // I2C-Bus zentral EINMALIG initialisieren (FR-SNS-03: Timeout an einer
   // Stelle). imuBegin()/bmp280Begin() sind reine Busnutzer und rufen selbst
@@ -286,6 +416,15 @@ void setup() {
   const bool gnss_ready = drivers::gnssBegin();
   Serial.printf("[boot] GNSS ready=%d\n", (int)gnss_ready);
 
+  // FR-TEL-01/FR-SYS-04: BLE-Telemetrie-Server (Notify-only). Ausfall/
+  // Trennung beeinflusst Licht/Blinker nicht (FR-SAF-04) -- taskTelemetry()
+  // puffert bei fehlender Verbindung nur in den RAM-Ringpuffer. Hinter
+  // BLE_ENABLED (s. Kommentar oben) -- s. open_issues.md "Brown-Out beim
+  // BLE-Start": aktuell AUS, damit R1-R4 (insb. Licht/Blinker) stabil laufen.
+#ifdef BLE_ENABLED
+  drivers::bleBegin();
+#endif
+
   // FR-SAF-03: Task-Watchdog. Dieser Core initialisiert den TWDT bereits
   // vor setup() (sdkconfig: CONFIG_ESP_TASK_WDT_INIT=y, Default 5 s) --
   // esp_task_wdt_init() wuerde daher ESP_ERR_INVALID_STATE liefern.
@@ -308,6 +447,13 @@ void setup() {
 }
 
 void loop() {
+#ifdef BLE_ISOLATION_TEST
+  // TODO(temp) Isolationstest: keine Sensor-/Aktor-Tasks, nur der NimBLE-
+  // Host-Task im Hintergrund. s. setup(). NICHT COMMITTEN.
+  delay(1000);
+  return;
+#endif
+
   const uint32_t now = millis();
 
   // Jeden Durchlauf draint (kein eigener Timer): bei 9600 Bd und loop() bei
