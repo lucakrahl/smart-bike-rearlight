@@ -369,7 +369,7 @@ Ordnerprinzip: `lib/logic` = hardwarefreie, host-testbare Logik (kein `Arduino.h
 - **M3 Sensorik/Bremserkennung** (`imu_driver`, `motion_filter`) ✅ HW-validiert; Fahrtrichtung feldkalibriert (nur Verzögerung in Fahrtrichtung löst aus, Vorzeichen `MOTION_BRAKE_SIGN`).
 - **M4 Blinker + RF** (`rf_input`, `button_decoder`, `blinker_fsm`) ✅ Funktion HW-validiert (physische L/R-Zuordnung offen, s. Kap. 11).
 - **M5 Teil A Barometer** (`bmp280_driver`, FORCED-Mode) ✅ validiert; zentrale I²C-Bus-Init.
-- **M5 Teil C2 BLE-Telemetrie** (`ble_telemetry`, NimBLE-Arduino) ✅ implementiert + host-getestet (75/75), Build grün — ❌ **HW-blockiert:** Brownout-Bootloop bei `NimBLEDevice::init()` (Root-Cause-Analyse `docs/ble_brownout_fallstudie.md`), BLE-Verifikation vertagt bis Board-Tausch (Espressif ESP32-DevKitC-32E).
+- **M5 Teil C2 BLE-Telemetrie** (`ble_telemetry`, NimBLE-Arduino) ✅ implementiert, host-getestet (75/75) und **am realen System validiert**: Board-Tausch auf Espressif ESP32-DevKitC-32E (WROOM-32E) behebt den zuvor beobachteten Brownout-Bootloop vollständig (Root-Cause-Analyse `docs/ble_brownout_fallstudie.md`); Sensoren/Aktoren + BLE laufen gleichzeitig unter Volllast stabil, kein Brownout. Verbindung (nRF Connect) verifiziert: Advertising, MTU-Verhandlung auf 185 Byte (> Mindestwert 83), Reconnect-Backfill.
 - **Host-Unit-Tests:** 38/38 grün (native, Stand M5A; s. `docs/current_context.md` für aktuellen Zählerstand).
 - **Nächste:** M5 Teil B (GNSS L86), dann M6 (Konfiguration/NVS), M7 (Integration/Messungen). Roadmap: `docs/roadmap.md`.
 
@@ -501,7 +501,8 @@ Nicht begonnen. Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/War
 | MOSFET mit realer LED-Last | ❌ noch nicht getestet |
 | Ladeinfrastruktur unter Last | ❌ nicht verifiziert |
 | Gehäuse | ❌ nicht begonnen |
-| BLE/iOS-App | ❌ hardwareblockiert (Brownout-Bootloop bei `NimBLEDevice::init()`, Root-Cause-Analyse + Board-Tausch-Entscheidung s. `docs/ble_brownout_fallstudie.md`); Firmware M5 Teil C2 selbst host-getestet (75/75) und baut grün |
+| BLE-Transport (M5 Teil C2) | ✅ am realen System validiert (Espressif ESP32-DevKitC-32E, Board-Tausch behebt den zuvor beobachteten Brownout vollständig, s. `docs/ble_brownout_fallstudie.md`): Advertising, Verbindung, MTU=185, Volllastbetrieb (Sensoren/Aktoren + BLE) stabil |
+| iOS-App gegen reale BLE-Verbindung | ❌ noch offen (App bisher gegen `MockTelemetrySource` entwickelt, s. `docs/current_context.md`) |
 
 ### 9.1 Validierungsbefunde M5A
 

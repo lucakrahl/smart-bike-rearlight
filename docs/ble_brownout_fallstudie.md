@@ -148,6 +148,41 @@ Zwei-Quellen-Konflikt, Software-Gegenmaßnahmen, Verdrahtung/Versorgungspfad, re
 Pufferung) und dem gezielten Kontrollversuch (BOD-Abschaltung) erlaubt die belastbare
 Eingrenzung der Ursache auf eine Hardware-Grenze des konkreten Boards.
 
+## 8. Auflösung: Board-Tausch am realen System validiert
+
+Nach Eintreffen und Einlöten des Ersatzboards (Espressif ESP32-DevKitC-32E,
+ESP32-WROOM-32E) wurde die in Kap. 6 getroffene Entscheidung stufenweise am realen
+Gerät verifiziert:
+
+1. **Pin-/Logiktest ohne BLE:** Voller Normalbetrieb (alle Sensoren, Schluss-/
+   Bremslicht, Blinker/RF, Task-Watchdog) auf dem neuen Board ohne BLE — stabil, kein
+   Brownout, alle Boot-Meldungen (`IMU ready=1`, `BMP280 ready=1`, `GNSS ready=1`)
+   und laufenden Statusausgaben (`[R1/R2]`, `[Baro]`, `[GNSS]`) wie erwartet.
+2. **BLE-Isolationstest:** `NimBLEDevice::init()` als alleinige Hardware-Aktion (bei
+   weiterhin aktivem Brownout-Detektor, kein Register-Bypass) — der Log-Marker
+   „`[BLE] nach init()`" wird erstmals erreicht, kein „E BOD", Advertising startet.
+3. **Vollbetriebstest (Sensoren/Aktoren + BLE gleichzeitig):** identisches Ergebnis
+   unter voller Last — `[BLE] nach init()` ohne Brownout, Advertising läuft parallel
+   zu `[R1/R2]`/`[Baro]`/`[GNSS]` ohne Beeinträchtigung, kein Reset über die gesamte
+   Beobachtungsdauer.
+4. **Reale BLE-Verbindung (nRF Connect):** Verbindungsaufbau und MTU-Verhandlung auf
+   **185 Byte** (Nutzlast 182 Byte, deutlich über dem für ein 80-Byte-Frame in einer
+   Notification benötigten Mindestwert von 83 Byte), Notify-Subscribe erfolgreich.
+
+Bei der ersten Verbindungsprüfung fielen zwei von der Brownout-Ursache unabhängige
+Firmware-Bugs im Advertising auf und wurden behoben: (a) `NimBLEDevice::init(name)`
+trägt den Gerätenamen nur intern im GAP ein, nicht ins Advertising-Paket — ergänzt um
+einen expliziten `pAdvertising->setName()`-Aufruf; (b) der Name überschritt zusammen
+mit der 128-Bit-Service-UUID das 31-Byte-Limit des primären Advertising-Pakets
+(„Data length exceeded") — behoben durch Auslagerung des Namens in die
+Scan-Response-Payload (`enableScanResponse(true)`, eigenes 31-Byte-Budget, Standard-
+BLE-Praxis).
+
+**Ergebnis:** Der in Kap. 5 identifizierte Root Cause (Spannungsregler des Altboards)
+ist damit bestätigt — auf dem Ersatzboard tritt der Brownout unter keiner der
+getesteten Lastkonfigurationen mehr auf. M5 Teil C2 (BLE-Telemetrietransport) gilt als
+am realen System validiert.
+
 ## Quellen
 
 - Espressif Systems: *ESP32-DevKitC Getting Started Guide* (Board, Pinbelegung, Maße).

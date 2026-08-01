@@ -33,24 +33,6 @@
 
 // PWM-Kanal-Zuordnung erfolgt ueber ledcAttach() (Core v3.x, CON-02).
 
-// TODO(temp)/Diagnose-Werkzeug, s. docs/ble_brownout_fallstudie.md:
-// Isolationstest -- bleBegin() als ALLERERSTES, vor jeder anderen Hardware-
-// Initialisierung (Wire/I2C, IMU/BMP280/GNSS, RF, LEDs, Watchdog), damit ein
-// nackter BLE-Controller-Hochlauf mit minimaler Grundlast entsteht. Diente
-// der Eingrenzung des Brownout-Bootloops auf dem Altboard (s. Fallstudie);
-// auf dem Ersatzboard (Espressif ESP32-DevKitC-32E) hardware-verifiziert
-// (Advertising, Verbindung, MTU=185) ohne Brownout. AUS (auskommentiert)
-// fuer den Normalbetrieb; zum Reaktivieren die naechste Zeile einkommentieren.
-// #define BLE_ISOLATION_TEST
-
-// BLE-Transport (FR-TEL-01) auf dem Ersatzboard hardware-verifiziert:
-// Advertising, Verbindung, MTU-Verhandlung (185, > Mindestwert 83 fuer ein
-// 80-Byte-Frame) laufen ohne Brownout, s. docs/ble_brownout_fallstudie.md.
-// Noch AUS: Vollbetriebstest (alle Sensoren/Aktoren + BLE gleichzeitig,
-// insb. R1-R4-Timing/Stromaufnahme unter Last) steht noch aus, s.
-// open_issues.md. Zum Testen einkommentieren.
-// #define BLE_ENABLED
-
 // ---- kooperativer Scheduler: einfache Task-Zeitstempel -------------------
 static uint32_t t_imu = 0, t_baro = 0, t_gnss = 0, t_tele = 0;
 
@@ -373,19 +355,6 @@ void setup() {
     Serial.println(F("[boot] recovered from watchdog reset"));
   }
 
-#ifdef BLE_ISOLATION_TEST
-  // TODO(temp) Isolationstest, s. Kommentar bei #define BLE_ISOLATION_TEST
-  // oben: bleBegin() als allererste Hardware-Aktion, VOR Wire/I2C,
-  // IMU/BMP280/GNSS, RF, LEDs und Watchdog -- minimale Grundlast, um zu
-  // pruefen, ob der Brownout beim nackten BLE-Hochlauf ausbleibt (Bracket-
-  // Logs "[BLE] vor/nach init()" in ble_telemetry.cpp unveraendert).
-  // Saemtliche Sensoren/Aktoren bleiben in diesem Modus komplett aus.
-  // NICHT COMMITTEN.
-  drivers::bleBegin();
-  Serial.println(F("[ISOLATION-TEST] Sensor-/Aktor-Init uebersprungen -- nur BLE aktiv"));
-  return;
-#endif
-
   // I2C-Bus zentral EINMALIG initialisieren (FR-SNS-03: Timeout an einer
   // Stelle). imuBegin()/bmp280Begin() sind reine Busnutzer und rufen selbst
   // kein Wire.begin() auf.
@@ -418,12 +387,11 @@ void setup() {
 
   // FR-TEL-01/FR-SYS-04: BLE-Telemetrie-Server (Notify-only). Ausfall/
   // Trennung beeinflusst Licht/Blinker nicht (FR-SAF-04) -- taskTelemetry()
-  // puffert bei fehlender Verbindung nur in den RAM-Ringpuffer. Hinter
-  // BLE_ENABLED (s. Kommentar oben) -- s. open_issues.md "Brown-Out beim
-  // BLE-Start": aktuell AUS, damit R1-R4 (insb. Licht/Blinker) stabil laufen.
-#ifdef BLE_ENABLED
+  // puffert bei fehlender Verbindung nur in den RAM-Ringpuffer. Am
+  // Ersatzboard (Espressif ESP32-DevKitC-32E) unter Volllast (alle Sensoren/
+  // Aktoren + BLE gleichzeitig) hardware-verifiziert, kein Brownout mehr
+  // (s. docs/ble_brownout_fallstudie.md) -- Normalbetrieb.
   drivers::bleBegin();
-#endif
 
   // FR-SAF-03: Task-Watchdog. Dieser Core initialisiert den TWDT bereits
   // vor setup() (sdkconfig: CONFIG_ESP_TASK_WDT_INIT=y, Default 5 s) --
@@ -447,13 +415,6 @@ void setup() {
 }
 
 void loop() {
-#ifdef BLE_ISOLATION_TEST
-  // TODO(temp) Isolationstest: keine Sensor-/Aktor-Tasks, nur der NimBLE-
-  // Host-Task im Hintergrund. s. setup(). NICHT COMMITTEN.
-  delay(1000);
-  return;
-#endif
-
   const uint32_t now = millis();
 
   // Jeden Durchlauf draint (kein eigener Timer): bei 9600 Bd und loop() bei

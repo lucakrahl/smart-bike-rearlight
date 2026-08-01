@@ -125,13 +125,13 @@ constexpr const char* BLE_CHARACTERISTIC_UUID = "8c604d09-743f-4850-9109-19604a1
 // (Frame + 3 Byte ATT-Overhead) benoetigt. [TODO(offen): Feldverifikation
 // mit der spaeteren Web-App]
 constexpr uint16_t BLE_PREFERRED_MTU = 185;
-// Gesendete Funkleistung. Reduziert (statt Werkseinstellung), weil der
-// Stromspitze des BLE-Radios beim Senden bei marginaler Versorgung den
-// Brownout-Detektor ausgeloest hat (Bootloop direkt nach BLE-Start,
-// Fehlerbild "E BOD"). Der Brownout-Detektor selbst bleibt aktiv -- er
-// maskiert das Problem nicht, sondern zeigt es korrekt an; Ursache ist die
-// Stromspitze, nicht der Detektor. [TODO(offen): Feldverifikation --
-// haengt von der tatsaechlichen Netzteil-/Kabel-Guete ab]
+// Gesendete Funkleistung. Reduziert (statt Werkseinstellung) fuer die
+// Energiebilanz (NFR-PWR); wirkt NICHT auf die RF-Kalibrierungs-Stromspitze
+// waehrend NimBLEDevice::init() (setPower() greift erst danach) -- war daher
+// nicht die Ursache des fruehen Brownout-Bootloops auf dem Altboard, s.
+// docs/ble_brownout_fallstudie.md (Root Cause: Spannungsregler des
+// Altboards). [TODO(offen): Feldverifikation -- haengt von der
+// tatsaechlichen Netzteil-/Kabel-Guete ab]
 constexpr int8_t BLE_TX_POWER_DBM = -12;
 // Anzahl gepufferter Frames, die taskTelemetry() nach einem Reconnect pro
 // 10-Hz-Tick zusaetzlich zum Live-Frame nachliefert (Backfill, FR-TEL-01/04).
