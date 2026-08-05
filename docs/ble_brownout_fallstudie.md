@@ -166,8 +166,8 @@ Gerät verifiziert:
    zu `[R1/R2]`/`[Baro]`/`[GNSS]` ohne Beeinträchtigung, kein Reset über die gesamte
    Beobachtungsdauer.
 4. **Reale BLE-Verbindung (nRF Connect):** Verbindungsaufbau und MTU-Verhandlung auf
-   **185 Byte** (Nutzlast 182 Byte, deutlich über dem für ein 80-Byte-Frame in einer
-   Notification benötigten Mindestwert von 83 Byte), Notify-Subscribe erfolgreich.
+   **185 Byte** (Nutzlast 182 Byte, deutlich über dem für ein 81-Byte-Frame in einer
+   Notification benötigten Mindestwert von 84 Byte), Notify-Subscribe erfolgreich.
 
 Bei der ersten Verbindungsprüfung fielen zwei von der Brownout-Ursache unabhängige
 Firmware-Bugs im Advertising auf und wurden behoben: (a) `NimBLEDevice::init(name)`

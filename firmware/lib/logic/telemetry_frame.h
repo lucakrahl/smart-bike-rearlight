@@ -40,13 +40,15 @@
 //   77      1        uint8   baro_valid         (0/1, FR-STA-05)
 //   78      1        uint8   gnss_fix_status    (0=NO_DATA,1=NO_FIX,2=FIX_OK)
 //   79      1        uint8   watchdog_recovered (0/1)
+//   80      1        uint8   brake_light_pct    (0..100, tatsaechlich kommandierte
+//                                                LED-Duty aus tail_light_fsm, FR-TEL-03)
 #pragma once
 #include <cstdint>
 #include <cstddef>
 
 namespace logic {
 
-constexpr size_t TELEMETRY_FRAME_SIZE = 80;
+constexpr size_t TELEMETRY_FRAME_SIZE = 81;
 
 struct TelemetryFrame {
   uint32_t timestamp_ms = 0;
@@ -79,6 +81,14 @@ struct TelemetryFrame {
   bool baro_valid = false;
   uint8_t gnss_fix_status = 0;   // logic::GnssFixStatus als uint8_t
   bool watchdog_recovered = false;
+
+  // Tatsaechlich kommandierte Ruecklicht-Duty (derselbe Wert wie an
+  // drivers::setDutyPercent() uebergeben) -- im Gegensatz zu
+  // brake_decel_ms2 (roher motion_filter-Eingang) bereits durch
+  // tail_light_fsm gegatet (Fail-Safe, Hysterese, Mindesthaltezeit).
+  // Erlaubt der App/Auswertung den Vergleich Eingang vs. Ausgang der
+  // Bremslicht-Logik (FR-TL-06-Validierung).
+  uint8_t brake_light_pct = 0;
 };
 
 // Serialisiert "frame" nach "out" gemaess obigem Layout. "out" muss

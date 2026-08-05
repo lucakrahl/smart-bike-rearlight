@@ -49,7 +49,9 @@ constexpr uint32_t PERIOD_IMU_MS   = 10;    // 100 Hz
 constexpr uint32_t PERIOD_BARO_MS  = 100;   // 10 Hz (Task-Slot; BMP280-FORCED-Zyklus s. BARO_FORCED_CYCLE_MS)
 constexpr uint32_t PERIOD_GNSS_MS  = 1000;  // 1 Hz
 constexpr uint32_t PERIOD_TELE_MS  = 100;   // 10 Hz
-constexpr uint16_t TELEMETRY_SCHEMA_VERSION = 1;  // FR-TEL-06
+// v2: brake_light_pct (Offset 80) ergaenzt -- tatsaechlich kommandierte
+// Ruecklicht-Duty neben dem rohen brake_decel_ms2-Eingang (FR-TEL-06).
+constexpr uint16_t TELEMETRY_SCHEMA_VERSION = 2;  // FR-TEL-06
 
 // BMP280 laeuft im FORCED-Mode bewusst langsamer als der 10-Hz-Task-Slot:
 // Trigger und Read sind auf zwei Zyklen entkoppelt (s. bmp280_driver), das
@@ -121,7 +123,7 @@ constexpr const char* BLE_SERVICE_UUID       = "587bb505-9f9d-4ae0-96fd-0b29adfc
 constexpr const char* BLE_CHARACTERISTIC_UUID = "8c604d09-743f-4850-9109-19604a17f358";
 // Bevorzugtes MTU (Server-Wunsch); tatsaechlich ausgehandelter Wert haengt vom
 // Client (Web-Bluetooth-Stack) ab, s. onMTUChange in ble_telemetry.cpp. Fuer
-// ein 80-Byte-Frame in einer einzigen Notification werden mindestens 83
+// ein 81-Byte-Frame in einer einzigen Notification werden mindestens 84
 // (Frame + 3 Byte ATT-Overhead) benoetigt. [TODO(offen): Feldverifikation
 // mit der spaeteren Web-App]
 constexpr uint16_t BLE_PREFERRED_MTU = 185;

@@ -14,7 +14,11 @@ metrisch, alle Daten lokal (kein Netzwerk/Account).
 - Geräte-Name `SmartBikeRearLight`
 - Service-UUID `587bb505-9f9d-4ae0-96fd-0b29adfc4b03`
 - Characteristic (NOTIFY) `8c604d09-743f-4850-9109-19604a17f358` — nur NOTIFY, kein Write
-- Frame: **80 Byte, Little-Endian, gepackt, 10 Hz**, Schema-`version` == 1 (Offset 0)
+- Frame: **81 Byte, Little-Endian, gepackt, 10 Hz**, Schema-`version` == 2 (Offset 0).
+  Neu ggü. v1: `brake_light_pct` (uint8, Offset 80) — tatsächlich kommandierte
+  Rücklicht-Duty (0..100), Gegenstück zum rohen `brake_decel_ms2` (Offset 30).
+  `TelemetryFrame.swift`/`TelemetryFrameDecoder.swift` lesen dieses Feld noch
+  nicht (separater iOS-Task).
 - Unidirektional ESP32 → App. Offsets/Feldliste: siehe `SmartBikeCore` + App Bible Kap. 10.
 
 ## Architektur (App Bible Kap. 9) — Regeln
@@ -49,6 +53,13 @@ metrisch, alle Daten lokal (kein Netzwerk/Account).
 - Semantik: Rot = Warnung/Bremse/Fehler · Grün = Fix ok · Amber = Suche/kein Fix.
 - Cockpit-Ziffern: **SF Pro Rounded, tabellarische Ziffern** (`Theme.numeric`).
 - Diagramme (Swift Charts): Geschwindigkeit = Cyan, Höhe = Slate; X-Achse = Distanz.
+- **Liquid Glass (iOS 26) NUR für Chrome/Steuerelemente** — schwebende Pillen, Buttons,
+  System-Chrome (TabBar/Nav werden automatisch verglast, nicht manuell überschreiben).
+  **Inhalte/Datenflächen bleiben glasfrei** und klar lesbar (Kacheln/`MetricTile`, Charts,
+  Listenzeilen) — Glanceability/Lesbarkeit (AR-UX-01) hat Vorrang. Wiederverwendbar über
+  `View.floatingGlass(interactive:in:)` (`DesignSystem/GlassBackground.swift`): nutzt
+  `glassEffect` auf iOS 26, sonst Fallback `.ultraThinMaterial`. `.interactive()` nur auf
+  tippbaren Elementen; `.glassEffect` erst NACH den Layout-Modifiern anwenden.
 
 ## Konventionen
 - UI-Strings **Deutsch**; Lokalisierung vorbereiten. Einheiten metrisch.

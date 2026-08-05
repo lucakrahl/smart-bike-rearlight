@@ -1,6 +1,6 @@
 # Project Bible — Smartes Fahrrad-Rücklicht
 **Bachelorarbeit Krahl · Maschinenbau & Produktentwicklung (B.Eng.)**
-**Version 0.12 · Stand 30.07.2026 · Status: aktiv gepflegt (Single Source of Truth)**
+**Version 0.14 · Stand 05.08.2026 · Status: aktiv gepflegt (Single Source of Truth)**
 
 > Diese Project Bible ist die oberste Wissensinstanz des Projekts. Bei Widersprüchen zwischen Chat-Historie und Project Bible gilt ausschließlich die Project Bible. Chats dienen der Diskussion und Entscheidungsfindung; der offizielle Projektstand steht ausschließlich hier.
 
@@ -34,6 +34,8 @@
 | 0.10 | 26.07.2026 | Implementierungsstand M1–M4 hardwarevalidiert, M5 Teil A (BMP280) validiert; zentrale I²C-Bus-Initialisierung; BMP280 FORCED-Mode; Modulübersicht Firmware ergänzt; Validierungsbefunde Bremsrichtung + (vorläufig) Temperatur. | Impl. M1–M5A |
 | 0.11 | 29.07.2026 | App-Plattform: native iOS-App (Core Bluetooth) statt Web-App/PWA; Grund: kein Web Bluetooth auf iOS + Betreuer-Vorgabe. Firmware/BLE unverändert. | Plattform-Entscheidung App |
 | 0.12 | 30.07.2026 | BLE-Brownout-Fallstudie (`docs/ble_brownout_fallstudie.md`): Bootloop bei `NimBLEDevice::init()` auf zehn Tests systematisch eingegrenzt; Root Cause = Spannungsregler des Altboards liefert RF-Kalibrierungs-Transiente nicht. Board-Wechsel auf Espressif ESP32-DevKitC-32E (WROOM-32E) beschlossen, Entkopplungskondensatoren bleiben. | Root-Cause-Analyse BLE-Brownout |
+| 0.13 | 01.08.2026 | Board-Tausch auf Espressif ESP32-DevKitC-32E (WROOM-32E) **ausgeführt und am realen System validiert** (BLE-Transport M5 Teil C2: Advertising, Verbindung, MTU 185, Volllastbetrieb stabil); Board-Status in Kap. 4.1 mit Kap. 6.5/9 vereinheitlicht. iOS-App-Stand nachgezogen (Kap. 7.6/11.3: Phase 1–6 weit umgesetzt, Details App Bible). Kap. 10 um drei Entscheidungen ergänzt (Board-Tausch, Entkopplungskondensatoren behalten, WiFi verworfen). Kap. 6.5: M5 Teil B ergänzt, Host-Test-Zähler 38→75, „Nächstes" aktualisiert. | BLE-Validierung + App-Stand |
+| 0.14 | 05.08.2026 | Telemetrie-Frame um `brake_light_pct` (Offset 80, tatsächlich kommandierte Rücklicht-Duty) erweitert, 80→81 Byte, Schema-Version 1→2 (FR-TEL-06). Erlaubt Vergleich Bremskennlinien-Eingang (`brake_decel_ms2`) vs. -Ausgang (`brake_light_pct`) für die FR-TL-06-Validierung. Firmware host-getestet (77/77), ESP32-Build grün. Alle „80-Byte-Frame"-Nennungen auf „81-Byte-Frame" nachgezogen (Kap. 7.2/7.6). | Frame-Erweiterung `brake_light_pct` |
 
 ### 0.4 Datengrundlage
 | Quelle | Zeitstempel | Aussagekraft |
@@ -242,7 +244,7 @@ I²C (Sensoren), UART2 (GNSS), UART0 (Debug/Konfig), digitaler GPIO-Eingang (RF)
 ### 4.1 Bauteilübersicht
 | Ref. | Bauteil | Hersteller/Typ | Funktion | Schnittstelle | Status |
 |---|---|---|---|---|---|
-| U3 | ESP32 NodeMCU DevKit C V2 → **Espressif ESP32-DevKitC-32E (WROOM-32E)** (Wechsel beschlossen) | AZ-Delivery → Espressif | Hauptrechner | 3,3 V GPIO | Board-Tausch beschlossen (Root Cause BLE-Brownout: Regler des Altboards liefert RF-Kalibrierungs-Transiente nicht, s. `docs/ble_brownout_fallstudie.md`); neues Board bestellt, pin-kompatibel (38-Pin-DevKitC-Layout), Tausch aussteht |
+| U3 | ESP32 NodeMCU DevKit C V2 → **Espressif ESP32-DevKitC-32E (WROOM-32E)** (getauscht) | AZ-Delivery → Espressif | Hauptrechner | 3,3 V GPIO | **Board-Tausch ausgeführt und validiert** (Root Cause BLE-Brownout: Regler des Altboards liefert RF-Kalibrierungs-Transiente nicht, s. `docs/ble_brownout_fallstudie.md`); pin-kompatibel (38-Pin-DevKitC-Layout), ohne Neuverkabelung getauscht; BLE unter Volllast stabil, kein Brownout (Kap. 6.5/9) |
 | IC2 | MPU-6050 (GY-521) | AZ-Delivery | IMU | I²C 0x68 | validiert |
 | IC3 | BMP280 | AZ-Delivery | Barometer | I²C 0x76 | validiert |
 | IC4 | Quectel L86 | Quectel | GNSS | UART2, 9600 Bd | teilvalidiert (Fix offen) |
@@ -273,7 +275,7 @@ I²C (Sensoren), UART2 (GNSS), UART0 (Debug/Konfig), digitaler GPIO-Eingang (RF)
 | Gate-Widerstand | 100 Ω | alle 3 Gates | gesichert |
 | Gate-Pull-Down | 10 kΩ → GND | alle 3 Gates | real verbaut; fehlt in Schaltplan/BOM |
 
-Hinweis: GPIO4 durch RF belegt → MPU6050-INT-Pin ungenutzt (Polling statt Interrupt). Pinbelegung im Code: `firmware/include/pins.h`.
+Hinweis: GPIO4 durch RF belegt → MPU6050-INT-Pin ungenutzt (Polling statt Interrupt). Pinbelegung im Code: `firmware/include/pins.h`. Der Board-Tausch (Kap. 4.1) ist pin-kompatibel; die Belegung bleibt unverändert.
 
 **I²C-Bus-Initialisierung [gesichert]:** `Wire.begin(SDA,SCL)` + `Wire.setTimeOut(I2C_TIMEOUT_MS)` erfolgen zentral einmalig in `main.cpp`/`setup()` (Anwendungsebene), nicht in den einzelnen Sensor-Treibern. `imu_driver` und `bmp280_driver` sind reine Bus-Nutzer. Grund: Modularität und Unabhängigkeit optionaler Sensoren — kein Treiber muss wissen, ob/welcher andere Treiber den Bus bereits initialisiert hat (s. Kap. 10). BMP280-Adresse `0x76` als Konstante `BMP280_I2C_ADDR` in `config.h` (analog `MPU6050_I2C_ADDR = 0x68`).
 
@@ -293,9 +295,9 @@ USB-C 5V → TP4056 (1A Ladung) → LiPo LP103454, 3,7–4,2V, 2000 mAh
 **Entkopplungs-/Pufferkondensatoren [gesichert, verbaut]:** Je ein 1000-µF-Elektrolyt-
 kondensator an Vin/5V↔GND (Reglereingang) und an 3V3↔GND (Reglerausgang, direkt an den
 Modul-Pins, Zuleitungswiderstand < 1 Ω). Ursprünglich als Gegenmaßnahme zum BLE-Brownout-
-Bootloop verlötet, dort ohne Wirkung (Root Cause liegt am Regler selbst, s.
-`docs/ble_brownout_fallstudie.md`); bleiben als Bestandteil eines robusten
-Stromversorgungsdesigns verbaut (verbesserte Transienten-/EMV-Robustheit bei
+Bootloop verlötet, dort ohne Wirkung (Root Cause liegt am Regler des Altboards selbst, durch
+Board-Tausch behoben, s. `docs/ble_brownout_fallstudie.md`); bleiben als Bestandteil eines
+robusten Stromversorgungsdesigns verbaut (verbesserte Transienten-/EMV-Robustheit bei
 Lastspitzen, z. B. LED-Schaltvorgänge).
 
 ### 5.2 Energiebilanz [Annahme — keine Messwerte]
@@ -331,13 +333,13 @@ Keine Batteriespannungsmessung (OUT-01). Ladezustand nur über USB-C-/TP4056-Mod
 **Vorher (bis Phase 2, überholt):** Arduino IDE (macOS), esp32-Core v3.x, „ESP32 Dev Module", CP2102.
 
 ### 6.2 Bibliotheken
-Adafruit MPU6050, Adafruit BMP280, Adafruit Unified Sensor, TinyGPSPlus (Mikal Hart), RCSwitch (sui77). Versionen in `firmware/platformio.ini`.
+Adafruit MPU6050, Adafruit BMP280, Adafruit Unified Sensor, TinyGPSPlus (Mikal Hart), RCSwitch (sui77), NimBLE-Arduino (BLE-Telemetrie, M5 Teil C2). Versionen in `firmware/platformio.ini`.
 
 ### 6.3 Konventionen
 PWM ausschließlich über `ledcAttach()`/`ledcWrite()` (Core v3.x). Kooperativer nicht-blockierender Scheduler, kein `delay()` im Betrieb, statische Speicherverwaltung, Trennung Logik ↔ Hardware, ID-Referenzen in Kommentaren. Details: `CLAUDE.md` im Repo.
 
 ### 6.4 Repository (Monorepo)
-`firmware/` (PlatformIO), `webapp/` (ursprünglich für eine PWA vorgesehen — seit v0.11 durch die native iOS-App abgelöst, s. Kap. 7/10; Ordner bleibt bestehen, endgültiger Ablageort des iOS-App-Codes noch offen), `docs/` (Bible-Kopie + Wissensdatenbank), `hardware/`, `cad/`, `testdata/`. Logik hardwarefrei in `firmware/lib/logic`, Treiber in `firmware/lib/drivers`. Wissensdatenbank: `decision_log.md`, `current_context.md`, `roadmap.md`, `open_issues.md`, `lessons_learned.md`.
+`firmware/` (PlatformIO), `webapp/` (ursprünglich für eine PWA vorgesehen — seit v0.11 durch die native iOS-App abgelöst, s. Kap. 7/10; Ordner bleibt bestehen, endgültiger Ablageort des iOS-App-Codes noch offen), `docs/` (Bible-Kopie + Wissensdatenbank + `ble_brownout_fallstudie.md`), `hardware/`, `cad/`, `testdata/`. Logik hardwarefrei in `firmware/lib/logic`, Treiber in `firmware/lib/drivers`. Wissensdatenbank: `decision_log.md`, `current_context.md`, `roadmap.md`, `open_issues.md`, `lessons_learned.md`, `ble_brownout_fallstudie.md`.
 
 ### 6.4a Modulübersicht Firmware
 Ordnerprinzip: `lib/logic` = hardwarefreie, host-testbare Logik (kein `Arduino.h`); `lib/drivers` = Hardwarezugriff (I²C/PWM/RF); `src` = kooperativer Scheduler; `include` = Header/Konstanten.
@@ -358,7 +360,10 @@ Ordnerprinzip: `lib/logic` = hardwarefreie, host-testbare Logik (kein `Arduino.h
 | `lib/drivers/` | `imu_driver` (.h+.cpp) | MPU6050 über I²C |
 | `lib/drivers/` | `rf_input` (.h+.cpp) | 433-MHz-Empfänger |
 | `lib/drivers/` | `bmp280_driver` (.h+.cpp) | BMP280 Barometer über I²C (M5) |
-| `test/` (native, Unity) | `test_brake_curve`, `test_tail_light_fsm`, `test_lifecycle_fsm`, `test_motion_filter`, `test_button_decoder`, `test_blinker_fsm` | 38/38 grün |
+| `lib/drivers/` | `gnss_driver` + `gnss_fix` | L86/GNSS über UART2, Fix-Status (M5 Teil B) |
+| `lib/logic/` | `imu_health` | Plausibilität/Recovery/Fail-Safe (Härtung, FR-SNS-04/05, FR-STA-04) |
+| `lib/drivers/` | `ble_telemetry` | BLE-Notify-Transport, NimBLE (M5 Teil C2) |
+| `test/` (native, Unity) | u. a. `test_brake_curve`, `test_tail_light_fsm`, `test_lifecycle_fsm`, `test_motion_filter`, `test_button_decoder`, `test_blinker_fsm`, GNSS-/Telemetrie-Tests | 75/75 grün |
 
 **Architekturhinweis — zentrale I²C-Bus-Initialisierung:** `Wire.begin(PIN_I2C_SDA, PIN_I2C_SCL)` + `Wire.setTimeOut(I2C_TIMEOUT_MS)` laufen einmalig in `main.cpp`/`setup()`; `imu_driver` und `bmp280_driver` rufen selbst kein `Wire.begin()` mehr auf (reine Busnutzer, FR-SNS-03 an einer Stelle). IMU-Regressionstest nach dem Umbau bestanden (`degraded=0`, Bremslicht reagiert weiterhin korrekt).
 
@@ -369,9 +374,11 @@ Ordnerprinzip: `lib/logic` = hardwarefreie, host-testbare Logik (kein `Arduino.h
 - **M3 Sensorik/Bremserkennung** (`imu_driver`, `motion_filter`) ✅ HW-validiert; Fahrtrichtung feldkalibriert (nur Verzögerung in Fahrtrichtung löst aus, Vorzeichen `MOTION_BRAKE_SIGN`).
 - **M4 Blinker + RF** (`rf_input`, `button_decoder`, `blinker_fsm`) ✅ Funktion HW-validiert (physische L/R-Zuordnung offen, s. Kap. 11).
 - **M5 Teil A Barometer** (`bmp280_driver`, FORCED-Mode) ✅ validiert; zentrale I²C-Bus-Init.
-- **M5 Teil C2 BLE-Telemetrie** (`ble_telemetry`, NimBLE-Arduino) ✅ implementiert, host-getestet (75/75) und **am realen System validiert**: Board-Tausch auf Espressif ESP32-DevKitC-32E (WROOM-32E) behebt den zuvor beobachteten Brownout-Bootloop vollständig (Root-Cause-Analyse `docs/ble_brownout_fallstudie.md`); Sensoren/Aktoren + BLE laufen gleichzeitig unter Volllast stabil, kein Brownout. Verbindung (nRF Connect) verifiziert: Advertising, MTU-Verhandlung auf 185 Byte (> Mindestwert 83), Reconnect-Backfill.
-- **Host-Unit-Tests:** 38/38 grün (native, Stand M5A; s. `docs/current_context.md` für aktuellen Zählerstand).
-- **Nächste:** M5 Teil B (GNSS L86), dann M6 (Konfiguration/NVS), M7 (Integration/Messungen). Roadmap: `docs/roadmap.md`.
+- **M5 Teil B GNSS** (`gnss_driver`, `gnss_fix`, Fix-Status FR-TEL-05) ✅ UART/Parsing am Board validiert (Indoor korrekt `NO_FIX`; echter Fix braucht Freilandtest, s. Kap. 11).
+- **Härtung** (I²C-Recovery + Plausibilität + Fail-Safe `imu_health`, FR-SNS-04/05/FR-STA-04; Task-Watchdog + Reset-Reason-Diagnose FR-SAF-03) ✅ am Board per Fehlerinjektion (SDA-Kurzschluss) bzw. Hang-Hook verifiziert.
+- **M5 Teil C2 BLE-Telemetrie** (`ble_telemetry`, NimBLE-Arduino) ✅ implementiert, host-getestet (75/75) und **am realen System validiert**: Board-Tausch auf Espressif ESP32-DevKitC-32E (WROOM-32E) behebt den zuvor beobachteten Brownout-Bootloop vollständig (Root-Cause-Analyse `docs/ble_brownout_fallstudie.md`); Sensoren/Aktoren + BLE laufen gleichzeitig unter Volllast stabil, kein Brownout. Verbindung (nRF Connect) verifiziert: Advertising (Name in Scan-Response, 128-Bit-Service-UUID im Primärpaket), MTU-Verhandlung auf 185 Byte (> Mindestwert 83), Notify-Subscribe, Reconnect-Backfill.
+- **Host-Unit-Tests:** 75/75 grün (native; inkl. GNSS/Telemetrie, s. `docs/current_context.md`).
+- **Nächste:** GNSS-Freilandtest (echter Fix, freie Himmelssicht), M6 (Konfiguration/NVS), M7 (Integration/Messungen: Reaktionszeit ≤ 50 ms, Loop-Zeit, Energie). App-seitig: Tausch `MockTelemetrySource` → echte `BLEConnectionService` und End-to-End-Verifikation (Kap. 7.6). Roadmap: `docs/roadmap.md`.
 
 ### 6.6 Zustandsmodell (vier parallele Regionen) [Block B/C/D]
 
@@ -448,22 +455,23 @@ Konfiguration: Kalibrierwerte in NVS, Struktur-/Sicherheitswerte fest im Code; s
 ## 7. App (iOS)
 
 ### 7.1 Zielarchitektur
-Native iOS-App — kein PWA-/Web-Bluetooth-Ansatz mehr (Grund s. Kap. 10, Entscheidung „Native iOS-App statt Web-App/PWA"). Rolle (FR-SYS-01) unverändert: Rechen- und Datensenke — empfängt das versionierte 80-Byte-Telemetrie-Frame (10 Hz, FR-TEL-06) per BLE, berechnet Statistik/Sensorfusion (Kap. 2.3), speichert die Fahrt (CON-01), visualisiert die MVP-Kennzahlen (Kap. 2.4), zeigt Warnungen (GNSS-Verlust, Future-Work).
+Native iOS-App — kein PWA-/Web-Bluetooth-Ansatz mehr (Grund s. Kap. 10, Entscheidung „Native iOS-App statt Web-App/PWA"). Rolle (FR-SYS-01) unverändert: Rechen- und Datensenke — empfängt das versionierte 81-Byte-Telemetrie-Frame (10 Hz, FR-TEL-06) per BLE, berechnet Statistik/Sensorfusion (Kap. 2.3), speichert die Fahrt (CON-01), visualisiert die MVP-Kennzahlen (Kap. 2.4), zeigt Warnungen (GNSS-Verlust, Future-Work).
 
 ### 7.2 Kommunikationsmodell
-Unidirektional ESP32 → App (FR-SYS-04): ein GATT-Service mit einer einzigen NOTIFY-Characteristic, kein Steuerkanal App → Gerät. Firmware und BLE-Schnittstelle (GATT-Service, 80-Byte-Frame) sind bewusst client-agnostisch gehalten und durch den Plattformwechsel **unverändert** — die bereits umgesetzte Firmware-Telemetrie (M5 Teil C2) ist vollständig wiederverwendbar.
+Unidirektional ESP32 → App (FR-SYS-04): ein GATT-Service mit einer einzigen NOTIFY-Characteristic, kein Steuerkanal App → Gerät. Firmware und BLE-Schnittstelle (GATT-Service, 81-Byte-Frame) sind bewusst client-agnostisch gehalten und durch den Plattformwechsel **unverändert** — die bereits umgesetzte Firmware-Telemetrie (M5 Teil C2) ist vollständig wiederverwendbar. Am realen Gerät verifiziert: Advertising mit Name in der Scan-Response und 128-Bit-Service-UUID im Primärpaket, MTU 185 (Nutzlast 182 ≫ 84), Notify-Subscribe (s. Kap. 6.5 und `docs/ble_brownout_fallstudie.md`).
 
 ### 7.3 Technik
 Swift/SwiftUI (nativer iOS-Look), SF Symbols (Icons), Swift Charts (Diagramme/Visualisierung), Core Bluetooth (BLE-Zentrale, Ersatz für die auf iOS nicht verfügbare Web Bluetooth API).
 
 ### 7.4 Entwicklung
-iOS-App-Entwicklung in Xcode (26.3+) mit eingebautem, agentischem Claude-Assistenten. Firmware weiterhin in VS Code + Claude Code (PlatformIO) — zwei getrennte Toolchains, verbunden über den gemeinsamen BLE-Frame-Vertrag (Kap. 7.2).
+iOS-App-Entwicklung in Xcode (26.3+) mit eingebautem, agentischem Claude-Assistenten. Firmware weiterhin in VS Code + Claude Code (PlatformIO) — zwei getrennte Toolchains, verbunden über den gemeinsamen BLE-Frame-Vertrag (Kap. 7.2). App-SSOT ist die separate **App Bible** (`claude/app_bible.md`) mit eigener Anforderungs-/Entscheidungssystematik (AR-IDs).
 
 ### 7.5 Signierung & Verteilung (Eigennutzung)
 Gratis-Weg über ein Personal Team (Apple-ID, „Automatically manage signing" in Xcode). Installation einmalig per USB-Kabel aus Xcode; danach kabellose Nutzung (die BLE-Verbindung App↔Rücklicht ist unabhängig vom Installationsweg). Das Provisioning-Profil läuft nach 7 Tagen ab → erneutes Deploy aus Xcode nötig. **Kein** Apple Developer Program (99 $/Jahr), **kein** App Store Connect, **kein** TestFlight erforderlich. TestFlight (90-Tage-Laufzeit, drahtlose Verteilung) wäre nur relevant, falls die App später an Dritte verteilt werden soll — hier nur als Option vermerkt, nicht als aktueller Bedarf.
 
 ### 7.6 Stand
-Noch nicht begonnen — eigener Arbeitsblock nach M5 Teil C2 (Firmware-BLE-Transport, s. `docs/roadmap.md`). Voraussetzungen: aktuelles Xcode (26.3+) mit Claude-Assistent eingerichtet; physisches iPhone zum Testen (Core Bluetooth erfordert reale Hardware — der iOS-Simulator unterstützt kein BLE).
+**In fortgeschrittener Umsetzung (Phase 6).** Die native SwiftUI-App (Deployment iOS 26) wurde entlang eigener Phasen entwickelt (Anforderungsanalyse → Informationsarchitektur → UX → Softwarearchitektur → Projektstruktur → Implementierung; Details und App-SSOT in der **App Bible**, `claude/app_bible.md`). Umgesetzt und getestet gegen eine simulierte Telemetriequelle (`MockTelemetrySource`, echte 80-Byte-Frames @ 10 Hz — kein Gerät nötig): Live-Cockpit (Start = Tap / Stopp = Halten), Fahrtaufzeichnung (1-Hz-Verdichtung) mit SwiftData-Persistenz über einen Hintergrund-`ModelActor`, Verlaufsliste (Wisch-Löschen), Fahrt-Detail (Statistik + Höhen-/Geschwindigkeitsdiagramm über Distanz via Swift Charts + Route via MapKit), Liquid-Glass-Chrome (nur Steuerelemente/Statuszeile), System-/Sensorwarnungen + Stale-Abdimmung sowie Absturz-Recovery (AR-DATA-04: Abschließen / Verwerfen / Weiter fahren). Reine, UI-freie Logik liegt host-getestet im lokalen Swift-Package `SmartBikeCore`.
+**Offen (App):** Tausch `MockTelemetrySource` → echte `BLEConnectionService` (Core Bluetooth) und End-to-End-Verifikation gegen die reale Firmware am **physischen iPhone** (Core Bluetooth erfordert reale Hardware — kein BLE im Simulator); danach Cockpit-Personalisierung (`DashboardLayout`-Editor) und Verlaufs-Gesamtübersicht. Voraussetzungen erfüllt: Xcode (26.3+) mit Claude-Assistent eingerichtet, Firmware-BLE-Transport am realen Gerät validiert (Kap. 6.5).
 
 ---
 
@@ -487,7 +495,7 @@ Nicht begonnen. Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/War
 | GPS L86 – NMEA/UART | ✅ Daten fließen |
 | GPS-Fix | ⏳ noch nicht erreicht |
 | PlatformIO-Umgebung (Build + Host-Tests) | ✅ eingerichtet (Core 3.3.11; ESP32-Build grün) |
-| Host-Unit-Tests (native, Unity) | ✅ 38/38 grün |
+| Host-Unit-Tests (native, Unity) | ✅ 75/75 grün |
 | R1-Lebenszyklus (`lifecycle_fsm`) | ✅ HW-validiert (RUN erreicht, `degraded=0`) |
 | R2-Zustandslogik + Bremskennlinie (`tail_light_fsm`, `brake_curve`) | ✅ HW-validiert |
 | Bremslicht-Kennlinie (FR-TL-06) inkl. Feldkalibrierung der Schwellwerte | ❌ offen (Feld) |
@@ -495,9 +503,9 @@ Nicht begonnen. Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/War
 | Bremslicht-Reaktionszeit ≤ 50 ms (NFR-RT-01) | ❌ offen — Messung |
 | Loop-Zykluszeit < 10 ms & RAM-/CPU-Budget | ❌ offen — Messung |
 | Energiebilanz/Laufzeit unter realen Lastfällen | ❌ offen — Messung |
-| I²C-Bus-Recovery | ❌ offen |
-| Watchdog-Reset | ❌ offen |
-| Brown-Out unter realer LED-Lastspitze | ❌ offen |
+| I²C-Bus-Recovery | ✅ am Board per SDA-Kurzschluss-Fehlerinjektion verifiziert (`imu_health`) |
+| Watchdog-Reset | ✅ am Board per 'H'-Hang-Hook verifiziert (Auto-Reset ~2 s, Reset-Grund erkannt) |
+| Brown-Out unter realer LED-Lastspitze | ❌ offen (Re-Test auf neuem Board empfohlen, s. Kap. 11) |
 | MOSFET mit realer LED-Last | ❌ noch nicht getestet |
 | Ladeinfrastruktur unter Last | ❌ nicht verifiziert |
 | Gehäuse | ❌ nicht begonnen |
@@ -562,6 +570,9 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 | BMP280 FORCED-Mode (Weather Monitoring ×1/×1/IIR aus) | geringes Rauschen @1 Hz, geringere Stromaufnahme, Bosch-Empfehlung | NORMAL-Dauerbetrieb ×16 |
 | Keine feste Temperatur-Korrektur in der Firmware | Offset noch nicht abschließend charakterisiert, umgebungs-/lastabhängig; Rohdaten-Integrität; verfälscht sonst Druckkompensation | fester Offset im Code |
 | Bremslicht nur bei Verzögerung in Fahrtrichtung (`MOTION_BRAKE_SIGN`, feldkalibriert) | Sprint/Beschleunigung darf kein Bremslicht auslösen; reale Einbaulage | \|a\| via `fabs()` (richtungsblind) |
+| **Board-Tausch auf Espressif ESP32-DevKitC-32E (WROOM-32E)** | BLE-Brownout-Bootloop bei `NimBLEDevice::init()` auf zehn systematischen Tests eingegrenzt; Root Cause = Regler des Altboards liefert die RF-Kalibrierungs-Transiente nicht (Details `docs/ble_brownout_fallstudie.md`); neues Board Referenz-Design, robusterer Regler, pin-kompatibel (38-Pin-DevKitC-Layout), kein Neuverkabeln nötig | Beim Altboard bleiben (Ursache nicht behebbar); WiFi statt BLE |
+| **Entkopplungskondensatoren (1000 µF an 3V3, 1000 µF an Vin) trotz Wirkungslosigkeit gegen den BLE-Brownout beibehalten** | verbessern allgemeine Versorgungsstabilität/Transienten-Robustheit (EMV, Lastspitzen); robustes Stromversorgungsdesign; weniger Rework-Risiko durch erneutes Auslöten | Kondensatoren wieder entfernen |
+| **WiFi statt BLE verworfen** | teilt sich denselben 2,4-GHz-Funk/dieselbe RF-Kalibrierung, zieht mehr Strom → gleiches/stärkeres Brownout-Risiko; widerspricht BLE-App-Architektur & NFR-PWR-01 (WiFi aus) | WiFi als Telemetrie-Transport |
 | Native iOS-App statt Web-App/PWA | Web Bluetooth auf iOS nicht unterstützt; Betreuer-Vorgabe; Firmware/BLE unverändert | PWA / Web Bluetooth |
 | Gratis-Signierung (Personal Team, 7 Tage) statt TestFlight | reine Eigennutzung, kein 99-$-Account nötig | TestFlight / Apple Developer Program |
 | iOS-App in Xcode mit eingebautem Claude | eine Toolchain (Code+Build+Vorschau+Deploy) | VS Code + Claude Code für iOS (kann iOS nicht bauen/rendern) |
@@ -578,17 +589,17 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 
 ### 11.2 Wichtig
 - **RF-Verifikationstest (FR-RF-03/04):** Wiederhol-Intervall der Fernbedienung messen → finaler Release-Timeout.
-- **Brown-Out unter LED-Lastspitzen:** Pufferkondensator am Vin / MT3608-Auslegung, Messpunkt Validierung.
+- **Brown-Out unter LED-Lastspitzen:** Pufferkondensator am Vin / MT3608-Auslegung, Messpunkt Validierung. Re-Test auf dem neuen Board (robusterer Regler) empfohlen — könnte den Fall bereits auflösen oder sauber isolieren.
 - **Schaltplan-Korrekturen:** RF GPIO34→GPIO4; GPIO25↔GPIO26; 3× 10-kΩ-Pull-Down; SW1; Entkopplungskondensatoren.
 - **BOM-Ergänzungen:** 10-kΩ-Pull-Down (3×), Drucktaster IP65 8 mm, Akku LP103454.
 - **RF-Empfänger-Bezeichnung:** BOM „PT2262" vs. real SRX882S vereinheitlichen.
-- **Geplante Härtung vor Thesis-Abgabe:** FR-SNS-04 (I²C-Recovery), FR-SNS-05 (Plausibilitätsprüfung), FR-SAF-03 (Watchdog) weiterhin offen — empirisch motiviert durch die Akkubetrieb-Freeze-Beobachtung (Kap. 9.2).
+- **Geplante Härtung vor Thesis-Abgabe:** FR-SNS-04 (I²C-Recovery), FR-SNS-05 (Plausibilitätsprüfung), FR-SAF-03 (Watchdog) am Board per Fehlerinjektion verifiziert; IMU-Plausibilitäts-/Recovery-Schwellen (`config.h`) noch als Erstschätzung, Feldverifikation offen.
 - **LED-Anordnung/Verdrahtung noch nicht festgelegt** → physische Blinker-L/R-Zuordnung (welche Taste welche LED-Seite ansteuert) erst danach validierbar; s. auch Kanalzuordnung Kap. 11.1.
 
 ### 11.3 Zu verifizieren / offen
 - **„HSD ESP32 IoT Base":** *obsolet seit v0.11* — bezog sich auf eine mögliche PWA-Basis; durch die Entscheidung für eine native iOS-App (Kap. 7/10) hinfällig.
-- **iOS-App noch nicht begonnen** — eigener Arbeitsblock nach M5 Teil C2 (Firmware-BLE-Transport), s. Kap. 7.6.
-- **Aktuelles Xcode (26.3+) + Claude-Assistent einrichten; physisches iPhone zum Testen** (Core Bluetooth erfordert reale Hardware, kein BLE im Simulator).
+- **iOS-App in fortgeschrittener Umsetzung (Phase 6)** — offen ist v. a. der Tausch `MockTelemetrySource` → echte `BLEConnectionService` (Core Bluetooth) und die End-to-End-Verifikation gegen die reale Firmware am physischen iPhone; danach Cockpit-Personalisierung + Verlaufs-Gesamtübersicht. Details App Bible, s. Kap. 7.6.
+- **Physisches iPhone zum Testen** (Core Bluetooth erfordert reale Hardware, kein BLE im Simulator). Xcode (26.3+) + Claude-Assistent bereits eingerichtet.
 - **Apple Developer Program / TestFlight** nur relevant bei späterer externer Verteilung der App (Eigennutzung kommt ohne aus, s. Kap. 7.5).
 - **Fehlende Nachweise:** Lichtstärke (cd) § 67, Messprotokolle, Feld-Kalibrierdaten Bremsschwelle.
 - **BMP280-Temperatur im eingeschwungenen Zustand erneut messen** (FORCED-Mode-Wirkung verifizieren, s. Kap. 9.1); danach ggf. app-/konfigseitige Kalibrierung, nur auf die ausgegebene, nie die kompensationsrelevante Temperatur.
@@ -604,7 +615,7 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 | Stromreduktion vs. § 67-Mindestlichtstärke | ggf. nicht zulassungsfähig | photometrische Prüfung nach Klärung Kanalzuordnung |
 | FR-TL-07 verstößt gegen § 67 Abs. 4 | im Auslieferzustand unzulässig | standardmäßig deaktiviert, dokumentiert |
 | RF-Halte-Erkennung nicht realisierbar | Warnblinker nicht auslösbar | Verifikationstest; sonst Ersatz-Trigger / Future-Work |
-| Brown-Out unter Lastspitzen | ungewollter Neustart/Bootloop | **REALISIERT** (BLE-Start: reproduzierbarer Bootloop bei `NimBLEDevice::init()`, s. `docs/ble_brownout_fallstudie.md`). Root Cause: Spannungsregler des Altboards liefert die RF-Kalibrierungs-Transiente nicht (Pufferkondensatoren an 3V3 UND Vin sowie Software-Gegenmaßnahmen nachweislich wirkungslos). Gegenmaßnahme: Board-Tausch auf Espressif ESP32-DevKitC-32E (WROOM-32E) + Entkopplungskondensatoren bleiben verbaut. |
+| Brown-Out unter Lastspitzen | ungewollter Neustart/Bootloop | **REALISIERT** (BLE-Start: reproduzierbarer Bootloop bei `NimBLEDevice::init()`, s. `docs/ble_brownout_fallstudie.md`). Root Cause: Spannungsregler des Altboards liefert die RF-Kalibrierungs-Transiente nicht (Pufferkondensatoren an 3V3 UND Vin sowie Software-Gegenmaßnahmen nachweislich wirkungslos). **Gelöst durch Board-Tausch** auf Espressif ESP32-DevKitC-32E (WROOM-32E), am realen System validiert; Entkopplungskondensatoren bleiben verbaut. |
 | Kein Tiefentlade-/Unterspannungsschutz über DW01 hinaus | Akkuschädigung | systemseitigen Schutz bewerten |
 | Keine Sicherung/Strombegrenzung 5 V-/Akkuseite | Kurzschlussrisiko | Sicherungskonzept |
 | Firmware-Hang | Systemausfall | Task-Watchdog (~2 s), Auto-Reset |
@@ -633,6 +644,7 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 | HDOP | Horizontal Dilution of Precision |
 | IMU | Inertial Measurement Unit |
 | MVP | Minimum Viable Product |
+| NimBLE | schlanker BLE-Stack (NimBLE-Arduino), genutzt für den Telemetrie-Transport (M5 Teil C2) |
 | NMEA | GNSS-Datenprotokoll |
 | NVS | Non-Volatile Storage (ESP32-Schlüssel-Wert-Speicher, `Preferences`) |
 | OTA | Over-the-Air (drahtloses Firmware-Update) |

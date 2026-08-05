@@ -89,6 +89,11 @@ static drivers::BaroSample lastBaroSample{};
 static bool lastBaroValid = false;
 static drivers::GnssData lastGnssData{};
 static logic::GnssFixStatus lastGnssFix = logic::GnssFixStatus::NO_DATA;
+// Tatsaechlich kommandierte Ruecklicht-Duty (derselbe Wert wie an
+// drivers::setDutyPercent() uebergeben) -- im Gegensatz zu lastDecelMs2
+// bereits durch tail_light_fsm gegatet, s. telemetry_frame.h Feld-Kommentar
+// zu brake_light_pct.
+static uint8_t lastBrakeLightPct = 0;
 
 // RAM-Ringpuffer (FR-TEL-04, NFR-RES-01) fuer Frames ohne BLE-Verbindung
 // bzw. als Reconnect-Backfill-Quelle (s. taskTelemetry()).
@@ -162,6 +167,7 @@ static void taskLifecycleAndTailLight() {
       (healthy_this_cycle && health.escalation_trusted) ? decel_ms2 : 0.0f;
   const logic::TailLightOutput tl = tailLightFsm.update(tail_input, sys.state, now);
   drivers::setDutyPercent(PIN_BRAKE_LIGHT, tl.duty_pct);
+  lastBrakeLightPct = tl.duty_pct;  // fuer Telemetrie, s. Kommentar bei der Deklaration
   lastSystemState = sys.state;  // fuer FR-BLK-09-Gating in taskBlinker()
 
   // TODO(temp debug): entfernen, sobald Telemetrie (M5) den Zustand ausgibt.
@@ -289,6 +295,7 @@ static void taskTelemetry() {
   frame.baro_valid = lastBaroValid;
   frame.gnss_fix_status = static_cast<uint8_t>(lastGnssFix);
   frame.watchdog_recovered = bootRecoveredFromWatchdog;
+  frame.brake_light_pct = lastBrakeLightPct;
 
   uint8_t bytes[logic::TELEMETRY_FRAME_SIZE];
   logic::telemetryFrameSerialize(frame, bytes);

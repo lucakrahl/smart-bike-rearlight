@@ -26,7 +26,7 @@ float readF32(const uint8_t* buf, size_t offset) {
 }  // namespace
 
 void test_frame_size_matches_documented_layout() {
-  TEST_ASSERT_EQUAL_UINT32(80, (uint32_t)TELEMETRY_FRAME_SIZE);
+  TEST_ASSERT_EQUAL_UINT32(81, (uint32_t)TELEMETRY_FRAME_SIZE);
 }
 
 void test_version_field_at_offset_0() {
@@ -137,6 +137,27 @@ void test_status_fields_round_trip_including_edge_values() {
   TEST_ASSERT_EQUAL_UINT8(1, buf[79]);
 }
 
+void test_brake_light_pct_field_round_trip_and_offset() {
+  TelemetryFrame frame;
+  frame.brake_light_pct = 73;
+  uint8_t buf[TELEMETRY_FRAME_SIZE];
+  telemetryFrameSerialize(frame, buf);
+  TEST_ASSERT_EQUAL_UINT8(73, buf[80]);
+}
+
+void test_brake_light_pct_edge_values() {
+  TelemetryFrame frame;
+  uint8_t buf[TELEMETRY_FRAME_SIZE];
+
+  frame.brake_light_pct = 0;
+  telemetryFrameSerialize(frame, buf);
+  TEST_ASSERT_EQUAL_UINT8(0, buf[80]);
+
+  frame.brake_light_pct = 100;
+  telemetryFrameSerialize(frame, buf);
+  TEST_ASSERT_EQUAL_UINT8(100, buf[80]);
+}
+
 int main(int, char**) {
   UNITY_BEGIN();
   RUN_TEST(test_frame_size_matches_documented_layout);
@@ -147,5 +168,7 @@ int main(int, char**) {
   RUN_TEST(test_gnss_float_fields_round_trip);
   RUN_TEST(test_gnss_utc_fields_round_trip);
   RUN_TEST(test_status_fields_round_trip_including_edge_values);
+  RUN_TEST(test_brake_light_pct_field_round_trip_and_offset);
+  RUN_TEST(test_brake_light_pct_edge_values);
   return UNITY_END();
 }

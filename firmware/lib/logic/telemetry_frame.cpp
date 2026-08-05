@@ -67,6 +67,8 @@ void telemetryFrameSerialize(const TelemetryFrame& frame, uint8_t* out) {
   o = writeU8(out, o, frame.gnss_fix_status);
   o = writeU8(out, o, frame.watchdog_recovered ? 1 : 0);
 
+  o = writeU8(out, o, frame.brake_light_pct);
+
   (void)o;  // == TELEMETRY_FRAME_SIZE, s. test_telemetry_frame Sanity-Test
 }
 

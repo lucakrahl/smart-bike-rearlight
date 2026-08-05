@@ -9,7 +9,7 @@ pioarduino, Arduino-ESP32-Core 3.3.11. R1 (`lifecycle_fsm`), R2
 (`imu_driver`+`motion_filter`+`imu_health`, `bmp280_driver`,
 `gnss_driver`+`gnss_fix`, `ble_telemetry`) sind in `main.cpp` verdrahtet.
 BLE läuft im Normalbetrieb mit (kein Feature-Flag mehr, Isolations-Scaffold
-entfernt). Baut grün auf PC (`pio test -e native`, 75/75) und ESP32
+entfernt). Baut grün auf PC (`pio test -e native`, 77/77) und ESP32
 (`pio run -e esp32dev`).
 
 **Aktueller Fokus:** Firmware-Implementierung nach SRS fortsetzen.
@@ -20,7 +20,26 @@ BLE-Verbindung (CoreBluetooth statt `MockTelemetrySource`) verifizieren;
 danach Rest-Firmware (M6 Konfiguration/NVS, M7 Integration/Messungen)
 fortsetzen.
 
-**Zuletzt erledigt:** M5 Teil C2 — BLE-Transport (`ble_telemetry`, NimBLE-
+**Zuletzt erledigt:** Telemetrie-Frame um `brake_light_pct` (Offset 80,
+uint8, 0..100) erweitert — die tatsächlich von `tail_light_fsm` kommandierte
+Rücklicht-Duty, derselbe Wert wie an `drivers::setDutyPercent()` übergeben.
+Ergänzt `brake_decel_ms2` (roher `motion_filter`-Eingang, unverändert bei
+Offset 30) um den zugehörigen Ausgang, damit App/Auswertung Eingang vs.
+Ausgang der Bremskennlinie vergleichen können (FR-TL-06-Validierung).
+Frame 80→81 Byte, `TELEMETRY_SCHEMA_VERSION` 1→2 (FR-TEL-06). Zwei neue
+Host-Tests (`test_brake_light_pct_field_round_trip_and_offset`,
+`test_brake_light_pct_edge_values`); `pio test -e native` 77/77, `pio run -e
+esp32dev` grün (RAM 26,7 %/87.456 B, Flash 21,4 %/672.991 B — Delta nur der
+zusätzliche Byte × `RINGBUFFER_FRAMES`). `docs/project_bible.md` (0.13→0.14,
+Kap. 7.2/7.6 „80-Byte" → „81-Byte", MTU-Mindestwert 83→84) und
+`docs/ble_brownout_fallstudie.md` (dieselbe Zahlenkorrektur) nachgezogen.
+`ios-app/SmartBikeRearLight/CLAUDE.md` (BLE-Vertrag, Zeile 17) auf 81 Byte/
+Schema v2/`brake_light_pct`@80 aktualisiert — bewusst nur die
+Vertragsbeschreibung; `TelemetryFrame.swift`/`TelemetryFrameDecoder.swift`
++ deren Tests unverändert gelassen (separater iOS-Task, liest weiterhin nur
+die ersten 80 Byte, ignoriert das neue Feld kommentarlos).
+
+Davor: M5 Teil C2 — BLE-Transport (`ble_telemetry`, NimBLE-
 Arduino 2.5.0, FR-TEL-01, FR-SYS-04) implementiert, in `main.cpp` verdrahtet
 (Frame + Ringpuffer aus Teil C1 an `taskTelemetry()` angeschlossen,
 Reconnect-Backfill), committet (`bd1f3ab`). Ursprünglich Hardware-blockiert

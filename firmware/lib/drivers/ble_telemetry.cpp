@@ -20,8 +20,8 @@ NimBLECharacteristic* g_pTelemetryChar = nullptr;
 volatile bool     g_connected = false;
 volatile uint16_t g_negotiatedMtu = 23;  // BLE-ATT-Default vor jeder Aushandlung
 
-// Mindest-MTU, damit ein 80-Byte-Frame in eine einzige Notification passt
-// (Frame + 3 Byte ATT-Opcode/Handle-Overhead).
+// Mindest-MTU, damit ein Frame (TELEMETRY_FRAME_SIZE) in eine einzige
+// Notification passt (Frame + 3 Byte ATT-Opcode/Handle-Overhead).
 constexpr uint16_t kMinMtuForFrame = logic::TELEMETRY_FRAME_SIZE + 3;
 
 class ServerCallbacks : public NimBLEServerCallbacks {
@@ -49,7 +49,7 @@ class ServerCallbacks : public NimBLEServerCallbacks {
       Serial.printf("[BLE] MTU ausgehandelt=%u (Nutzlast<=%u)\n", mtu, mtu > 3 ? mtu - 3 : 0);
       if (mtu < kMinMtuForFrame) {
         Serial.printf(
-            "[BLE][WARN] MTU %u < benoetigte %u fuer 80-Byte-Frame in einer "
+            "[BLE][WARN] MTU %u < benoetigte %u fuer ein Frame in einer "
             "Notification -- s. open_issues.md\n",
             mtu, kMinMtuForFrame);
       }
