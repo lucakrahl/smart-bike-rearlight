@@ -1,9 +1,10 @@
 import Foundation
 
-/// Dekodiertes 80-Byte-Telemetrie-Frame (App Bible Kap. 10). Reiner Werttyp.
+/// Dekodiertes Telemetrie-Frame, BLE-Schema v2 (81 Byte, App Bible Kap. 10). Reiner Werttyp.
 public struct TelemetryFrame: Sendable, Equatable {
-    public static let byteCount = 80
-    public static let schemaVersion: UInt16 = 1
+    /// Mindest-/Sollgröße des Frames. Überzählige Bytes werden vom Decoder ignoriert.
+    public static let byteCount = 81
+    public static let schemaVersion: UInt16 = 2
 
     public var version: UInt16
     public var timestampMs: UInt32
@@ -27,6 +28,9 @@ public struct TelemetryFrame: Sendable, Equatable {
     public var baroValid: Bool
     public var gnssFix: GnssFixStatus
     public var watchdogRecovered: Bool
+    /// v2 (Offset 80): tatsächlich kommandierte Rücklicht-Duty in Prozent (0…100),
+    /// Gegenstück zum rohen `brakeDecel` (Offset 30).
+    public var brakeLightPct: UInt8
 
     public init(version: UInt16, timestampMs: UInt32,
                 accelX: Float, accelY: Float, accelZ: Float,
@@ -36,7 +40,8 @@ public struct TelemetryFrame: Sendable, Equatable {
                 sats: UInt8, hdop: Float,
                 utcYear: UInt16, utcMonth: UInt8, utcDay: UInt8, utcHour: UInt8, utcMinute: UInt8, utcSecond: UInt8,
                 systemState: SystemState, initDegraded: Bool, imuHealth: ImuHealthState,
-                baroValid: Bool, gnssFix: GnssFixStatus, watchdogRecovered: Bool) {
+                baroValid: Bool, gnssFix: GnssFixStatus, watchdogRecovered: Bool,
+                brakeLightPct: UInt8 = 0) {
         self.version = version; self.timestampMs = timestampMs
         self.accelX = accelX; self.accelY = accelY; self.accelZ = accelZ
         self.gyroX = gyroX; self.gyroY = gyroY; self.gyroZ = gyroZ; self.brakeDecel = brakeDecel
@@ -47,5 +52,6 @@ public struct TelemetryFrame: Sendable, Equatable {
         self.utcHour = utcHour; self.utcMinute = utcMinute; self.utcSecond = utcSecond
         self.systemState = systemState; self.initDegraded = initDegraded; self.imuHealth = imuHealth
         self.baroValid = baroValid; self.gnssFix = gnssFix; self.watchdogRecovered = watchdogRecovered
+        self.brakeLightPct = brakeLightPct
     }
 }

@@ -4,26 +4,33 @@ import MapKit
 import SmartBikeCore
 
 /// Fahrt-Detail (App Bible 6.5, AR-STAT-02/AR-VIS-*). Kennzahlen + Höhenprofil +
-/// Geschwindigkeit (Swift Charts, X = Distanz) + Routenkarte (MapKit, Should).
+/// Geschwindigkeit (Swift Charts, X = Distanz) + Routenkarte (MapKit). Serien/Route
+/// werden off-main aufgebaut (flüssiges Öffnen); höhenlose Punkte sind gefiltert.
 struct RideDetailView: View {
     @Environment(AppEnvironment.self) private var env
     @Environment(\.dismiss) private var dismiss
     let rideId: UUID
     @State private var vm: RideDetailViewModel?
 
-    /// Ab so vielen Fix-Punkten lohnt sich die Routenanzeige.
     private static let minRoutePoints = 2
 
     var body: some View {
         ScrollView {
-            if let detail = vm?.detail {
-                content(detail)
+            if let presentation = vm?.presentation {
+                content(presentation)
             } else {
-                ProgressView().padding(.top, 80)
+                ProgressView("Lädt…").padding(.top, 80)
             }
         }
         .navigationTitle("Fahrt")
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if let url = vm?.exportURL {
+                ToolbarItem(placement: .topBarTrailing) {
+                    ShareLink(item: url) { Label("Exportieren", systemImage: "square.and.arrow.up") }
+                }
+            }
+        }
         .task {
             if vm == nil { vm = RideDetailViewModel(rideId: rideId, repository: env.repository) }
             await vm?.load()
@@ -31,23 +38,26 @@ struct RideDetailView: View {
     }
 
     @ViewBuilder
-    private func content(_ detail: RideDetail) -> some View {
-        let plot = Self.plotPoints(for: detail.points)
-        let maxDist = max(plot.last?.distanceKm ?? 0, 0.001)
+    private func content(_ p: RideDetailPresentation) -> some View {
         VStack(spacing: Theme.Spacing.unit * 2) {
-            header(detail)
-            statsGrid(detail.statistics)
+            header(p)
+            statsGrid(p.statistics)
 
-            if plot.count >= 2 {
+            if p.chart.count >= 2 {
                 ChartCard(title: "Höhenprofil", unit: "m · über Distanz") {
-                    altitudeChart(plot, maxDist: maxDist)
+                    altitudeChart(p)
                 }
                 ChartCard(title: "Geschwindigkeit", unit: "km/h · über Distanz") {
-                    speedChart(plot, maxDist: maxDist)
+                    speedChart(p)
+                }
+            }
+            if p.brake.count >= 2 {
+                ChartCard(title: "Bremslicht-Validierung", unit: "m/s² · % über Zeit") {
+                    brakeChart(p)
                 }
             }
 
-            routeCard(detail.points)
+            routeCard(p.route)
             deleteButton
         }
         .padding()
@@ -55,11 +65,11 @@ struct RideDetailView: View {
 
     // MARK: - Kopf & Kennzahlen
 
-    private func header(_ detail: RideDetail) -> some View {
+    private func header(_ p: RideDetailPresentation) -> some View {
         VStack(alignment: .leading, spacing: 2) {
-            Text(detail.startedAt, format: .dateTime.weekday(.wide).day().month(.wide).year())
+            Text(p.startedAt, format: .dateTime.weekday(.wide).day().month(.wide).year())
                 .font(.headline)
-            Text(detail.startedAt, format: .dateTime.hour().minute())
+            Text(p.startedAt, format: .dateTime.hour().minute())
                 .font(.subheadline).foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -86,43 +96,85 @@ struct RideDetailView: View {
 
     // MARK: - Diagramme (gleiche X-Achse = Distanz)
 
-    private func altitudeChart(_ plot: [PlotPoint], maxDist: Double) -> some View {
-        let alts = plot.map(\.altitudeM)
-        let lo = (alts.min() ?? 0) - 3
-        let hi = (alts.max() ?? 0) + 3
-        return Chart(plot) { p in
-            AreaMark(x: .value("Distanz (km)", p.distanceKm),
-                     y: .value("Höhe (m)", p.altitudeM))
+    private struct AltPoint: Identifiable { let id: Int; let distanceKm: Double; let altitudeM: Double }
+
+    private func altitudeChart(_ p: RideDetailPresentation) -> some View {
+        // Höhenlose Punkte filtern → keine Ausreißer-Balken.
+        let alt = p.chart.compactMap { c in c.altitudeM.map { AltPoint(id: c.id, distanceKm: c.distanceKm, altitudeM: $0) } }
+        let domain = p.altitudeDomain ?? 0...1
+        return Chart(alt) { point in
+            AreaMark(x: .value("Distanz (km)", point.distanceKm),
+                     y: .value("Höhe (m)", point.altitudeM))
                 .foregroundStyle(Theme.Chart.altitude.opacity(0.22))
-            LineMark(x: .value("Distanz (km)", p.distanceKm),
-                     y: .value("Höhe (m)", p.altitudeM))
+            LineMark(x: .value("Distanz (km)", point.distanceKm),
+                     y: .value("Höhe (m)", point.altitudeM))
                 .foregroundStyle(Theme.Chart.altitude)
         }
-        .chartXScale(domain: 0...maxDist)
-        .chartYScale(domain: lo...hi)
+        .chartXScale(domain: 0...p.maxDistanceKm)
+        .chartYScale(domain: domain)                 // Y-Bereich an reale Höhen gebunden
         .frame(height: 160)
-        .clipped()   // Flächenfüllung endet exakt am unteren Diagrammrand
+        .clipped()                                   // Fläche endet am unteren Diagrammrand
     }
 
-    private func speedChart(_ plot: [PlotPoint], maxDist: Double) -> some View {
-        Chart(plot) { p in
-            LineMark(x: .value("Distanz (km)", p.distanceKm),
-                     y: .value("km/h", p.speedKmph))
-                .foregroundStyle(Color.accentColor)                 // Geschwindigkeit = Cyan
+    private func speedChart(_ p: RideDetailPresentation) -> some View {
+        Chart(p.chart) { point in
+            LineMark(x: .value("Distanz (km)", point.distanceKm),
+                     y: .value("km/h", point.speedKmph))
+                .foregroundStyle(Color.accentColor)   // Geschwindigkeit = Cyan
                 .interpolationMethod(.catmullRom)
         }
-        .chartXScale(domain: 0...maxDist)
+        .chartXScale(domain: 0...p.maxDistanceKm)
         .frame(height: 160)
+        .clipped()
+    }
+
+    // Doppelachse: Verzögerung (m/s², links) + Bremslicht (%, rechts) über die Zeit.
+    // Erwartete Korrelation: Verzögerung ↑ ⇒ Lichtintensität ↑. IMU-Fehler (≠ .ok) sind
+    // dezent markiert — dort zeigt das Rücklicht Fail-Safe-Schlusslicht, keine „keine Reaktion".
+    private func brakeChart(_ p: RideDetailPresentation) -> some View {
+        let maxDecel = p.maxDecel
+        let decelName = "Verzögerung (m/s²)"
+        let pctName = "Bremslicht (%)"
+        let pctTicks: [Double] = [0, 25, 50, 75, 100]
+        return Chart {
+            ForEach(p.brake) { b in
+                LineMark(x: .value("Zeit (s)", b.t), y: .value("Wert", b.decel),
+                         series: .value("Serie", decelName))
+                    .foregroundStyle(by: .value("Serie", decelName))
+                // Bremslicht-% in den Verzögerungs-Wertebereich skaliert (gemeinsame Y-Achse).
+                LineMark(x: .value("Zeit (s)", b.t), y: .value("Wert", b.pct / 100 * maxDecel),
+                         series: .value("Serie", pctName))
+                    .foregroundStyle(by: .value("Serie", pctName))
+            }
+            ForEach(p.brake.filter { !$0.imuHealthy }) { b in
+                PointMark(x: .value("Zeit (s)", b.t), y: .value("Wert", b.decel))
+                    .symbolSize(28)
+                    .foregroundStyle(.secondary)
+            }
+        }
+        .chartForegroundStyleScale([decelName: Theme.Semantic.warning, pctName: Color.accentColor])
+        .chartYScale(domain: 0...maxDecel)
+        .chartYAxis {
+            AxisMarks(position: .leading)                       // m/s²
+            AxisMarks(position: .trailing, values: pctTicks.map { $0 / 100 * maxDecel }) { mark in
+                AxisGridLine()
+                AxisTick()
+                AxisValueLabel {
+                    if let v = mark.as(Double.self) {
+                        Text("\(Int((v / maxDecel * 100).rounded()))%")
+                    }
+                }
+            }
+        }
+        .frame(height: 180)
         .clipped()
     }
 
     // MARK: - Route
 
     @ViewBuilder
-    private func routeCard(_ points: [TrackPoint]) -> some View {
-        let coords = points
-            .filter { $0.gnssFix == .fixOK }
-            .map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon) }
+    private func routeCard(_ route: [RoutePoint]) -> some View {
+        let coords = route.map { CLLocationCoordinate2D(latitude: $0.lat, longitude: $0.lon) }
         if coords.count >= Self.minRoutePoints, let region = Self.region(for: coords) {
             VStack(alignment: .leading, spacing: Theme.Spacing.unit) {
                 Text("Route").font(.headline)
@@ -132,7 +184,7 @@ struct RideDetailView: View {
                 }
                 .frame(height: 240)
                 .clipShape(RoundedRectangle(cornerRadius: Theme.tileCornerRadius))
-                .allowsHitTesting(false)   // im Detail nur Vorschau, kein Panning im ScrollView
+                .allowsHitTesting(false)   // im Detail nur Vorschau
             }
         }
     }
@@ -150,22 +202,6 @@ struct RideDetailView: View {
     }
 
     // MARK: - Reine Helfer
-
-    struct PlotPoint: Identifiable {
-        let id: Int
-        let distanceKm: Double
-        let altitudeM: Double
-        let speedKmph: Double
-    }
-
-    /// Verknüpft jeden Punkt mit seiner kumulierten Distanz (SmartBikeCore).
-    static func plotPoints(for points: [TrackPoint]) -> [PlotPoint] {
-        let cum = StatisticsEngine().cumulativeDistanceKm(for: points)
-        return points.indices.map { i in
-            PlotPoint(id: i, distanceKm: cum[i],
-                      altitudeM: points[i].altitudeM, speedKmph: points[i].speedKmph)
-        }
-    }
 
     static func region(for coords: [CLLocationCoordinate2D]) -> MKCoordinateRegion? {
         guard !coords.isEmpty else { return nil }

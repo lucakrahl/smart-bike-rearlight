@@ -12,7 +12,8 @@ import SwiftData
     var status: String            // "recording" | "finished"
     // eingebettete Statistik
     var distanceKm: Double
-    var duration: Double
+    var duration: Double        // bewegte Fahrzeit
+    var totalDuration: Double?  // reine Gesamt-Aufzeichnungszeit (additiv)
     var avgSpeedKmph: Double
     var maxSpeedKmph: Double
     var ascentM: Double
@@ -24,7 +25,7 @@ import SwiftData
 
     init(id: UUID = UUID(), startedAt: Date, status: String = "recording") {
         self.id = id; self.startedAt = startedAt; self.status = status
-        self.endedAt = nil; self.distanceKm = 0; self.duration = 0
+        self.endedAt = nil; self.distanceKm = 0; self.duration = 0; self.totalDuration = nil
         self.avgSpeedKmph = 0; self.maxSpeedKmph = 0; self.ascentM = 0; self.descentM = 0
         self.minAltitudeM = 0; self.maxAltitudeM = 0; self.samples = []
     }
@@ -34,19 +35,44 @@ import SwiftData
     var t: Double
     var lat: Double
     var lon: Double
-    var altitudeM: Double
+    /// Effektive Höhe (baro bevorzugt); `nil` = höhenlos (kein Baro, kein gültiger Fix).
+    var altitudeM: Double?
     var speedKmph: Double
     var courseDeg: Double
     var sats: Int
     var hdop: Double
     var gnssFix: Int
+    /// Bremslicht-Validierung (v2) + IMU-Gesundheit (Fail-Safe-Kennzeichnung).
+    var brakeDecelMs2: Double?
+    var brakeLightPct: Int?
+    var imuHealth: Int?
+    /// Rohwerte fürs Nachvollziehen: Luftdruck (Baro-Quelle) + GNSS-Höhe als Referenz.
+    var pressurePa: Double?
+    var gnssAltitudeM: Double?
+    /// Weitere Rohfelder (Validierung/Export). `deviceTimestampMs`/`systemState`/`frameVersion`
+    /// als Int gespeichert (SwiftData-freundlich); Mapping in `SwiftDataStore`.
+    var deviceTimestampMs: Int?
+    var baroValid: Bool?
+    var systemState: Int?
+    var initDegraded: Bool?
+    var watchdogRecovered: Bool?
+    var frameVersion: Int?
     var ride: RideEntity?
 
-    init(t: Double, lat: Double, lon: Double, altitudeM: Double, speedKmph: Double,
-         courseDeg: Double, sats: Int, hdop: Double, gnssFix: Int) {
+    init(t: Double, lat: Double, lon: Double, altitudeM: Double?, speedKmph: Double,
+         courseDeg: Double, sats: Int, hdop: Double, gnssFix: Int,
+         brakeDecelMs2: Double? = nil, brakeLightPct: Int? = nil, imuHealth: Int? = nil,
+         pressurePa: Double? = nil, gnssAltitudeM: Double? = nil,
+         deviceTimestampMs: Int? = nil, baroValid: Bool? = nil, systemState: Int? = nil,
+         initDegraded: Bool? = nil, watchdogRecovered: Bool? = nil, frameVersion: Int? = nil) {
         self.t = t; self.lat = lat; self.lon = lon; self.altitudeM = altitudeM
         self.speedKmph = speedKmph; self.courseDeg = courseDeg; self.sats = sats
         self.hdop = hdop; self.gnssFix = gnssFix
+        self.brakeDecelMs2 = brakeDecelMs2; self.brakeLightPct = brakeLightPct; self.imuHealth = imuHealth
+        self.pressurePa = pressurePa; self.gnssAltitudeM = gnssAltitudeM
+        self.deviceTimestampMs = deviceTimestampMs; self.baroValid = baroValid
+        self.systemState = systemState; self.initDegraded = initDegraded
+        self.watchdogRecovered = watchdogRecovered; self.frameVersion = frameVersion
     }
 }
 

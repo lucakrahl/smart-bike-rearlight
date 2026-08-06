@@ -75,11 +75,26 @@ actor MockTelemetrySource: TelemetrySource {
         writeF32(Float(51.2277 + sin(angle) * 0.006), at: 42)          // lat (Offset 42)
         writeF32(Float(6.7735 + (1 - cos(angle)) * 0.009), at: 46)     // lon (Offset 46)
 
-        // Höhe sanft um ~200 m (±15 m, Periode ~31 s) für ein sichtbares Höhenprofil.
-        writeF32(Float(200 + sin(tick * 0.02) * 15), at: 58)           // altitude_m (Offset 58)
+        // Höhe wird in der App barometrisch aus pressure_pa berechnet (nicht mehr aus
+        // altitude_m). Druck so wählen, dass sich ~200 m ±15 m ergeben; Formel invers:
+        // p = p0 · (1 − h/44330)^5.255.
+        let targetAltitude = 200.0 + sin(tick * 0.02) * 15.0
+        let pressure = 101_325.0 * pow(1.0 - targetAltitude / 44_330.0, 5.255)
+        writeF32(Float(pressure), at: 34)               // pressure_pa (Offset 34)
+        writeF32(Float(targetAltitude), at: 58)         // altitude_m (GNSS-Referenz, Offset 58)
+        bytes[77] = 1                                   // baro_valid = 1 (Offset 77)
 
         bytes[62] = 9                                   // sats = 9 (Offset 62)
         bytes[78] = GnssFixStatus.fixOK.rawValue        // gnss_fix = 2 (Offset 78)
+
+        // Bremsen: pulsierende Verzögerung (nur positive Phasen), daraus die kommandierte
+        // Rücklicht-Duty über die Bremskennlinie 20 %→100 % (v2, Offsets 30 + 80).
+        let brakeDecel = Float(max(0.0, -cos(tick * 0.05) * 3.0))     // 0…3 m/s²
+        writeF32(brakeDecel, at: 30)                    // brake_decel_ms2 (Offset 30)
+        let brakeLightPct: UInt8 = brakeDecel <= 0.2
+            ? 0
+            : UInt8(min(100.0, 20.0 + Double(brakeDecel) / 3.0 * 80.0))
+        bytes[80] = brakeLightPct                       // brake_light_pct (Offset 80)
 
         return Data(bytes)
     }

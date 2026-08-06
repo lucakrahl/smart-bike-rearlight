@@ -87,9 +87,22 @@
 		30764016301D224400E45188 /* GlassBackground.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GlassBackground.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		3076401B3020A6E400E45188 /* Exceptions for "SmartBikeRearLight" folder in "SmartBikeRearLight" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 304AF18D301C02A8001F8A01 /* SmartBikeRearLight */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		304AF190301C02A8001F8A01 /* SmartBikeRearLight */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				3076401B3020A6E400E45188 /* Exceptions for "SmartBikeRearLight" folder in "SmartBikeRearLight" target */,
+			);
 			path = SmartBikeRearLight;
 			sourceTree = "<group>";
 		};
@@ -621,6 +634,8 @@
 				DEVELOPMENT_TEAM = 432MQA9KQY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SmartBikeRearLight/Info.plist;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Verbindung zum Fahrrad-Rücklicht zur Anzeige und Aufzeichnung der Fahrdaten";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -653,6 +668,8 @@
 				DEVELOPMENT_TEAM = 432MQA9KQY;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SmartBikeRearLight/Info.plist;
+				INFOPLIST_KEY_NSBluetoothAlwaysUsageDescription = "Verbindung zum Fahrrad-Rücklicht zur Anzeige und Aufzeichnung der Fahrdaten";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;

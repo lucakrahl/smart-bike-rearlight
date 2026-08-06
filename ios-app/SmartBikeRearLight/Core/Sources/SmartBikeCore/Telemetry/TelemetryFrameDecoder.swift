@@ -1,11 +1,12 @@
 import Foundation
 
-/// Dekodiert das 80-Byte-Frame (Little-Endian, feste Offsets — App Bible Kap. 10).
-/// Rein & host-testbar (AR-CONN-04, AR-NFR-TST-01). Gibt nil zurück bei falscher
-/// Länge oder unbekannter Schema-Version (Vorwärtskompatibilität, FR-TEL-06).
+/// Dekodiert das 81-Byte-Frame (BLE-Schema v2, Little-Endian, feste Offsets — App Bible
+/// Kap. 10). Rein & host-testbar (AR-CONN-04, AR-NFR-TST-01). Akzeptiert Länge ≥ 81 und
+/// ignoriert überzählige Bytes (Vorwärtskompatibilität, FR-TEL-06); gibt nil zurück bei
+/// zu kurzer Länge oder unbekannter Schema-Version.
 public enum TelemetryFrameDecoder {
     public static func decode(_ data: Data) -> TelemetryFrame? {
-        guard data.count == TelemetryFrame.byteCount else { return nil }
+        guard data.count >= TelemetryFrame.byteCount else { return nil }
         return data.withUnsafeBytes { (raw: UnsafeRawBufferPointer) -> TelemetryFrame? in
             func u8(_ o: Int) -> UInt8 { raw.load(fromByteOffset: o, as: UInt8.self) }
             func u16(_ o: Int) -> UInt16 { UInt16(littleEndian: raw.loadUnaligned(fromByteOffset: o, as: UInt16.self)) }
@@ -32,7 +33,8 @@ public enum TelemetryFrameDecoder {
                 imuHealth: ImuHealthState(rawValue: u8(76)) ?? .ok,
                 baroValid: u8(77) != 0,
                 gnssFix: GnssFixStatus(rawValue: u8(78)) ?? .noData,
-                watchdogRecovered: u8(79) != 0
+                watchdogRecovered: u8(79) != 0,
+                brakeLightPct: u8(80)                       // v2 (Offset 80)
             )
         }
     }

@@ -10,21 +10,47 @@ final class TelemetryStore {
     private(set) var connection: ConnectionState = .disconnected
     private(set) var liveState: LiveDataState = .none          // AR-UX-05
     private(set) var snapshot: LiveSnapshot = .empty
+    /// GNSS-Fix des letzten Frames gültig? (Fix ok + Sats > 0). Für „kein Fix"-Anzeige.
+    private(set) var isGnssValid: Bool = false
+    /// Aus dem letzten Frame abgeleitete System-/Sensorwarnungen (AR-LIVE-03).
+    private(set) var lastWarnings: [LiveWarning] = []
+
+    /// Warnungen greifen nur bei frischer Verbindung (Stale/kein Fix sind separat behandelt).
+    var warnings: [LiveWarning] { liveState == .fresh ? lastWarnings : [] }
+
+    private var lastFrameAt: Date?
 
     /// Wird vom Decode-Consumer aufgerufen (10 Hz). Schreibt die Live-Momentaufnahme
     /// fort; Aufzeichnungs-Aggregate (Distanz/Zeit/Ø/Max) folgen über den RideManager.
     func apply(_ frame: TelemetryFrame) {
         latestFrame = frame
-        liveState = .fresh
+        lastFrameAt = Date()
+        isGnssValid = frame.isGnssValid
+        lastWarnings = SystemWarnings.derive(from: frame)
         var s = snapshot
         s.speedKmph = Double(frame.speedKmph)
-        s.altitudeM = Double(frame.altitudeM)
+        // Höhe barometrisch (Fallback GNSS bei gültigem Fix); für die Live-Anzeige 0, wenn höhenlos.
+        s.altitudeM = AltitudeResolver.altitude(baroValid: frame.baroValid,
+                                                pressurePa: Double(frame.pressurePa),
+                                                gnssValid: frame.isGnssValid,
+                                                gnssAltitudeM: Double(frame.altitudeM)) ?? 0
         s.courseDeg = Double(frame.courseDeg)
         s.sats = Int(frame.sats)
         s.hdop = Double(frame.hdop)
         s.isConnected = (connection == .connected)
         snapshot = s
+        evaluateFreshness(now: Date())
     }
-    func update(connection: ConnectionState) { self.connection = connection }
-    func markStale() { if liveState == .fresh { liveState = .stale } }   // AR-CONN-06
+
+    func update(connection: ConnectionState) {
+        self.connection = connection
+        evaluateFreshness(now: Date())
+    }
+
+    /// Datenaktualität aus Frame-Alter + Verbindung neu bestimmen (AR-UX-05). Wird
+    /// zusätzlich periodisch aufgerufen, damit „veraltet" auch ohne neue Frames greift.
+    func evaluateFreshness(now: Date) {
+        let age = lastFrameAt.map { now.timeIntervalSince($0) }
+        liveState = LiveDataEvaluator.liveDataState(frameAgeSeconds: age, connection: connection)
+    }
 }

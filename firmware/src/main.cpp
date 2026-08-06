@@ -349,6 +349,7 @@ static void taskConfigConsole() {
 }
 
 // ------------------------------------------------------------------------
+#ifndef BENCH_MODE
 void setup() {
   Serial.begin(115200);
   Serial.println(F("[boot] Smart Bike Rear Light — Firmware-Geruest"));
@@ -443,3 +444,125 @@ void loop() {
   // Optionaler CPU-Idle (NFR-PWR-01); haelt 100 Hz problemlos.
   delay(1);
 }
+
+#else  // BENCH_MODE ---------------------------------------------------------
+// Serial-Bench zur Validierung der Bremslicht-Logik (NFR-TST-02). Eigene
+// PlatformIO-Env (esp32dev_bench, s. platformio.ini) -- die Standard-Env
+// esp32dev und damit Normalbetrieb/Sicherheitslogik bleiben unveraendert
+// (obiger Zweig ist textidentisch zum bisherigen Code). Treibt tail_light_fsm
+// + imu_health -- dieselben, unveraenderten Logik-Klassen wie im Normalbetrieb
+// -- mit einem synthetischen decel_ms2-Profil statt echter IMU-Werte an
+// derselben Stelle, an der im Normalbetrieb motion_filter seinen Ausgang
+// liefert (s. taskLifecycleAndTailLight() oben). Kein delay()-Verbot hier:
+// BENCH_MODE ist ein Offline-Diagnosewerkzeug, kein Fahrbetrieb (NFR-RT-03/04
+// gelten fuer den Normalbetrieb).
+namespace bench {
+
+#ifndef FIRMWARE_GIT_HASH
+#define FIRMWARE_GIT_HASH "unknown"  // per -D FIRMWARE_GIT_HASH="..." gesetzt
+#endif
+
+// Experiment A/C: linear 0->6.0 m/s^2 in 15 s, 1 s halten, linear 6.0->0 in 15 s.
+float rampProfile(uint32_t t_ms) {
+  if (t_ms <= 15000u) return 6.0f * (static_cast<float>(t_ms) / 15000.0f);
+  if (t_ms <= 16000u) return 6.0f;
+  if (t_ms <= 31000u) return 6.0f * (1.0f - static_cast<float>(t_ms - 16000u) / 15000.0f);
+  return 0.0f;
+}
+
+// Experiment B: 1 s bei 0, Sprung auf 6.0 m/s^2 fuer 0,5 s, dann 0 (2 s Nachlauf).
+float stepProfile(uint32_t t_ms) {
+  if (t_ms < 1000u) return 0.0f;
+  if (t_ms < 1500u) return 6.0f;
+  return 0.0f;
+}
+
+// Fuehrt ein Experiment aus: frische TailLightFsm/ImuHealth-Instanzen (jedes
+// Experiment reproduzierbar aus definiertem Startzustand), 100-Hz-CSV ueber
+// Serial zwischen "# BEGIN name" und "# END name".
+//   force_imu_failed: read_ok=false fuer die gesamte Dauer (Experiment C);
+//   ein nicht geloggter Vorlauf treibt imu_health VOR dem ersten geloggten
+//   Sample bereits in FAILED (IMU_FAIL_LIMIT + IMU_RECOVERY_MAX_ATTEMPTS + 1
+//   = 5+3+1 = 9 Zyklen genuegen rechnerisch, s. imu_health.cpp; 30 Zyklen
+//   Marge).
+void runExperiment(const char* name, uint32_t duration_ms,
+                    float (*decel_fn)(uint32_t), bool force_imu_failed) {
+  logic::TailLightFsm fsm;
+  logic::ImuHealth health;
+
+  if (force_imu_failed) {
+    for (int i = 0; i < 30; ++i) {
+      health.update(/*read_ok=*/false, 0.0f, 0.0f, 0.0f, 0.0f, 0);
+    }
+  }
+
+  Serial.printf("# META firmware=%s;board=ESP32-DevKitC-32E;fr_tl_07=disabled\n",
+                FIRMWARE_GIT_HASH);
+  Serial.printf("# BEGIN %s\n", name);
+  Serial.println("t_ms,decel_ms2,brake_light_pct,fsm_state,imu_health");
+
+  const uint32_t t0 = millis();
+  uint32_t next_tick = t0;
+  for (uint32_t t_ms = 0; t_ms <= duration_ms; t_ms += 10u) {
+    // Feste 10-ms-Taktung (100 Hz) per Busy-Wait statt delay(): vermeidet
+    // Drift ueber die bis zu 31 s lange Aufzeichnung. esp_task_wdt_reset()
+    // manuell noetig, weil dieser Block komplett in setup() laeuft und die
+    // automatische Fuetterung sonst erst zwischen loop()-Aufrufen griffe
+    // (s. Kommentar im Normalbetrieb-loop() oben).
+    while (static_cast<int32_t>(millis() - next_tick) < 0) {
+      esp_task_wdt_reset();
+    }
+    esp_task_wdt_reset();
+    next_tick += 10u;
+
+    const float decel = decel_fn(t_ms);
+    const bool read_ok = !force_imu_failed;
+    // Synthetische, plausible Rohwerte (nur ausgewertet wenn read_ok, s.
+    // imu_health.cpp): minimale Alternation an az verhindert die
+    // Frozen-Erkennung (IMU_FROZEN_LIMIT), bleibt weit innerhalb der
+    // Betrags-/Sprung-Schwellen -- Schwerkraftvektor im Stand (ax=ay=gx=0).
+    const float az = 9.81f + (((t_ms / 10u) % 2u == 0u) ? 0.001f : -0.001f);
+    const logic::ImuHealthOutput health_out =
+        health.update(read_ok, 0.0f, 0.0f, az, 0.0f, t_ms);
+
+    // Identische Gate-Logik wie taskLifecycleAndTailLight() im Normalbetrieb
+    // (FR-STA-04): decel_ms2 wird nur bei read_ok && plausible && vertrauter
+    // Eskalation durchgereicht, sonst 0 -- die geloggte decel_ms2-Spalte
+    // zeigt trotzdem den rohen Profilwert (s. Feld-Kommentar telemetry_frame.h).
+    const bool healthy_this_cycle = read_ok && health_out.plausible;
+    const float tail_input =
+        (healthy_this_cycle && health_out.escalation_trusted) ? decel : 0.0f;
+    const logic::TailLightOutput tl = fsm.update(tail_input, logic::SystemState::Run, t_ms);
+
+    drivers::setDutyPercent(PIN_BRAKE_LIGHT, tl.duty_pct);  // visuelle Kontrolle am realen LED-Pin
+
+    Serial.printf("%lu,%.3f,%u,%d,%d\n", static_cast<unsigned long>(t_ms), decel,
+                  static_cast<unsigned>(tl.duty_pct), static_cast<int>(tl.state),
+                  static_cast<int>(health_out.state));
+  }
+
+  Serial.printf("# END %s\n", name);
+}
+
+}  // namespace bench
+
+void setup() {
+  Serial.begin(115200);
+  delay(200);  // USB-Serial-CDC-Enumeration abwarten, bevor die erste Zeile geht
+
+  drivers::attach(PIN_BRAKE_LIGHT);  // realer LED-Pin, fuer visuelle Kontrolle waehrend der Bench
+
+  bench::runExperiment("bench_A_kennlinie_rampe", 31000u, bench::rampProfile,
+                        /*force_imu_failed=*/false);
+  bench::runExperiment("bench_B_zeitverhalten_sprung", 3500u, bench::stepProfile,
+                        /*force_imu_failed=*/false);
+  bench::runExperiment("bench_C_failsafe", 31000u, bench::rampProfile,
+                        /*force_imu_failed=*/true);
+
+  Serial.println("# BENCH DONE");
+}
+
+void loop() {
+  delay(1000);  // Bench beendet -- Idle, kein Normalbetrieb in diesem Build
+}
+#endif  // BENCH_MODE

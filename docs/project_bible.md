@@ -1,6 +1,6 @@
 # Project Bible — Smartes Fahrrad-Rücklicht
 **Bachelorarbeit Krahl · Maschinenbau & Produktentwicklung (B.Eng.)**
-**Version 0.14 · Stand 05.08.2026 · Status: aktiv gepflegt (Single Source of Truth)**
+**Version 0.15 · Stand 05.08.2026 · Status: aktiv gepflegt (Single Source of Truth)**
 
 > Diese Project Bible ist die oberste Wissensinstanz des Projekts. Bei Widersprüchen zwischen Chat-Historie und Project Bible gilt ausschließlich die Project Bible. Chats dienen der Diskussion und Entscheidungsfindung; der offizielle Projektstand steht ausschließlich hier.
 
@@ -36,6 +36,7 @@
 | 0.12 | 30.07.2026 | BLE-Brownout-Fallstudie (`docs/ble_brownout_fallstudie.md`): Bootloop bei `NimBLEDevice::init()` auf zehn Tests systematisch eingegrenzt; Root Cause = Spannungsregler des Altboards liefert RF-Kalibrierungs-Transiente nicht. Board-Wechsel auf Espressif ESP32-DevKitC-32E (WROOM-32E) beschlossen, Entkopplungskondensatoren bleiben. | Root-Cause-Analyse BLE-Brownout |
 | 0.13 | 01.08.2026 | Board-Tausch auf Espressif ESP32-DevKitC-32E (WROOM-32E) **ausgeführt und am realen System validiert** (BLE-Transport M5 Teil C2: Advertising, Verbindung, MTU 185, Volllastbetrieb stabil); Board-Status in Kap. 4.1 mit Kap. 6.5/9 vereinheitlicht. iOS-App-Stand nachgezogen (Kap. 7.6/11.3: Phase 1–6 weit umgesetzt, Details App Bible). Kap. 10 um drei Entscheidungen ergänzt (Board-Tausch, Entkopplungskondensatoren behalten, WiFi verworfen). Kap. 6.5: M5 Teil B ergänzt, Host-Test-Zähler 38→75, „Nächstes" aktualisiert. | BLE-Validierung + App-Stand |
 | 0.14 | 05.08.2026 | Telemetrie-Frame um `brake_light_pct` (Offset 80, tatsächlich kommandierte Rücklicht-Duty) erweitert, 80→81 Byte, Schema-Version 1→2 (FR-TEL-06). Erlaubt Vergleich Bremskennlinien-Eingang (`brake_decel_ms2`) vs. -Ausgang (`brake_light_pct`) für die FR-TL-06-Validierung. Firmware host-getestet (77/77), ESP32-Build grün. Alle „80-Byte-Frame"-Nennungen auf „81-Byte-Frame" nachgezogen (Kap. 7.2/7.6). | Frame-Erweiterung `brake_light_pct` |
+| 0.15 | 05.08.2026 | Serial-Bench-Validierung der Bremslicht-Logik (Firmware `d8a4e75`, `docs/Validierung/`): Bremskennlinie (FR-TL-06), Zeitverhalten (NFR-RT-01, 300-ms-Haltezeit) und Fail-Safe (FR-SAF-01/FR-STA-04) am realen MCU nachgewiesen (Kap. 9, neu 9.3). iOS-App am realen iPhone gegen die echte BLE-Verbindung verifiziert (Kap. 9, 11.3). Kap. 10 + `decision_log.md` um die Bench-Methodik-Entscheidung ergänzt (freigegeben). `roadmap.md` M7 nachgezogen. | Serial-Bench-Validierung Bremslicht + iOS-BLE verifiziert |
 
 ### 0.4 Datengrundlage
 | Quelle | Zeitstempel | Aussagekraft |
@@ -495,22 +496,24 @@ Nicht begonnen. Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/War
 | GPS L86 – NMEA/UART | ✅ Daten fließen |
 | GPS-Fix | ⏳ noch nicht erreicht |
 | PlatformIO-Umgebung (Build + Host-Tests) | ✅ eingerichtet (Core 3.3.11; ESP32-Build grün) |
-| Host-Unit-Tests (native, Unity) | ✅ 75/75 grün |
+| Host-Unit-Tests (native, Unity) | ✅ 77/77 grün |
 | R1-Lebenszyklus (`lifecycle_fsm`) | ✅ HW-validiert (RUN erreicht, `degraded=0`) |
 | R2-Zustandslogik + Bremskennlinie (`tail_light_fsm`, `brake_curve`) | ✅ HW-validiert |
-| Bremslicht-Kennlinie (FR-TL-06) inkl. Feldkalibrierung der Schwellwerte | ❌ offen (Feld) |
+| Bremslicht-Kennlinie (FR-TL-06), Logik/Zeitverhalten | ✅ **Serial-Bench validiert** (Ansprechschwelle 2,0 m/s², linear bis Sättigung 100 % bei 5,0 m/s² (R² = 0,99984), Hysterese-Rückfall < 1,5 m/s² + exakt 300 ms Mindesthaltezeit; Befund s. 9.3) |
+| Feldkalibrierung der Bremsschwellen (2,0/5,0/1,5 m/s² für reales Fahren geeignet?) | ❌ weiterhin offen — die Bench validiert nur die Logik mit den konfigurierten Schwellen, nicht deren reale Feldeignung (Feldtest ausstehend, s. Kap. 11) |
 | Blinker-Funktion (Ereignis → Blinken, Takt, Warnblinker) | ✅ HW-validiert; physische L/R-Zuordnung ❌ offen (LED-Anordnung noch nicht festgelegt) |
-| Bremslicht-Reaktionszeit ≤ 50 ms (NFR-RT-01) | ❌ offen — Messung |
+| Bremslicht-Reaktionszeit ≤ 50 ms (NFR-RT-01) | ✅ **Serial-Bench validiert** (gemessen ≤ 10 ms, Anstieg 20 %→100 % innerhalb eines 10-ms-Samples; Befund s. 9.3) |
 | Loop-Zykluszeit < 10 ms & RAM-/CPU-Budget | ❌ offen — Messung |
 | Energiebilanz/Laufzeit unter realen Lastfällen | ❌ offen — Messung |
 | I²C-Bus-Recovery | ✅ am Board per SDA-Kurzschluss-Fehlerinjektion verifiziert (`imu_health`) |
 | Watchdog-Reset | ✅ am Board per 'H'-Hang-Hook verifiziert (Auto-Reset ~2 s, Reset-Grund erkannt) |
+| Fail-Safe bei IMU-Ausfall (FR-SAF-01/FR-STA-04) | ✅ **Serial-Bench validiert** (`imu_health=FAILED` erzwungen: `brake_light_pct` bleibt trotz 0→6,0→0-Rampeneingang konstant bei 20 % Schlusslicht; Befund s. 9.3) |
 | Brown-Out unter realer LED-Lastspitze | ❌ offen (Re-Test auf neuem Board empfohlen, s. Kap. 11) |
 | MOSFET mit realer LED-Last | ❌ noch nicht getestet |
 | Ladeinfrastruktur unter Last | ❌ nicht verifiziert |
 | Gehäuse | ❌ nicht begonnen |
 | BLE-Transport (M5 Teil C2) | ✅ am realen System validiert (Espressif ESP32-DevKitC-32E, Board-Tausch behebt den zuvor beobachteten Brownout vollständig, s. `docs/ble_brownout_fallstudie.md`): Advertising, Verbindung, MTU=185, Volllastbetrieb (Sensoren/Aktoren + BLE) stabil |
-| iOS-App gegen reale BLE-Verbindung | ❌ noch offen (App bisher gegen `MockTelemetrySource` entwickelt, s. `docs/current_context.md`) |
+| iOS-App gegen reale BLE-Verbindung | ✅ **am realen iPhone verifiziert:** Verbinden per Service-UUID, Live-Werte, Auto-Reconnect (s. `docs/current_context.md`) |
 
 ### 9.1 Validierungsbefunde M5A
 
@@ -521,6 +524,18 @@ Nicht begonnen. Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/War
 ### 9.2 Akkubetrieb-Freeze (aufgeklärt)
 
 Bremslicht fror ein, wenn das USB-Kabel im ESP32 steckte, aber am Host-Ende getrennt war (floatende VBUS-Leitung → unruhige 3,3-V-Schiene → I²C-/IMU-Aussetzer; Blinker unbeeinträchtigt). Im echten Akkubetrieb (Kabel komplett ab) nicht reproduzierbar. **Lesson Learned:** „Debug-Setup ≠ Feldbedingung — Validierung stets im realen Betriebszustand." (s. auch `docs/lessons_learned.md`.)
+
+### 9.3 Validierungsbefunde Bremslicht-Logik (Serial-Bench)
+
+Nachweis der Bremslicht-Regellogik (FR-TL-06), ihres zeitlichen/zustandsbehafteten Verhaltens (NFR-RT-01, 300-ms-Haltezeit, Hysterese) sowie des Fail-Safe-Verhaltens (FR-SAF-01/FR-STA-04) per **kontrolliertem Serial-Bench-Test** (Firmware `d8a4e75`, Board Espressif ESP32-DevKitC-32E, `BENCH_MODE`-Sonderbuild, 100-Hz-Log). Über den Test-Daten-Hook (NFR-TST-02) wird ein definiertes Verzögerungsprofil in denselben Signalpfad gespeist, der im Normalbetrieb die Bremslicht-Duty erzeugt — der geloggte Ausgang (`brake_light_pct`) spiegelt damit das reale, integrierte FSM-Verhalten auf dem Ziel-MCU. Vollständiges Messprotokoll: `docs/Validierung/measurement_log.md`; Rohdaten `docs/Validierung/bench_A_kennlinie_rampe.csv` / `bench_B_zeitverhalten_sprung.csv` / `bench_C_failsafe.csv` + `bench_run_notes.md`; Diagramme `docs/Validierung/abb_A_kennlinie.png` / `abb_B_sprung.png` / `abb_C_failsafe.png`.
+
+**Experiment A — Kennlinie (Rampe 0→6,0→0 m/s², 31 s):** Grundhelligkeit 20 % konstant unterhalb der Ansprechschwelle; Zustandswechsel Schluss→Brems exakt bei `decel_ms2 > 2,0` (gemessen bei 2,004); linearer Verlauf 2,0–5,0 m/s² (`pct = 26,66·decel − 33,32`, **R² = 0,99984**, theoretische Steigung 26,67 nahezu exakt getroffen); Sättigung 100 % ab 5,0 m/s². Hysterese-Rückfall (Zustand Brems→Schluss) unterschreitet 1,5 m/s² bei t = 27 260 ms, der Zustandswechsel erfolgt exakt 300 ms später (t = 27 560 ms) — die Hysterese wirkt auf Zustandsebene, überlagert mit der Mindesthaltezeit; kein Fehler, spezifikationskonform (s. Abb. A).
+
+**Experiment B — Zeitverhalten (Sprung 0→6,0 m/s² für 0,5 s→0, 3,5 s):** Anstieg 20 %→100 % innerhalb eines einzelnen 10-ms-Abtastschritts (**≤ 10 ms**, NFR-RT-01-Soll ≤ 50 ms komfortabel erfüllt). Nach Bremsende hält die FSM 100 % exakt 300 ms (t = 1500–1800 ms), danach Rückfall auf 20 % Schlusslicht (s. Abb. B).
+
+**Experiment C — Fail-Safe (`imu_health = FAILED` erzwungen, identische 0→6,0→0-Rampe):** `brake_light_pct` bleibt über den gesamten Lauf konstant bei 20 % (Schlusslicht), `imu_health` durchgängig `FAILED` — der Fail-Safe-Gate (FR-STA-04) hält das Schlusslicht unabhängig vom (weiterhin mitgeloggten) Verzögerungs-Eingang (s. Abb. C).
+
+**Einordnung/Grenzen (Ehrlichkeit):** Die Bench validiert die **Steuerlogik** mit den **konfigurierten** Schwellen (2,0/5,0/1,5 m/s², `config.h`) — nicht deren reale Eignung für tatsächliches Fahrverhalten, und nicht die photometrische Lichtstärke der LED (separate Hardware-Eigenschaft). Feldkalibrierung der Schwellen und Lichtstärke-Nachweis (§ 67) bleiben eigenständige offene Punkte (s. Kap. 11).
 
 Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 
@@ -576,6 +591,7 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 | Native iOS-App statt Web-App/PWA | Web Bluetooth auf iOS nicht unterstützt; Betreuer-Vorgabe; Firmware/BLE unverändert | PWA / Web Bluetooth |
 | Gratis-Signierung (Personal Team, 7 Tage) statt TestFlight | reine Eigennutzung, kein 99-$-Account nötig | TestFlight / Apple Developer Program |
 | iOS-App in Xcode mit eingebautem Claude | eine Toolchain (Code+Build+Vorschau+Deploy) | VS Code + Claude Code für iOS (kann iOS nicht bauen/rendern) |
+| **Bench-Validierung der Bremslicht-Logik über NFR-TST-02-Einspeisung** (synthetische Verzögerungsprofile, 100-Hz-Serial-Log) | reproduzierbar/präzise, löst die schnellen Effekte (300-ms-Halten, < 50-ms-Anstieg) auf | nur physische Verzögerung / BLE-Telemetrie @ 10 Hz (zu grob) |
 
 *Hinweis: Kalendertage einzelner Altentscheidungen nicht durchgängig belegt ([Annahme]).*
 
@@ -598,10 +614,9 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5.
 
 ### 11.3 Zu verifizieren / offen
 - **„HSD ESP32 IoT Base":** *obsolet seit v0.11* — bezog sich auf eine mögliche PWA-Basis; durch die Entscheidung für eine native iOS-App (Kap. 7/10) hinfällig.
-- **iOS-App in fortgeschrittener Umsetzung (Phase 6)** — offen ist v. a. der Tausch `MockTelemetrySource` → echte `BLEConnectionService` (Core Bluetooth) und die End-to-End-Verifikation gegen die reale Firmware am physischen iPhone; danach Cockpit-Personalisierung + Verlaufs-Gesamtübersicht. Details App Bible, s. Kap. 7.6.
-- **Physisches iPhone zum Testen** (Core Bluetooth erfordert reale Hardware, kein BLE im Simulator). Xcode (26.3+) + Claude-Assistent bereits eingerichtet.
+- **iOS-App MVP funktionsfertig, echte BLE-Verbindung am realen iPhone verifiziert** — `BLEConnectionService` (Core Bluetooth) löst `MockTelemetrySource` ab, End-to-End gegen die reale Firmware bestätigt (Verbinden per Service-UUID, Live-Werte, Auto-Reconnect); Recovery, Stale-/GNSS-Validitätsanzeige, barometrische Höhe, Bremslicht-Validierungs-Export/-Diagramm, System-/Sensorwarnungen und Cockpit-Editor umgesetzt. Offen: Verlaufs-Gesamtübersicht. Details App Bible, s. Kap. 7.6, und `docs/current_context.md`.
 - **Apple Developer Program / TestFlight** nur relevant bei späterer externer Verteilung der App (Eigennutzung kommt ohne aus, s. Kap. 7.5).
-- **Fehlende Nachweise:** Lichtstärke (cd) § 67, Messprotokolle, Feld-Kalibrierdaten Bremsschwelle.
+- **Fehlende Nachweise:** Messprotokoll Bremslicht-*Logik* liegt vor (Serial-Bench, `docs/Validierung/measurement_log.md`, s. Kap. 9.3). Weiterhin offen: Lichtstärke (cd) § 67 (photometrische Messung, separate Hardware-Eigenschaft) und Feld-Kalibrierdaten der Bremsschwellen (reale Fahrbedingungen).
 - **BMP280-Temperatur im eingeschwungenen Zustand erneut messen** (FORCED-Mode-Wirkung verifizieren, s. Kap. 9.1); danach ggf. app-/konfigseitige Kalibrierung, nur auf die ausgegebene, nie die kompensationsrelevante Temperatur.
 - **Debug-Ausgaben hinter `DEBUG_SERIAL`** (derzeit `true`) vor Abgabe auf `false` / entfernen.
 

@@ -1,39 +1,57 @@
 import SwiftUI
 import SmartBikeCore
 
-/// Live-Cockpit (App Bible 6.4). Zwei Zustände (AR-LIVE-05):
-/// Bereitschaft (Momentanwerte + „Fahrt starten") und Aufzeichnung (mitlaufende
-/// Kennzahlen + „Zum Stoppen halten"). Ohne Scrollen, keine modalen Alerts (AR-UX-01).
+/// Live-Cockpit (App Bible 6.4). Statuszeile · anpassbares Kachel-Raster (AR-LIVE-08) ·
+/// Start/Stopp. Ohne Scrollen, keine modalen Alerts im Fahrbetrieb (AR-UX-01).
 struct CockpitView: View {
     @Environment(AppEnvironment.self) private var env
+    @State private var showWarnings = false
+    @State private var showEditor = false
 
     var body: some View {
-        // Leichter VM (hält nur Referenzen); liest die @Observable-Stores → Live-Updates.
         let vm = CockpitViewModel(store: env.telemetryStore, rides: env.rideManager)
+        let placements = GridPacker.placements(for: env.dashboardLayout.tiles)
         NavigationStack {
             VStack(spacing: Theme.Spacing.unit * 2) {
-                StatusBar(connection: vm.connection, fix: vm.gnssFix, sats: vm.sats)
-                    .frame(maxWidth: .infinity, alignment: .leading)
+                VStack(alignment: .leading, spacing: Theme.Spacing.unit) {
+                    StatusBar(connection: vm.connection, fix: vm.gnssFix, sats: vm.sats,
+                              warnings: vm.warnings)
+                        .onTapGesture {
+                            guard !vm.warnings.isEmpty else { return }
+                            withAnimation { showWarnings.toggle() }
+                        }
+                    if showWarnings, !vm.warnings.isEmpty { warningList(vm.warnings) }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-                // Hero-Kachel „Geschwindigkeit" — in beiden Zuständen sichtbar, glanceable.
-                MetricTile(display: vm.display(.speed),
-                           isStale: vm.liveState == .stale,
-                           valueSize: 64)
-                    .frame(maxWidth: .infinity, minHeight: 180)
+                // Anpassbares Kachel-Raster mit Live-Werten (kein Scrollen).
+                DashboardGridView(placements: placements) { p in
+                    MetricTile(display: vm.tileDisplay(p.tile.metric),
+                               isStale: !vm.isFresh,
+                               valueSize: Self.valueSize(for: p))
+                }
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
                 if vm.isRecording {
-                    secondaryGrid(vm)
-                    Spacer(minLength: 0)
+                    Text("Bearbeiten während der Aufzeichnung gesperrt")
+                        .font(.caption2).foregroundStyle(.secondary)
                     HoldToStopButton { await vm.requestStop() }
                         .frame(maxWidth: .infinity)
                 } else {
-                    Spacer(minLength: 0)
                     startButton { vm.start() }
                 }
             }
             .padding()
             .navigationTitle("Live")
-            // Dezente Haptik bei Start/Stopp (AR-UX-04).
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button { showEditor = true } label: {
+                        Label("Bearbeiten", systemImage: "square.grid.2x2")
+                    }
+                    .disabled(vm.isRecording)   // nur außerhalb der Aufzeichnung (AR-LIVE-08)
+                }
+            }
+            .sheet(isPresented: $showEditor) { CockpitEditorView() }
             .sensoryFeedback(trigger: vm.recording) { _, new in
                 switch new {
                 case .recording: return .impact(weight: .medium)
@@ -44,13 +62,25 @@ struct CockpitView: View {
         }
     }
 
-    /// 3-Spalten-Raster; kompakte Zifferngröße, damit z. B. 00:00:00 nicht umbricht.
-    private func secondaryGrid(_ vm: CockpitViewModel) -> some View {
-        HStack(spacing: Theme.Spacing.unit) {
-            MetricTile(display: vm.display(.distance), isStale: vm.liveState == .stale, valueSize: 26)
-            MetricTile(display: vm.display(.duration), isStale: vm.liveState == .stale, valueSize: 26)
-            MetricTile(display: vm.display(.avgSpeed), isStale: vm.liveState == .stale, valueSize: 26)
+    /// Zifferngröße abhängig von der Kachelgröße (Hero groß, 1×1 kompakt).
+    static func valueSize(for p: TilePlacement) -> CGFloat {
+        if p.width >= 3 || p.height >= 2 { return 56 }
+        if p.width == 2 { return 40 }
+        return 26
+    }
+
+    private func warningList(_ warnings: [LiveWarning]) -> some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(warnings) { w in
+                Label(w.text, systemImage: w.severity == .warnung ? "exclamationmark.triangle.fill" : "info.circle")
+                    .font(.caption)
+                    .foregroundStyle(w.severity == .warnung ? Theme.Semantic.warning : Theme.Semantic.searching)
+            }
         }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 8)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(.thinMaterial, in: RoundedRectangle(cornerRadius: Theme.tileCornerRadius))
     }
 
     /// „Fahrt starten" — einfacher Tap (AR-UX-02), prominentes Liquid-Glass-Control.
@@ -67,6 +97,30 @@ struct CockpitView: View {
             button.buttonStyle(.glassProminent).tint(.accentColor)
         } else {
             button.buttonStyle(.borderedProminent)
+        }
+    }
+}
+
+/// Positioniert Kacheln gemäß Packing im 3-Spalten-Raster (geteilt von Cockpit & Editor).
+struct DashboardGridView<TileContent: View>: View {
+    let placements: [TilePlacement]
+    var spacing: CGFloat = Theme.Spacing.unit
+    @ViewBuilder var content: (TilePlacement) -> TileContent
+
+    var body: some View {
+        GeometryReader { geo in
+            let cols = CGFloat(DashboardLayout.columns)
+            let usedRows = CGFloat(max(1, placements.map { $0.row + $0.height }.max() ?? 1))
+            let colW = (geo.size.width - spacing * (cols - 1)) / cols
+            let rowH = (geo.size.height - spacing * (usedRows - 1)) / usedRows
+            ForEach(placements, id: \.tile.id) { p in
+                content(p)
+                    .frame(width: colW * CGFloat(p.width) + spacing * CGFloat(p.width - 1),
+                           height: rowH * CGFloat(p.height) + spacing * CGFloat(p.height - 1),
+                           alignment: .topLeading)
+                    .offset(x: (colW + spacing) * CGFloat(p.column),
+                            y: (rowH + spacing) * CGFloat(p.row))
+            }
         }
     }
 }
@@ -100,9 +154,8 @@ private struct HoldToStopButton: View {
         }
         .padding(.horizontal, 24)
         .padding(.vertical, 16)
-        .floatingGlass(interactive: true, in: .capsule)   // interaktives Glas-Control
+        .floatingGlass(interactive: true, in: .capsule)
         .gesture(
-            // DragGesture(minimumDistance: 0) erkennt Druck (onChanged) und Loslassen (onEnded).
             DragGesture(minimumDistance: 0)
                 .onChanged { _ in if holdTask == nil { beginHold() } }
                 .onEnded { _ in cancelHold() }
@@ -117,7 +170,6 @@ private struct HoldToStopButton: View {
             try? await Task.sleep(nanoseconds: UInt64(holdDuration * 1_000_000_000))
             if Task.isCancelled { return }
             await onStop()
-            // View verschwindet i. d. R. mit dem Zustandswechsel; Reset zur Sicherheit.
             holdTask = nil
             progress = 0
         }

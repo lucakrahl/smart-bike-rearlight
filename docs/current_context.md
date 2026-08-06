@@ -3,24 +3,46 @@
 > Von Claude Code eigenständig pflegbar (siehe `CLAUDE.md`).
 
 **Stand:** Firmware-Kernfunktion (R1–R4) implementiert und mit Host-Tests
-abgesichert. SRS/Bible bei Version 0.12. Build-Umgebung: PlatformIO mit
-pioarduino, Arduino-ESP32-Core 3.3.11. R1 (`lifecycle_fsm`), R2
-(`tail_light_fsm`), R3 (`rf_input`/`button_decoder`/`blinker_fsm`) und R4
+abgesichert, Bremslicht-Logik (FR-TL-06/NFR-RT-01/FR-SAF-01) per Serial-Bench
+am realen MCU validiert. SRS/Bible bei Version 0.15. Build-Umgebung:
+PlatformIO mit pioarduino, Arduino-ESP32-Core 3.3.11. R1 (`lifecycle_fsm`),
+R2 (`tail_light_fsm`), R3 (`rf_input`/`button_decoder`/`blinker_fsm`) und R4
 (`imu_driver`+`motion_filter`+`imu_health`, `bmp280_driver`,
 `gnss_driver`+`gnss_fix`, `ble_telemetry`) sind in `main.cpp` verdrahtet.
 BLE läuft im Normalbetrieb mit (kein Feature-Flag mehr, Isolations-Scaffold
 entfernt). Baut grün auf PC (`pio test -e native`, 77/77) und ESP32
-(`pio run -e esp32dev`).
+(`pio run -e esp32dev`). iOS-App-MVP ist funktionsfertig und am realen
+iPhone gegen die echte BLE-Verbindung verifiziert (s. iOS-Abschnitt unten).
 
-**Aktueller Fokus:** Firmware-Implementierung nach SRS fortsetzen.
+**Aktueller Fokus:** Feldtest vorbereiten; Rest-Firmware (M6/M7) fortsetzen.
 
-**Nächster Schritt:** GNSS-Freilandtest (echter Fix, freie Himmelssicht,
-bisher nur Indoor `NO_FIX` gezeigt). Parallel: iOS-App gegen die reale
-BLE-Verbindung (CoreBluetooth statt `MockTelemetrySource`) verifizieren;
-danach Rest-Firmware (M6 Konfiguration/NVS, M7 Integration/Messungen)
-fortsetzen.
+**Nächster Schritt:** Feldtest (30-km/h-Zone: App-Validierungs-Export
+`brake_decel_ms2`/`brake_light_pct` @ 1 Hz + Beobachtung/Foto) als realer
+Fahrkontext zur präzisen Bench-Kennlinie; GNSS-Freilandtest (echter Fix,
+freie Himmelssicht, bisher nur Indoor `NO_FIX` gezeigt). Danach Rest-Firmware
+(M6 Konfiguration/NVS, M7 restliche Messungen: Loop-Zykluszeit, Energie,
+Brown-Out-Re-Test) fortsetzen.
 
-**Zuletzt erledigt:** Telemetrie-Frame um `brake_light_pct` (Offset 80,
+**Zuletzt erledigt:** Serial-Bench-Validierung der Bremslicht-Logik
+(NFR-TST-02-Testdaten-Hook, `BENCH_MODE`-Sonderbuild, Firmware `d8a4e75`,
+Board Espressif ESP32-DevKitC-32E): drei Experimente (Kennlinie/Rampe,
+Zeitverhalten/Sprung, Fail-Safe) bei 100 Hz aufgezeichnet und ausgewertet.
+Ansprechschwelle exakt bei `decel_ms2 > 2,0`, linearer Verlauf bis Sättigung
+100 % bei 5,0 (R² = 0,99984), Hysterese-Rückfall < 1,5 m/s² kombiniert mit
+exakt 300 ms Mindesthaltezeit; Reaktionszeit ≤ 10 ms (NFR-RT-01-Soll ≤ 50 ms);
+Fail-Safe hält bei `imu_health=FAILED` durchgängig 20 % Schlusslicht trotz
+0→6,0→0-Rampeneingang. Artefakte unter `docs/Validierung/`: drei CSVs,
+`measurement_log.md` (Messprotokoll), drei Diagramme (`abb_A/B/C_*.png`),
+`bench_run_notes.md`. Parallel: iOS-App am realen iPhone gegen die echte
+BLE-Verbindung verifiziert (Verbinden per Service-UUID, Live-Werte,
+Auto-Reconnect) — MVP damit funktionsfertig. Wissensdatenbank nachgezogen:
+Bible 0.14→0.15 (Kap. 9 neu 9.3, Kap. 10/11.3), `decision_log.md`
+(Bench-Methodik-Entscheidung, freigegeben), `roadmap.md` (M5/M7).
+Reine Logik/Firmware-Code dabei nicht angefasst (nur `BENCH_MODE`-Zweig in
+`main.cpp` + neue PlatformIO-Env, s. vorheriger Eintrag); Host-Tests
+unverändert 77/77.
+
+Davor: Telemetrie-Frame um `brake_light_pct` (Offset 80,
 uint8, 0..100) erweitert — die tatsächlich von `tail_light_fsm` kommandierte
 Rücklicht-Duty, derselbe Wert wie an `drivers::setDutyPercent()` übergeben.
 Ergänzt `brake_decel_ms2` (roher `motion_filter`-Eingang, unverändert bei
@@ -72,29 +94,34 @@ Teil 1 — I²C-Recovery + Plausibilität + Fail-Safe (`imu_health`,
 FR-SNS-04/05, FR-STA-04) committet (`4096d4d`), per SDA-Kurzschluss-
 Fehlerinjektion am Board verifiziert.
 
-**Blocker/offene Klärungen:** BLE-Transport ist nicht mehr blockiert (s.
-oben). Derselbe Power-Delivery-Headroom-Mangel vermutlich auch Ursache des
-länger bekannten Brown-Out unter LED-Lastspitzen (weiterhin offen, s.
-`open_issues.md`) — dort noch kein Board-Tausch-Nachweis erbracht.
+**Blocker/offene Klärungen:** Keine harten Blocker mehr — BLE-Transport und
+iOS-BLE sind verifiziert. Offen bleiben: **Feldkalibrierung der
+Bremsschwellen** (2,0/5,0/1,5 m/s² — die Bench validiert nur die Logik mit
+den konfigurierten Werten, nicht deren reale Fahreignung, s. Bible Kap. 9.3);
+derselbe Power-Delivery-Headroom-Mangel vermutlich auch Ursache des länger
+bekannten Brown-Out unter LED-Lastspitzen (weiterhin offen, s.
+`open_issues.md`) — dort noch kein Board-Tausch-Nachweis erbracht,
 Brownout-Detektor bleibt regulär aktiv. Daneben: LED-Kanalzuordnung/
 Datenblatt (Bible 11.1); RF-Release-Timeout vorläufig (FR-RF-03);
 IMU-Plausibilitäts-/Recovery-Schwellen noch `TODO(offen)` (Feldverifikation,
-s. `open_issues.md`); GNSS-Freilandtest (echter Fix) ausstehend; iOS-App
-noch nicht gegen reale BLE-Verbindung getestet.
+s. `open_issues.md`); GNSS-Freilandtest (echter Fix) ausstehend; Feldtest
+(30-Zone) ausstehend.
 
 ## iOS-App (paralleler Track)
-**Stand:** Native SwiftUI-App (Deployment iOS 26) läuft im Simulator gegen eine
-simulierte Telemetriequelle (`MockTelemetrySource`, echte 80-Byte-Frames @ 10 Hz) —
-kein Gerät nötig. Implementiert & getestet: Live-Cockpit (Start = Tap / Stopp =
-Halten mit Fortschrittsring), Fahrtaufzeichnung mit 1-Hz-Verdichtung, SwiftData-
-Persistenz im Hintergrund-`ModelActor`, Verlauf-Liste (Wisch-Löschen), Fahrt-Detail
-(Statistik + Höhen-/Geschwindigkeitsdiagramm über Distanz via Swift Charts +
-Routen-Polyline via MapKit), Liquid-Glass-Chrome (nur Steuerelemente/Statuszeile),
-sowie Absturz-Recovery **AR-DATA-04** (beim App-Start: Abschließen / Verwerfen /
-Weiter fahren). Tests grün: `SmartBikeCore` (`swift test`) und App-Tests
-(SwiftData-Store, Recovery) über den Xcode-Testplan.
+**Stand:** Native SwiftUI-App (Deployment iOS 26), **MVP funktionsfertig und am
+realen iPhone gegen die echte BLE-Verbindung verifiziert** (`BLEConnectionService`/
+Core Bluetooth löst `MockTelemetrySource` als Standardquelle ab — Mock bleibt für
+Simulator-Entwicklung nutzbar): Verbinden per Service-UUID, Live-Werte, Auto-
+Reconnect. Implementiert & getestet: Live-Cockpit (Start = Tap / Stopp = Halten mit
+Fortschrittsring), Fahrtaufzeichnung mit 1-Hz-Verdichtung, SwiftData-Persistenz im
+Hintergrund-`ModelActor`, Verlauf-Liste (Wisch-Löschen), Fahrt-Detail (Statistik +
+Höhen-/Geschwindigkeitsdiagramm über Distanz via Swift Charts + Routen-Polyline via
+MapKit), Liquid-Glass-Chrome (nur Steuerelemente/Statuszeile), Absturz-Recovery
+**AR-DATA-04** (beim App-Start: Abschließen / Verwerfen / Weiter fahren), Stale-/
+GNSS-Validitätsanzeige, barometrische Höhe, Bremslicht-Validierungs-Export/-Diagramm
+(Gegenstück zur Firmware-Bench, s. oben), System-/Sensorwarnungen sowie
+Cockpit-Personalisierung (`DashboardLayout`-Editor). Tests grün: `SmartBikeCore`
+(`swift test`) und App-Tests (SwiftData-Store, Recovery) über den Xcode-Testplan.
 
-**Nächster Schritt (iOS):** echten `BLEConnectionService` (CoreBluetooth) an die
-Stelle des Mocks setzen und gegen die reale Firmware verifizieren (sobald Board/BLE
-verfügbar); danach Cockpit-Personalisierung (`DashboardLayout`) und Verlaufs-
-Gesamtübersicht.
+**Nächster Schritt (iOS):** Verlaufs-Gesamtübersicht; danach gemeinsam mit der
+Firmware der Feldtest (30-Zone).

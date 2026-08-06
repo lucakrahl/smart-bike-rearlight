@@ -31,7 +31,14 @@
 
 ## Zu verifizieren
 - [ ] „HSD ESP32 IoT Base" als Web-App-Basis?
-- [ ] Nachweise: Lichtstärke (cd) § 67, Messprotokolle, Feld-Kalibrierdaten.
+- [x] Messprotokoll Bremslicht-*Logik* — Serial-Bench (`docs/Validierung/measurement_log.md`,
+  Firmware `d8a4e75`), s. Bible Kap. 9.3.
+- [ ] Nachweise: Lichtstärke (cd) § 67 (photometrische Messung, separate
+  Hardware-Eigenschaft) — weiterhin offen.
+- [ ] **Feldkalibrierung der Bremsschwellen** (2,0/5,0/1,5 m/s² für reales
+  Fahren geeignet?) — weiterhin **getrennt offen**: die Bench validiert nur
+  die Logik mit den konfigurierten Schwellen, nicht deren reale Feldeignung
+  (Feldtest 30-Zone aussteht, s. `current_context.md`).
 - [ ] **GNSS-Fix-Feldtest** im Freien (freie Himmelssicht) — Indoor-Test zeigte
   nur `NO_FIX` (UART/Parsing bestätigt, echter Fix indoor nicht möglich).
 - [ ] **BMP280-Temperatur-Retest** im thermisch eingeschwungenen Zustand

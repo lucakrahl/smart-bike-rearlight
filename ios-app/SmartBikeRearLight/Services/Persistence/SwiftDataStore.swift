@@ -83,24 +83,43 @@ actor SwiftDataStore: RideRepository {
     private func makeSample(_ p: TrackPoint) -> TrackSampleEntity {
         TrackSampleEntity(t: p.t, lat: p.lat, lon: p.lon, altitudeM: p.altitudeM,
                           speedKmph: p.speedKmph, courseDeg: p.courseDeg,
-                          sats: p.sats, hdop: p.hdop, gnssFix: Int(p.gnssFix.rawValue))
+                          sats: p.sats, hdop: p.hdop, gnssFix: Int(p.gnssFix.rawValue),
+                          brakeDecelMs2: p.brakeDecelMs2, brakeLightPct: p.brakeLightPct,
+                          imuHealth: Int(p.imuHealth.rawValue),
+                          pressurePa: p.pressurePa, gnssAltitudeM: p.gnssAltitudeM,
+                          deviceTimestampMs: p.deviceTimestampMs.map(Int.init),
+                          baroValid: p.baroValid,
+                          systemState: p.systemState.map { Int($0.rawValue) },
+                          initDegraded: p.initDegraded,
+                          watchdogRecovered: p.watchdogRecovered,
+                          frameVersion: p.frameVersion)
     }
 
     private func makeTrackPoint(_ s: TrackSampleEntity) -> TrackPoint {
         TrackPoint(t: s.t, lat: s.lat, lon: s.lon, altitudeM: s.altitudeM,
                    speedKmph: s.speedKmph, courseDeg: s.courseDeg, sats: s.sats,
-                   hdop: s.hdop, gnssFix: GnssFixStatus(rawValue: UInt8(clamping: s.gnssFix)) ?? .noData)
+                   hdop: s.hdop, gnssFix: GnssFixStatus(rawValue: UInt8(clamping: s.gnssFix)) ?? .noData,
+                   brakeDecelMs2: s.brakeDecelMs2, brakeLightPct: s.brakeLightPct,
+                   imuHealth: ImuHealthState(rawValue: UInt8(clamping: s.imuHealth ?? 0)) ?? .ok,
+                   pressurePa: s.pressurePa, gnssAltitudeM: s.gnssAltitudeM,
+                   deviceTimestampMs: s.deviceTimestampMs.map { UInt32(clamping: $0) },
+                   baroValid: s.baroValid,
+                   systemState: s.systemState.flatMap { SystemState(rawValue: UInt8(clamping: $0)) },
+                   initDegraded: s.initDegraded,
+                   watchdogRecovered: s.watchdogRecovered,
+                   frameVersion: s.frameVersion)
     }
 
     private func makeStatistics(_ r: RideEntity) -> RideStatistics {
-        RideStatistics(duration: r.duration, distanceKm: r.distanceKm,
+        RideStatistics(duration: r.duration, totalDuration: r.totalDuration ?? r.duration,
+                       distanceKm: r.distanceKm,
                        avgSpeedKmph: r.avgSpeedKmph, maxSpeedKmph: r.maxSpeedKmph,
                        ascentM: r.ascentM, descentM: r.descentM,
                        minAltitudeM: r.minAltitudeM, maxAltitudeM: r.maxAltitudeM)
     }
 
     private func apply(_ st: RideStatistics, to r: RideEntity) {
-        r.duration = st.duration; r.distanceKm = st.distanceKm
+        r.duration = st.duration; r.totalDuration = st.totalDuration; r.distanceKm = st.distanceKm
         r.avgSpeedKmph = st.avgSpeedKmph; r.maxSpeedKmph = st.maxSpeedKmph
         r.ascentM = st.ascentM; r.descentM = st.descentM
         r.minAltitudeM = st.minAltitudeM; r.maxAltitudeM = st.maxAltitudeM

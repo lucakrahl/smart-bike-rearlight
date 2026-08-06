@@ -38,7 +38,7 @@ AUS/LINKS/RECHTS/WARN (FR-BLK-01..09), 1,5-Hz-Takt (FR-BLK-08). In `main.cpp`
 verdrahtet (FR-BLK-09-Gate gegen `SystemState`, Event genau einmal
 konsumiert). Tests der Tastenerkennung/Blinklogik.
 
-## M5 — Sensorik-Vervollständigung + Härtung + Telemetrie/BLE (R4)  ☐
+## M5 — Sensorik-Vervollständigung + Härtung + Telemetrie/BLE (R4)  ✅
 **Teil A — BMP280 (Luftdruck)  ✅**
 Rohdaten-Treiber (FR-SYS-01: Höhe wird in der App berechnet), FORCED-Mode
 (Weather-Monitoring-Profil ×1/×1, IIR aus — Selbsterwärmung reduziert),
@@ -69,13 +69,46 @@ per `esp_reset_reason()` (WDT-/Panic-Reset-Flag, hinter `DEBUG_SERIAL`,
 vorgehalten für Telemetrie). Per 'H'-Hang-Hook am Board verifiziert:
 Auto-Reset nach ~2 s, Reset-Grund korrekt erkannt (Commit `17d18bc`).
 
-**Telemetrie + BLE  ☐ ← als Nächstes**
-Versioniertes Frame (FR-TEL-02/03/06), BLE-Notify unidirektional (FR-SYS-04),
-RAM-Ringpuffer (FR-TEL-04, NFR-RES-01).
+**Telemetrie + BLE  ✅**
+Versioniertes Frame (FR-TEL-02/03/06, inkl. `brake_light_pct` seit Schema v2),
+BLE-Notify unidirektional (FR-SYS-04), RAM-Ringpuffer (FR-TEL-04, NFR-RES-01).
+Am realen System validiert (Espressif ESP32-DevKitC-32E, Board-Tausch behebt
+den zuvor beobachteten Brownout, s. `docs/ble_brownout_fallstudie.md`):
+Advertising, Verbindung, MTU=185, Volllastbetrieb stabil (Commit `e007cc3`).
 
 ## M6 — Konfiguration  ☐
 NVS/`Preferences` + serielles Kalibrier-Interface (FR-CFG-01/02/03).
 
 ## M7 — Integration & Messungen  ☐
-Gesamtsystemtest; Messungen: Reaktionszeit ≤ 50 ms, Loop-Zeit, Energie, I²C-
-Recovery, Watchdog, Brown-Out (Bible Kap. 9).
+Gesamtsystemtest; Messungen (Bible Kap. 9):
+- Reaktionszeit ≤ 50 ms (NFR-RT-01)  ✅ Serial-Bench validiert (≤ 10 ms
+  gemessen, s. `docs/Validierung/`)
+- Bremskennlinie (FR-TL-06), Logik/Zeitverhalten  ✅ Serial-Bench validiert
+  (Ansprechschwelle 2,0, Sättigung 5,0, Hysterese + 300-ms-Haltezeit)
+- Fail-Safe bei IMU-Ausfall (FR-SAF-01/FR-STA-04)  ✅ Serial-Bench validiert
+- I²C-Recovery  ✅ (Härtung Teil 1) · Watchdog  ✅ (Härtung Teil 2)
+- Loop-Zykluszeit & RAM-/CPU-Budget  ☐ offen — Messung
+- Energiebilanz/Laufzeit unter realen Lastfällen  ☐ offen — Messung
+- Brown-Out unter realer LED-Lastspitze  ☐ offen (Re-Test auf neuem Board)
+- Feldkalibrierung der Bremsschwellen (reale Fahrbedingungen)  ☐ offen —
+  Bench validiert nur die Logik mit den konfigurierten Schwellen, s. Kap. 9.3
+- GNSS-Freiland-Fix  ☐ offen (bisher nur Indoor `NO_FIX`)
+- Feldtest (30-Zone, App-Export + Beobachtung)  ☐ offen
+
+---
+
+# Roadmap — iOS-Begleit-App (paralleler Track)
+
+> Eigene AR-IDs (App Bible). Reine Logik in `SmartBikeCore` (host-getestet,
+> `swift test`). App-Target gegen simulierte Quelle, bis realer BLE-Transport steht.
+
+- Core (Frame-Decoder, `StatisticsEngine`, `MetricRegistry`, `DashboardLayout`) + Unit-Tests  ✅
+- Live-Cockpit gegen simulierte Quelle (Start/Stopp, Live-Kennzahlen, Stale-Handling)  ✅
+- Fahrtaufzeichnung (1-Hz-Verdichtung) + SwiftData-Persistenz (`ModelActor`) + Verlauf-Liste  ✅
+- Fahrt-Detail: Statistik-Kacheln, Höhen-/Geschwindigkeitsprofil (Swift Charts), Route (MapKit)  ✅
+- Liquid Glass (iOS 26) nur für Chrome/Steuerelemente, Inhalte glasfrei  ✅
+- Absturz-Recovery **AR-DATA-04** (abschließen / verwerfen / weiter fahren)  ✅
+- Echter BLE-Transport `BLEConnectionService` (CoreBluetooth) statt Mock, am
+  realen iPhone verifiziert  ✅
+- Cockpit-Personalisierung (`DashboardLayout`-Editor)  ✅
+- Verlaufs-Gesamtübersicht  ☐
