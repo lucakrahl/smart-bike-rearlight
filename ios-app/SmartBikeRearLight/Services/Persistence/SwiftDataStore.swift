@@ -29,6 +29,20 @@ actor SwiftDataStore: RideRepository {
         try modelContext.save()
     }
 
+    /// Batch-Schreiben: alle Punkte einfügen, EIN einziger `save()` (AP6). Idempotent
+    /// gegen bereits vorhandene Zeitstempel (auch innerhalb des Batches, s. `seen`).
+    func appendBatch(_ points: [TrackPoint], to rideId: UUID) async throws {
+        guard let ride = try fetchRide(rideId), !points.isEmpty else { return }
+        var seen = Set(ride.samples.map(\.t))
+        for point in points where seen.insert(point.t).inserted {
+            let sample = makeSample(point)
+            sample.ride = ride
+            ride.samples.append(sample)
+            modelContext.insert(sample)
+        }
+        try modelContext.save()
+    }
+
     func finishRide(_ rideId: UUID, statistics: RideStatistics) async throws {
         guard let ride = try fetchRide(rideId) else { return }
         ride.endedAt = Date()

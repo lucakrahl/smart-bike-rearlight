@@ -15,6 +15,7 @@ final class AppEnvironment {
     private let source: TelemetrySource?
     private var telemetryTask: Task<Void, Never>?
     private static let layoutKey = "dashboardLayout"
+    private static let recordingModeKey = "recordingMode"
 
     init(telemetryStore: TelemetryStore, rideManager: RideManager,
          repository: RideRepository, source: TelemetrySource? = nil) {
@@ -36,6 +37,20 @@ final class AppEnvironment {
 
     func resetLayout() { updateLayout(.standard) }
 
+    /// Aufzeichnungsrate umschalten (AP6). Nur außerhalb einer laufenden Aufzeichnung
+    /// (RideManager erzwingt die Sperre); bei Erfolg persistiert. `false` = gesperrt.
+    @discardableResult
+    func setRecordingMode(_ mode: RecordingMode) -> Bool {
+        guard rideManager.setMode(mode) else { return false }
+        UserDefaults.standard.set(mode.rawValue, forKey: Self.recordingModeKey)
+        return true
+    }
+
+    private static func loadRecordingMode() -> RecordingMode {
+        let raw = UserDefaults.standard.object(forKey: recordingModeKey) as? Int
+        return raw.flatMap(RecordingMode.init(rawValue:)) ?? .hz1
+    }
+
     private static func loadLayout() -> DashboardLayout {
         if let data = UserDefaults.standard.data(forKey: layoutKey),
            let decoded = try? JSONDecoder().decode(DashboardLayout.self, from: data) {
@@ -51,6 +66,7 @@ final class AppEnvironment {
         let container = Self.makeModelContainer()
         let repository = SwiftDataStore(modelContainer: container)
         let manager = RideManager(repository: repository)
+        manager.setMode(Self.loadRecordingMode())   // persistierte Rate übernehmen (AP6)
         let source = Self.makeSource()
         let env = AppEnvironment(telemetryStore: store, rideManager: manager,
                                  repository: repository, source: source)

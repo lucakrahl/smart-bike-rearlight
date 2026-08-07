@@ -36,6 +36,29 @@ struct SettingsView: View {
                     if isRecording { Text("Während der Aufzeichnung gesperrt.") }
                 }
 
+                Section {
+                    Picker("Aufzeichnungsrate", selection: Binding(
+                        get: { env.rideManager.mode },
+                        set: { _ = env.setRecordingMode($0) }
+                    )) {
+                        Text("1 Hz · Standard").tag(RecordingMode.hz1)
+                        Text("10 Hz · Validierung").tag(RecordingMode.hz10)
+                    }
+                    .pickerStyle(.segmented)
+                    .disabled(isRecording)   // Umschalten nur außerhalb der Aufzeichnung (AP6)
+                } header: {
+                    Text("Aufzeichnung")
+                } footer: {
+                    // Nicht-modaler Hinweis (AR-UX-01): kein Alert, nur Fußtext.
+                    if isRecording {
+                        Text("Während der Aufzeichnung gesperrt.")
+                    } else if env.rideManager.mode == .hz10 {
+                        Text("10 Hz erhöht den Speicherbedarf deutlich (≈ 10× mehr Datenpunkte pro Fahrt).")
+                    } else {
+                        Text("10 Hz liefert eine höhere Auflösung für Validierungsfahrten – auf Kosten von mehr Speicher.")
+                    }
+                }
+
                 Section("Anzeige") {
                     LabeledContent("Einheiten", value: "Metrisch")
                 }

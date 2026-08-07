@@ -6,6 +6,9 @@ import SmartBikeCore
 public protocol RideRepository: Sendable {
     func startRide(deviceId: UUID?) async throws -> UUID
     func append(_ point: TrackPoint, to rideId: UUID) async throws
+    /// Mehrere 1-Hz-/10-Hz-Punkte in EINEM Schreibvorgang (ein `save()`), damit bei
+    /// 10 Hz nicht pro Sample gespeichert wird (AR-NFR-PERF-01, AP6). Idempotent wie `append`.
+    func appendBatch(_ points: [TrackPoint], to rideId: UUID) async throws
     func finishRide(_ rideId: UUID, statistics: RideStatistics) async throws
     func allRides() async throws -> [RideSummary]
     func ride(_ id: UUID) async throws -> RideDetail?
