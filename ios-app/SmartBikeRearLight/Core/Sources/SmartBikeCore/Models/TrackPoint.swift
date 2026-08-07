@@ -31,6 +31,20 @@ public struct TrackPoint: Sendable, Equatable {
     public var initDegraded: Bool?
     public var watchdogRecovered: Bool?
     public var frameVersion: Int?
+    /// v3-Analyse-/Aggregatfelder (Offsets 81–112). Optional, da für Alt-/v2-Daten nicht vorhanden.
+    public var gnssAccelMs2: Double?
+    public var pitchRad: Double?
+    public var gyroBiasRads: Double?
+    public var normDeltaMin: Double?
+    public var normDeltaMax: Double?
+    public var jerkMax: Double?
+    public var regimeStaticN: Int?
+    public var regimeDynamicN: Int?
+    public var regimeShockN: Int?
+    public var biasCalibrated: Bool?
+    public var gnssAccelValid: Bool?
+    public var dtMaxMs: Int?
+    public var loopMaxUs: Int?
 
     public init(t: TimeInterval, lat: Double, lon: Double, altitudeM: Double?,
                 speedKmph: Double, courseDeg: Double, sats: Int, hdop: Double,
@@ -39,7 +53,12 @@ public struct TrackPoint: Sendable, Equatable {
                 gnssAltitudeM: Double? = nil, temperatureC: Double? = nil,
                 deviceTimestampMs: UInt32? = nil, baroValid: Bool? = nil,
                 systemState: SystemState? = nil, initDegraded: Bool? = nil,
-                watchdogRecovered: Bool? = nil, frameVersion: Int? = nil) {
+                watchdogRecovered: Bool? = nil, frameVersion: Int? = nil,
+                gnssAccelMs2: Double? = nil, pitchRad: Double? = nil, gyroBiasRads: Double? = nil,
+                normDeltaMin: Double? = nil, normDeltaMax: Double? = nil, jerkMax: Double? = nil,
+                regimeStaticN: Int? = nil, regimeDynamicN: Int? = nil, regimeShockN: Int? = nil,
+                biasCalibrated: Bool? = nil, gnssAccelValid: Bool? = nil,
+                dtMaxMs: Int? = nil, loopMaxUs: Int? = nil) {
         self.t = t; self.lat = lat; self.lon = lon; self.altitudeM = altitudeM
         self.speedKmph = speedKmph; self.courseDeg = courseDeg; self.sats = sats
         self.hdop = hdop; self.gnssFix = gnssFix
@@ -48,5 +67,10 @@ public struct TrackPoint: Sendable, Equatable {
         self.deviceTimestampMs = deviceTimestampMs; self.baroValid = baroValid
         self.systemState = systemState; self.initDegraded = initDegraded
         self.watchdogRecovered = watchdogRecovered; self.frameVersion = frameVersion
+        self.gnssAccelMs2 = gnssAccelMs2; self.pitchRad = pitchRad; self.gyroBiasRads = gyroBiasRads
+        self.normDeltaMin = normDeltaMin; self.normDeltaMax = normDeltaMax; self.jerkMax = jerkMax
+        self.regimeStaticN = regimeStaticN; self.regimeDynamicN = regimeDynamicN; self.regimeShockN = regimeShockN
+        self.biasCalibrated = biasCalibrated; self.gnssAccelValid = gnssAccelValid
+        self.dtMaxMs = dtMaxMs; self.loopMaxUs = loopMaxUs
     }
 }

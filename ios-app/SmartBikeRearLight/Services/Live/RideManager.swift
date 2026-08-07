@@ -89,7 +89,21 @@ final class RideManager {
             systemState: frame.systemState,
             initDegraded: frame.initDegraded,
             watchdogRecovered: frame.watchdogRecovered,
-            frameVersion: Int(frame.version)
+            frameVersion: Int(frame.version),               // je Sample mitschreiben (CSV-Präambel AP7)
+            // v3-Analyse-/Aggregatfelder (nil bei v2-Frames) — nur Persistenz/Analyse.
+            gnssAccelMs2: frame.gnssAccelMs2.map(Double.init),
+            pitchRad: frame.pitchRad.map(Double.init),
+            gyroBiasRads: frame.gyroBiasRads.map(Double.init),
+            normDeltaMin: frame.normDeltaMin.map(Double.init),
+            normDeltaMax: frame.normDeltaMax.map(Double.init),
+            jerkMax: frame.jerkMax.map(Double.init),
+            regimeStaticN: frame.regimeStaticN.map(Int.init),
+            regimeDynamicN: frame.regimeDynamicN.map(Int.init),
+            regimeShockN: frame.regimeShockN.map(Int.init),
+            biasCalibrated: frame.biasCalibrated.map { $0 == 1 },
+            gnssAccelValid: frame.gnssAccelValid.map { $0 == 1 },
+            dtMaxMs: frame.dtMaxMs.map(Int.init),
+            loopMaxUs: frame.loopMaxUs.map(Int.init)
         )
         points.append(point)
         statistics = engine.computeStatistics(from: points)   // Live-Update (AR-LIVE-07)

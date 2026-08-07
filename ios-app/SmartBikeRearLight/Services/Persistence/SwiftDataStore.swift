@@ -87,12 +87,18 @@ actor SwiftDataStore: RideRepository {
                           brakeDecelMs2: p.brakeDecelMs2, brakeLightPct: p.brakeLightPct,
                           imuHealth: Int(p.imuHealth.rawValue),
                           pressurePa: p.pressurePa, gnssAltitudeM: p.gnssAltitudeM,
+                          temperatureC: p.temperatureC,
                           deviceTimestampMs: p.deviceTimestampMs.map(Int.init),
                           baroValid: p.baroValid,
                           systemState: p.systemState.map { Int($0.rawValue) },
                           initDegraded: p.initDegraded,
                           watchdogRecovered: p.watchdogRecovered,
-                          frameVersion: p.frameVersion)
+                          frameVersion: p.frameVersion,
+                          gnssAccelMs2: p.gnssAccelMs2, pitchRad: p.pitchRad, gyroBiasRads: p.gyroBiasRads,
+                          normDeltaMin: p.normDeltaMin, normDeltaMax: p.normDeltaMax, jerkMax: p.jerkMax,
+                          regimeStaticN: p.regimeStaticN, regimeDynamicN: p.regimeDynamicN, regimeShockN: p.regimeShockN,
+                          biasCalibrated: p.biasCalibrated, gnssAccelValid: p.gnssAccelValid,
+                          dtMaxMs: p.dtMaxMs, loopMaxUs: p.loopMaxUs)
     }
 
     private func makeTrackPoint(_ s: TrackSampleEntity) -> TrackPoint {
@@ -102,12 +108,18 @@ actor SwiftDataStore: RideRepository {
                    brakeDecelMs2: s.brakeDecelMs2, brakeLightPct: s.brakeLightPct,
                    imuHealth: ImuHealthState(rawValue: UInt8(clamping: s.imuHealth ?? 0)) ?? .ok,
                    pressurePa: s.pressurePa, gnssAltitudeM: s.gnssAltitudeM,
+                   temperatureC: s.temperatureC,
                    deviceTimestampMs: s.deviceTimestampMs.map { UInt32(clamping: $0) },
                    baroValid: s.baroValid,
                    systemState: s.systemState.flatMap { SystemState(rawValue: UInt8(clamping: $0)) },
                    initDegraded: s.initDegraded,
                    watchdogRecovered: s.watchdogRecovered,
-                   frameVersion: s.frameVersion)
+                   frameVersion: s.frameVersion,
+                   gnssAccelMs2: s.gnssAccelMs2, pitchRad: s.pitchRad, gyroBiasRads: s.gyroBiasRads,
+                   normDeltaMin: s.normDeltaMin, normDeltaMax: s.normDeltaMax, jerkMax: s.jerkMax,
+                   regimeStaticN: s.regimeStaticN, regimeDynamicN: s.regimeDynamicN, regimeShockN: s.regimeShockN,
+                   biasCalibrated: s.biasCalibrated, gnssAccelValid: s.gnssAccelValid,
+                   dtMaxMs: s.dtMaxMs, loopMaxUs: s.loopMaxUs)
     }
 
     private func makeStatistics(_ r: RideEntity) -> RideStatistics {
