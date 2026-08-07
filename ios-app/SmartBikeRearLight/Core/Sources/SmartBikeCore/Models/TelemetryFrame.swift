@@ -1,6 +1,9 @@
 import Foundation
 
-/// Dekodiertes Telemetrie-Frame, BLE-Schema v2 (81 Byte, App Bible Kap. 10). Reiner Werttyp.
+/// Dekodiertes Telemetrie-Frame (App Bible Kap. 10). Reiner Werttyp. Trägt die
+/// v2-Felder (Offsets 0–80, nicht-optional) sowie die v3-Felder (Offsets 81–112) als
+/// Optionals — `nil`, wenn das Frame sie nicht enthält (v2-Gerät / zu kurzes v3-Frame).
+/// Decoder/Versionsregel folgen in AP2; hier nur der Werttyp.
 public struct TelemetryFrame: Sendable, Equatable {
     /// Mindest-/Sollgröße des Frames. Überzählige Bytes werden vom Decoder ignoriert.
     public static let byteCount = 81
@@ -32,6 +35,23 @@ public struct TelemetryFrame: Sendable, Equatable {
     /// Gegenstück zum rohen `brakeDecel` (Offset 30).
     public var brakeLightPct: UInt8
 
+    // MARK: v3-Felder (Offsets 81–112, Schema v3). Optional: `nil` = im Frame nicht
+    // vorhanden (v2-Gerät oder zu kurzes v3-Frame) — Datentyp-Seite der
+    // Vorwärtskompatibilität (AR-CONN-04). Benennung/Typen exakt aus Vertrag Kap. 3.2.
+    public var gnssAccelMs2: Float?     // Off 81 — m/s², nur gültig wenn gnssAccelValid==1
+    public var pitchRad: Float?         // Off 85 — rad, interne Lageschätzung
+    public var gyroBiasRads: Float?     // Off 89 — rad/s, geschätzter gyro_x-Nullpunktfehler
+    public var normDeltaMin: Float?     // Off 93 — m/s², Min (‖a‖−g) im 100-ms-Fenster
+    public var normDeltaMax: Float?     // Off 97 — m/s², Max (‖a‖−g) im Fenster
+    public var jerkMax: Float?          // Off 101 — m/s²/10 ms, Max |Δ‖a‖| dt-normiert
+    public var regimeStaticN: UInt8?    // Off 105 — Anzahl STATIC-Samples im Fenster
+    public var regimeDynamicN: UInt8?   // Off 106 — Anzahl DYNAMIC-Samples
+    public var regimeShockN: UInt8?     // Off 107 — Anzahl SHOCK-Samples
+    public var biasCalibrated: UInt8?   // Off 108 — 0/1, Stufe-1-Bias-Kalibrierung fertig
+    public var gnssAccelValid: UInt8?   // Off 109 — 0/1, Gültigkeit der GNSS-Referenz
+    public var dtMaxMs: UInt8?          // Off 110 — ms, größtes dt im Fenster, sat. 255
+    public var loopMaxUs: UInt16?       // Off 111 — µs, längste Schleifendauer, sat. 65535
+
     public init(version: UInt16, timestampMs: UInt32,
                 accelX: Float, accelY: Float, accelZ: Float,
                 gyroX: Float, gyroY: Float, gyroZ: Float, brakeDecel: Float,
@@ -41,7 +61,12 @@ public struct TelemetryFrame: Sendable, Equatable {
                 utcYear: UInt16, utcMonth: UInt8, utcDay: UInt8, utcHour: UInt8, utcMinute: UInt8, utcSecond: UInt8,
                 systemState: SystemState, initDegraded: Bool, imuHealth: ImuHealthState,
                 baroValid: Bool, gnssFix: GnssFixStatus, watchdogRecovered: Bool,
-                brakeLightPct: UInt8 = 0) {
+                brakeLightPct: UInt8 = 0,
+                gnssAccelMs2: Float? = nil, pitchRad: Float? = nil, gyroBiasRads: Float? = nil,
+                normDeltaMin: Float? = nil, normDeltaMax: Float? = nil, jerkMax: Float? = nil,
+                regimeStaticN: UInt8? = nil, regimeDynamicN: UInt8? = nil, regimeShockN: UInt8? = nil,
+                biasCalibrated: UInt8? = nil, gnssAccelValid: UInt8? = nil,
+                dtMaxMs: UInt8? = nil, loopMaxUs: UInt16? = nil) {
         self.version = version; self.timestampMs = timestampMs
         self.accelX = accelX; self.accelY = accelY; self.accelZ = accelZ
         self.gyroX = gyroX; self.gyroY = gyroY; self.gyroZ = gyroZ; self.brakeDecel = brakeDecel
@@ -53,5 +78,10 @@ public struct TelemetryFrame: Sendable, Equatable {
         self.systemState = systemState; self.initDegraded = initDegraded; self.imuHealth = imuHealth
         self.baroValid = baroValid; self.gnssFix = gnssFix; self.watchdogRecovered = watchdogRecovered
         self.brakeLightPct = brakeLightPct
+        self.gnssAccelMs2 = gnssAccelMs2; self.pitchRad = pitchRad; self.gyroBiasRads = gyroBiasRads
+        self.normDeltaMin = normDeltaMin; self.normDeltaMax = normDeltaMax; self.jerkMax = jerkMax
+        self.regimeStaticN = regimeStaticN; self.regimeDynamicN = regimeDynamicN; self.regimeShockN = regimeShockN
+        self.biasCalibrated = biasCalibrated; self.gnssAccelValid = gnssAccelValid
+        self.dtMaxMs = dtMaxMs; self.loopMaxUs = loopMaxUs
     }
 }
