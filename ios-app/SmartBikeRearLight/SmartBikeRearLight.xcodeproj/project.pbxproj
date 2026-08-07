@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		3023C8663026664E00F92744 /* DiagnosticsViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3023C8653026664E00F92744 /* DiagnosticsViewModel.swift */; };
+		3023C8673026664E00F92744 /* DiagnosticsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3023C8643026664E00F92744 /* DiagnosticsView.swift */; };
 		304AF21F301C052A001F8A01 /* SwiftDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF21B301C052A001F8A01 /* SwiftDataStore.swift */; };
 		304AF220301C052A001F8A01 /* HistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF208301C052A001F8A01 /* HistoryViewModel.swift */; };
 		304AF221301C052A001F8A01 /* RideRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF21A301C052A001F8A01 /* RideRepository.swift */; };
@@ -54,6 +56,8 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		3023C8643026664E00F92744 /* DiagnosticsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsView.swift; sourceTree = "<group>"; };
+		3023C8653026664E00F92744 /* DiagnosticsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiagnosticsViewModel.swift; sourceTree = "<group>"; };
 		304AF18E301C02A8001F8A01 /* SmartBikeRearLight.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SmartBikeRearLight.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		304AF19D301C02A9001F8A01 /* SmartBikeRearLightTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartBikeRearLightTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		304AF1A7301C02A9001F8A01 /* SmartBikeRearLightUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SmartBikeRearLightUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -222,6 +226,8 @@
 		304AF20E301C052A001F8A01 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
+				3023C8643026664E00F92744 /* DiagnosticsView.swift */,
+				3023C8653026664E00F92744 /* DiagnosticsViewModel.swift */,
 				304AF20C301C052A001F8A01 /* SettingsView.swift */,
 				304AF20D301C052A001F8A01 /* SettingsViewModel.swift */,
 			);
@@ -445,6 +451,8 @@
 				30764017301D224400E45188 /* GlassBackground.swift in Sources */,
 				304AF221301C052A001F8A01 /* RideRepository.swift in Sources */,
 				304AF222301C052A001F8A01 /* MetricTile.swift in Sources */,
+				3023C8663026664E00F92744 /* DiagnosticsViewModel.swift in Sources */,
+				3023C8673026664E00F92744 /* DiagnosticsView.swift in Sources */,
 				304AF223301C052A001F8A01 /* TelemetrySource.swift in Sources */,
 				304AF224301C052A001F8A01 /* SettingsView.swift in Sources */,
 				304AF225301C052A001F8A01 /* RootTabView.swift in Sources */,

@@ -63,6 +63,14 @@ struct SettingsView: View {
                     LabeledContent("Einheiten", value: "Metrisch")
                 }
 
+                Section("Diagnose") {
+                    NavigationLink {
+                        DiagnosticsView()
+                    } label: {
+                        Label("Diagnose", systemImage: "stethoscope")
+                    }
+                }
+
                 Section("Info") {
                     LabeledContent("Version", value: SettingsViewModel.appVersion)
                     LabeledContent("Datenschutz", value: "Alle Daten lokal")
