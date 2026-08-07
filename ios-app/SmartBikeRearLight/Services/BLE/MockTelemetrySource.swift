@@ -3,7 +3,8 @@ import SmartBikeCore
 
 /// Simulierte Telemetriequelle für Entwicklung im Simulator (kein echtes Gerät).
 /// Erfüllt denselben Vertrag wie `BLEConnectionService` und liefert gültige
-/// 80-Byte-Frames (Little-Endian, feste Offsets — App Bible Kap. 10) mit ~10 Hz.
+/// **113-Byte-v3-Frames** (Little-Endian, App Bible Kap. 10 / Vertrag v3) mit ~10 Hz.
+/// Byte-Aufbau über `TelemetryFrameEncoder` (dieselbe Quelle wie die Round-Trip-Tests).
 /// WARUM: Ermöglicht das Live-Cockpit ohne ESP32; der BLE-Vertrag (FR-SYS-04)
 /// bleibt dabei unverändert, da hier echte Frames im Firmware-Format erzeugt werden.
 actor MockTelemetrySource: TelemetrySource {
@@ -45,57 +46,61 @@ actor MockTelemetrySource: TelemetrySource {
         }
     }
 
-    /// Baut ein gültiges 80-Byte-Frame an den festen Offsets des BLE-Vertrags.
-    /// Nur die für das Cockpit relevanten Felder sind belegt; der Rest bleibt 0.
+    /// Baut ein plausibles v3-Frame (113 Byte, version 3) und serialisiert es über den
+    /// gemeinsamen `TelemetryFrameEncoder`. Enthält bewusst Sonderfälle über die Zeit:
+    /// `bias_calibrated == 0` in den ersten ~3 s (Boot), sowie periodische Phasen mit
+    /// `gnss_accel_valid == 0` (dann `gnss_accel_ms2 = 0`).
     static func makeFrame(timestampMs: UInt32, tick: Double) -> Data {
-        var bytes = [UInt8](repeating: 0, count: TelemetryFrame.byteCount)
-
-        func writeU16(_ v: UInt16, at o: Int) {
-            withUnsafeBytes(of: v.littleEndian) { raw in
-                bytes[o] = raw[0]; bytes[o + 1] = raw[1]
-            }
-        }
-        func writeU32(_ v: UInt32, at o: Int) {
-            withUnsafeBytes(of: v.littleEndian) { raw in
-                for i in 0..<4 { bytes[o + i] = raw[i] }
-            }
-        }
-        func writeF32(_ v: Float, at o: Int) { writeU32(v.bitPattern, at: o) }
-
-        writeU16(TelemetryFrame.schemaVersion, at: 0)   // version == 1 (Offset 0)
-        writeU32(timestampMs, at: 2)                    // timestamp_ms (Offset 2)
-
-        // Geschwindigkeit sinusförmig 0…35 km/h (Offset 50); Periode ~12,6 s bei 10 Hz.
+        // Geschwindigkeit sinusförmig 0…35 km/h (Periode ~12,6 s bei 10 Hz).
         let speed = Float((sin(tick * 0.05) * 0.5 + 0.5) * 35.0)
-        writeF32(speed, at: 50)
 
-        // Route: sanft gekrümmter Pfad um Düsseldorf. Amplituden deutlich über der
-        // float32-Auflösung bei ~51° Breite, damit die Linie glatt bleibt.
+        // Route: sanft gekrümmter Pfad um Düsseldorf (Amplituden > float32-Auflösung bei ~51°).
         let angle = tick * 0.004
-        writeF32(Float(51.2277 + sin(angle) * 0.006), at: 42)          // lat (Offset 42)
-        writeF32(Float(6.7735 + (1 - cos(angle)) * 0.009), at: 46)     // lon (Offset 46)
+        let lat = Float(51.2277 + sin(angle) * 0.006)
+        let lon = Float(6.7735 + (1 - cos(angle)) * 0.009)
 
-        // Höhe wird in der App barometrisch aus pressure_pa berechnet (nicht mehr aus
-        // altitude_m). Druck so wählen, dass sich ~200 m ±15 m ergeben; Formel invers:
-        // p = p0 · (1 − h/44330)^5.255.
+        // Höhe barometrisch: Druck so, dass sich ~200 m ±15 m ergeben (p = p0·(1−h/44330)^5.255).
         let targetAltitude = 200.0 + sin(tick * 0.02) * 15.0
-        let pressure = 101_325.0 * pow(1.0 - targetAltitude / 44_330.0, 5.255)
-        writeF32(Float(pressure), at: 34)               // pressure_pa (Offset 34)
-        writeF32(Float(targetAltitude), at: 58)         // altitude_m (GNSS-Referenz, Offset 58)
-        bytes[77] = 1                                   // baro_valid = 1 (Offset 77)
+        let pressure = Float(101_325.0 * pow(1.0 - targetAltitude / 44_330.0, 5.255))
 
-        bytes[62] = 9                                   // sats = 9 (Offset 62)
-        bytes[78] = GnssFixStatus.fixOK.rawValue        // gnss_fix = 2 (Offset 78)
-
-        // Bremsen: pulsierende Verzögerung (nur positive Phasen), daraus die kommandierte
-        // Rücklicht-Duty über die Bremskennlinie 20 %→100 % (v2, Offsets 30 + 80).
+        // Bremsen: pulsierende Verzögerung (nur positive Phasen) + Bremskennlinie 20 %→100 %.
         let brakeDecel = Float(max(0.0, -cos(tick * 0.05) * 3.0))     // 0…3 m/s²
-        writeF32(brakeDecel, at: 30)                    // brake_decel_ms2 (Offset 30)
-        let brakeLightPct: UInt8 = brakeDecel <= 0.2
-            ? 0
-            : UInt8(min(100.0, 20.0 + Double(brakeDecel) / 3.0 * 80.0))
-        bytes[80] = brakeLightPct                       // brake_light_pct (Offset 80)
+        let braking = brakeDecel > 0.2
+        let brakeLightPct: UInt8 = braking ? UInt8(min(100.0, 20.0 + Double(brakeDecel) / 3.0 * 80.0)) : 0
 
-        return Data(bytes)
+        // Sonderfälle:
+        let biasCalibrated: UInt8 = tick < 30 ? 0 : 1                 // erste ~3 s unkalibriert
+        let gnssValid: UInt8 = sin(tick * 0.03) > -0.5 ? 1 : 0        // periodische Ausfälle
+        let gnssAccel: Float = gnssValid == 1 ? brakeDecel * 0.9 : 0  // 0, wenn ungültig
+
+        // Regime-Zähler (Summe ~10), Shock/Dynamic steigen beim Bremsen.
+        let dynamicN: UInt8 = braking ? 6 : 2
+        let shockN: UInt8 = braking ? UInt8(min(4.0, Double(brakeDecel))) : 0
+        let staticN = UInt8(max(0, 10 - Int(dynamicN) - Int(shockN)))
+
+        let frame = TelemetryFrame(
+            version: 3, timestampMs: timestampMs,
+            accelX: 0, accelY: 0, accelZ: 9.81, gyroX: 0, gyroY: 0, gyroZ: 0,
+            brakeDecel: brakeDecel,
+            pressurePa: pressure, temperatureC: 21.5,
+            lat: lat, lon: lon, speedKmph: speed, courseDeg: Float((angle * 57.3).truncatingRemainder(dividingBy: 360)),
+            altitudeM: Float(targetAltitude),           // GNSS-Höhe (Referenz)
+            sats: 9, hdop: 0.8,
+            utcYear: 2026, utcMonth: 8, utcDay: 7,
+            utcHour: 15, utcMinute: 42, utcSecond: UInt8((Int(tick) / 10) % 60),
+            systemState: .run, initDegraded: false, imuHealth: .ok,
+            baroValid: true, gnssFix: .fixOK, watchdogRecovered: false,
+            brakeLightPct: brakeLightPct,
+            gnssAccelMs2: gnssAccel,
+            pitchRad: Float(sin(tick * 0.02) * 0.05),
+            gyroBiasRads: -0.01,
+            normDeltaMin: braking ? -0.5 : -0.2,
+            normDeltaMax: braking ? brakeDecel + 1.0 : 0.5,
+            jerkMax: braking ? brakeDecel * 1.5 : 0.3,
+            regimeStaticN: staticN, regimeDynamicN: dynamicN, regimeShockN: shockN,
+            biasCalibrated: biasCalibrated, gnssAccelValid: gnssValid,
+            dtMaxMs: 10, loopMaxUs: 1200
+        )
+        return TelemetryFrameEncoder.encode(frame)
     }
 }

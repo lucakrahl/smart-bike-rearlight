@@ -7,7 +7,6 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		304AF21E301C052A001F8A01 /* Info-Setup.md in Resources */ = {isa = PBXBuildFile; fileRef = 304AF210301C052A001F8A01 /* Info-Setup.md */; };
 		304AF21F301C052A001F8A01 /* SwiftDataStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF21B301C052A001F8A01 /* SwiftDataStore.swift */; };
 		304AF220301C052A001F8A01 /* HistoryViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF208301C052A001F8A01 /* HistoryViewModel.swift */; };
 		304AF221301C052A001F8A01 /* RideRepository.swift in Sources */ = {isa = PBXBuildFile; fileRef = 304AF21A301C052A001F8A01 /* RideRepository.swift */; };
@@ -74,7 +73,6 @@
 		304AF20A301C052A001F8A01 /* RideDetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideDetailViewModel.swift; sourceTree = "<group>"; };
 		304AF20C301C052A001F8A01 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		304AF20D301C052A001F8A01 /* SettingsViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsViewModel.swift; sourceTree = "<group>"; };
-		304AF210301C052A001F8A01 /* Info-Setup.md */ = {isa = PBXFileReference; lastKnownFileType = net.daringfireball.markdown; path = "Info-Setup.md"; sourceTree = "<group>"; };
 		304AF212301C052A001F8A01 /* BLEConnectionService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BLEConnectionService.swift; sourceTree = "<group>"; };
 		304AF213301C052A001F8A01 /* TelemetrySource.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TelemetrySource.swift; sourceTree = "<group>"; };
 		304AF215301C052A001F8A01 /* RideManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RideManager.swift; sourceTree = "<group>"; };
@@ -243,7 +241,6 @@
 		304AF211301C052A001F8A01 /* Resources */ = {
 			isa = PBXGroup;
 			children = (
-				304AF210301C052A001F8A01 /* Info-Setup.md */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -419,7 +416,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				304AF21E301C052A001F8A01 /* Info-Setup.md in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

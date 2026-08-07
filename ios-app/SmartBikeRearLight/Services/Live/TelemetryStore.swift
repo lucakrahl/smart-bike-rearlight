@@ -18,7 +18,26 @@ final class TelemetryStore {
     /// Warnungen greifen nur bei frischer Verbindung (Stale/kein Fix sind separat behandelt).
     var warnings: [LiveWarning] { liveState == .fresh ? lastWarnings : [] }
 
+    /// Diagnosezähler (AP2/AP8): verworfene Frames bzw. zu kurze v3-Frames (E‑1).
+    /// Der Decoder ist zustandslos; das Auswerten/Hochzählen liegt hier.
+    private(set) var decodeErrorCount: Int = 0
+    private(set) var truncatedV3FrameCount: Int = 0
+
     private var lastFrameAt: Date?
+
+    /// Wertet ein Decode-Ergebnis aus: aktualisiert Live-Wahrheit + Diagnosezähler und gibt
+    /// das Frame (falls vorhanden) an den Aufrufer zurück (für die Aufzeichnung).
+    @discardableResult
+    func consume(_ result: DecodeResult) -> TelemetryFrame? {
+        switch result {
+        case .ok(let frame):
+            apply(frame); return frame
+        case .truncatedV3(let frame):
+            truncatedV3FrameCount += 1; apply(frame); return frame   // E‑1: kein Fehler
+        case .rejected:
+            decodeErrorCount += 1; return nil
+        }
+    }
 
     /// Wird vom Decode-Consumer aufgerufen (10 Hz). Schreibt die Live-Momentaufnahme
     /// fort; Aufzeichnungs-Aggregate (Distanz/Zeit/Ø/Max) folgen über den RideManager.

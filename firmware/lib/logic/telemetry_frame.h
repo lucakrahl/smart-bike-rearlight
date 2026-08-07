@@ -4,13 +4,18 @@
 // entgegen; kennt weder Treiber noch main.cpp. Host-testbar (siehe
 // firmware/test/test_telemetry_frame/).
 //
-// Byte-Layout (gepackt, Little-Endian, 80 Byte gesamt). Serialisierung
-// erfolgt per memcpy an fortlaufenden Offsets, NICHT per struct-Cast --
-// vermeidet Compiler-Padding- und Alignment-Annahmen (einige Felder unten
-// liegen bewusst nicht typ-aligned, z. B. "hdop" bei Offset 63).
+// Schema v3 (docs/BLE_Frame_v3_Schnittstelle.md, verbindlicher Vertrag mit
+// der iOS-App). Byte-Layout (gepackt, Little-Endian, 113 Byte gesamt).
+// Serialisierung erfolgt per memcpy an fortlaufenden Offsets, NICHT per
+// struct-Cast -- vermeidet Compiler-Padding- und Alignment-Annahmen (einige
+// Felder liegen bewusst nicht typ-aligned, z. B. "hdop" bei Offset 63).
+//
+// Offsets 0-80 sind byte-identisch zu Schema v2 (ein v2-Decoder, der nur
+// die ersten 81 Byte liest, funktioniert an einem v3-Geraet weiter, s.
+// Vertrag Kap. 4).
 //
 //   Offset  Groesse  Typ     Feld
-//   0       2        uint16  version (TELEMETRY_SCHEMA_VERSION, FR-TEL-06)
+//   0       2        uint16  version (TELEMETRY_SCHEMA_VERSION=3, FR-TEL-06)
 //   2       4        uint32  timestamp_ms
 //   6       4        float   accel_x_ms2
 //   10      4        float   accel_y_ms2
@@ -42,13 +47,27 @@
 //   79      1        uint8   watchdog_recovered (0/1)
 //   80      1        uint8   brake_light_pct    (0..100, tatsaechlich kommandierte
 //                                                LED-Duty aus tail_light_fsm, FR-TEL-03)
+//   -- ab hier neu in v3 (Vertrag Kap. 3.2) --
+//   81      4        float   gnss_accel_ms2     (m/s^2, +=Verzoegerung; 0.0f wenn !gnss_accel_valid)
+//   85      4        float   pitch_rad          (motion_filter-Lageschaetzung, rad)
+//   89      4        float   gyro_bias_rads      (motion_filter-Gyro-Nullpunktfehler, rad/s)
+//   93      4        float   norm_delta_min      (m/s^2, Minimum ‖a‖-g im 100-ms-Fenster)
+//   97      4        float   norm_delta_max      (m/s^2, Maximum ‖a‖-g im 100-ms-Fenster)
+//   101     4        float   jerk_max            (m/s^2 je 10 ms, Betragsmaximum im Fenster)
+//   105     1        uint8   regime_static_n     (Anzahl STATIC-Samples im Fenster)
+//   106     1        uint8   regime_dynamic_n    (Anzahl DYNAMIC-Samples im Fenster)
+//   107     1        uint8   regime_shock_n      (Anzahl SHOCK-Samples im Fenster)
+//   108     1        uint8   bias_calibrated     (0/1, Stufe-1-Bias-Kalibrierung abgeschlossen)
+//   109     1        uint8   gnss_accel_valid    (0/1, Gueltigkeitsurteil gnss_speed_ref)
+//   110     1        uint8   dt_max_ms           (ms, groesstes dt_s im Fenster, saettigt 255)
+//   111     2        uint16  loop_max_us         (us, laengste Schleifendauer im Fenster, saettigt 65535)
 #pragma once
 #include <cstdint>
 #include <cstddef>
 
 namespace logic {
 
-constexpr size_t TELEMETRY_FRAME_SIZE = 81;
+constexpr size_t TELEMETRY_FRAME_SIZE = 113;
 
 struct TelemetryFrame {
   uint32_t timestamp_ms = 0;
@@ -89,6 +108,36 @@ struct TelemetryFrame {
   // Erlaubt der App/Auswertung den Vergleich Eingang vs. Ausgang der
   // Bremslicht-Logik (FR-TL-06-Validierung).
   uint8_t brake_light_pct = 0;
+
+  // -- Schema v3 (Offsets 81-112, docs/BLE_Frame_v3_Schnittstelle.md) --
+
+  // GNSS-Referenz (E1, BEOBACHTEND, s. gnss_speed_ref.h -- wirkt nicht auf
+  // die Bremslogik zurueck). Bei !gnss_accel_valid ist gnss_accel_ms2
+  // IMMER 0.0f (nie NaN) -- App/CSV-Export sollen keinen NaN-Sonderfall
+  // behandeln muessen; die Gueltigkeit traegt ausschliesslich das Flag.
+  float gnss_accel_ms2 = 0.0f;
+  bool gnss_accel_valid = false;
+
+  // Filter-Innensicht (motion_filter), fuer die Feldparametrierung der
+  // Stufe-1-Schwellwerte (MOTION_NORM_STATIC_BAND/_JERK_DELTA/_SHOCK_DELTA).
+  float pitch_rad = 0.0f;
+  float gyro_bias_rads = 0.0f;
+  bool bias_calibrated = false;
+
+  // Fensteraggregate ueber die 100-Hz-Samples seit dem letzten Frame (s.
+  // telemetry_window_agg.h) -- KEIN Momentanwert.
+  float norm_delta_min = 0.0f;
+  float norm_delta_max = 0.0f;
+  float jerk_max = 0.0f;
+  uint8_t regime_static_n = 0;
+  uint8_t regime_dynamic_n = 0;
+  uint8_t regime_shock_n = 0;
+
+  // Zeitverhalten-Nachweis NFR-RT-04 (Normalbetrieb, nicht der
+  // BENCH_MODE-Harness, s. docs/Validierung/bench_run_notes.md
+  // "Geltungsbereich der Zeitstatistik").
+  uint8_t dt_max_ms = 0;
+  uint16_t loop_max_us = 0;
 };
 
 // Serialisiert "frame" nach "out" gemaess obigem Layout. "out" muss

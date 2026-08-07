@@ -65,6 +65,68 @@ void releaseStuckScl() {
   delayMicroseconds(5);
 }
 
+// Direkter Registerzugriff fuer CONFIG (DLPF)/SMPLRT_DIV: Adafruit_MPU6050
+// bietet dafuer keine API, und die Bibliothek selbst schreibt beide
+// Register nie -- der Power-On-Reset-Default bleibt sonst stehen (260 Hz
+// Accel-Bandbreite bei 8 kHz interner Rate). Bei 100 Hz Firmware-
+// Auslesung (PERIOD_IMU_MS) bedeutet das Unterabtastung OHNE Anti-Alias-
+// Filterung -- am realen Board per Registerauslesung nachgewiesen
+// (B-FW.11, s. docs/Validierung/bench_run_notes.md) und als plausible
+// Hauptursache der ueberhoehten norm_delta-Streuung identifiziert
+// (gemessen ±0,6-0,7 m/s^2 im Ruhezustand statt der aus dem Datenblatt-
+// Rauschen (400 ug/sqrt(Hz)) erwarteten ±0,24 m/s^2).
+//
+// DLPF_CFG=3 -> Accel-Bandbreite 44 Hz (< 50 Hz = halbe Auslesefrequenz,
+// damit kein Aliasing mehr) UND Gyro-Basisrate wechselt von 8 kHz auf
+// 1 kHz. SMPLRT_DIV=4 -> Sensor-Sample-Rate = 1000/(1+4) = 200 Hz --
+// bewusst NICHT 100 Hz (Deckungsgleichheit mit der 100-Hz-Auslesung
+// wuerde eine Schwebung zwischen Sensor- und Auslesetakt riskieren, falls
+// beide Takte minimal auseinanderlaufen; 200 Hz liefert der Firmware bei
+// jeder zweiten Auslesung sicher ein frisches Sample).
+//
+// Zusaetzliche Gruppenlaufzeit durch den 44-Hz-Filter: 4,9 ms (Datenblatt)
+// gegen NFR-RT-01 (<=50 ms Bremslicht-Reaktionszeit) -- 4,9 ms sind ein
+// Zehntel des Budgets, lassen komfortable Reserve fuer I2C-Lesezeit,
+// motion_filter/tail_light_fsm-Verarbeitung und PWM-Ausgabe.
+constexpr uint8_t kRegConfig = 0x1A;
+constexpr uint8_t kRegSmplrtDiv = 0x19;
+constexpr uint8_t kDlpfCfg44Hz = 0x03;
+constexpr uint8_t kSmplrtDiv200Hz = 4;
+
+uint8_t readReg(uint8_t reg) {
+  Wire.beginTransmission(MPU6050_I2C_ADDR);
+  Wire.write(reg);
+  Wire.endTransmission(false);
+  Wire.requestFrom(MPU6050_I2C_ADDR, static_cast<uint8_t>(1));
+  return Wire.read();
+}
+
+void writeReg(uint8_t reg, uint8_t val) {
+  Wire.beginTransmission(MPU6050_I2C_ADDR);
+  Wire.write(reg);
+  Wire.write(val);
+  Wire.endTransmission();
+}
+
+// Schreibt CONFIG/SMPLRT_DIV und liest sie zurueck, um die tatsaechlich
+// wirksame Konfiguration zu verifizieren (nicht nur den Schreibaufruf
+// anzunehmen -- I2C-Schreibfehler waeren sonst unbemerkt). Rueckgabe:
+// true, wenn beide Register den Soll-Wert tragen.
+bool configureDlpfAndSampleRate() {
+  writeReg(kRegConfig, kDlpfCfg44Hz);
+  writeReg(kRegSmplrtDiv, kSmplrtDiv200Hz);
+  const uint8_t config_readback = readReg(kRegConfig);
+  const uint8_t smplrt_readback = readReg(kRegSmplrtDiv);
+  const bool ok = (config_readback == kDlpfCfg44Hz) && (smplrt_readback == kSmplrtDiv200Hz);
+  if (DEBUG_SERIAL) {
+    Serial.printf("[IMU] DLPF/SMPLRT_DIV gesetzt+zurueckgelesen: CONFIG=0x%02X (soll 0x%02X) "
+                  "SMPLRT_DIV=%u (soll %u) -> %s\n",
+                  config_readback, kDlpfCfg44Hz, smplrt_readback, kSmplrtDiv200Hz,
+                  ok ? "OK" : "FEHLER");
+  }
+  return ok;
+}
+
 }  // namespace
 
 bool imuBegin() {
@@ -77,6 +139,10 @@ bool imuBegin() {
     // die Plausibilitaetspruefung (imu_health, IMU_ACCEL_MAX_MAGNITUDE_MS2)
     // faelschlich ansprechen lassen.
     mpu.setAccelerometerRange(MPU6050_RANGE_16_G);
+    // DLPF/Sample-Rate fest konfigurieren (s. Kommentar oben) -- mpu.begin()
+    // fuehrt intern einen Register-Reset durch, DLPF/SMPLRT_DIV muessen
+    // deshalb NACH begin() gesetzt werden, sonst wirkt der Reset ueberschreibend.
+    ready = configureDlpfAndSampleRate();
   }
   return ready;
 }

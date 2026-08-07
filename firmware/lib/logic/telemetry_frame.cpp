@@ -69,6 +69,21 @@ void telemetryFrameSerialize(const TelemetryFrame& frame, uint8_t* out) {
 
   o = writeU8(out, o, frame.brake_light_pct);
 
+  // -- Schema v3 (Offsets 81-112) --
+  o = writeF32(out, o, frame.gnss_accel_ms2);
+  o = writeF32(out, o, frame.pitch_rad);
+  o = writeF32(out, o, frame.gyro_bias_rads);
+  o = writeF32(out, o, frame.norm_delta_min);
+  o = writeF32(out, o, frame.norm_delta_max);
+  o = writeF32(out, o, frame.jerk_max);
+  o = writeU8(out, o, frame.regime_static_n);
+  o = writeU8(out, o, frame.regime_dynamic_n);
+  o = writeU8(out, o, frame.regime_shock_n);
+  o = writeU8(out, o, frame.bias_calibrated ? 1 : 0);
+  o = writeU8(out, o, frame.gnss_accel_valid ? 1 : 0);
+  o = writeU8(out, o, frame.dt_max_ms);
+  o = writeU16(out, o, frame.loop_max_us);
+
   (void)o;  // == TELEMETRY_FRAME_SIZE, s. test_telemetry_frame Sanity-Test
 }
 

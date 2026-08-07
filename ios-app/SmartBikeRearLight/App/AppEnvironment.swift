@@ -111,8 +111,8 @@ final class AppEnvironment {
             defer { connectionTask.cancel() }
 
             for await data in stream {
-                if let frame = TelemetryFrameDecoder.decode(data) {
-                    telemetryStore.apply(frame)
+                // Decoder ist zustandslos; der Store wertet das Ergebnis aus + zählt (E‑1).
+                if let frame = telemetryStore.consume(TelemetryFrameDecoder.decode(data)) {
                     rideManager.ingest(frame)   // no-op außerhalb der Aufzeichnung
                 }
             }
