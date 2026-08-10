@@ -16,10 +16,6 @@ void bleBegin();
 // CONNECTIONS=1, s. platformio.ini).
 bool bleIsConnected();
 
-// Zuletzt ausgehandeltes ATT-MTU der aktuellen Verbindung (BLE-Default 23,
-// falls (noch) nichts verhandelt wurde/getrennt ist).
-uint16_t bleGetMtu();
-
 // Sendet eine Notification mit den gegebenen Bytes an den verbundenen
 // Client. Nicht-blockierend (NFR-RT-04): liefert sofort false zurueck, wenn
 // nicht verbunden oder die interne Sende-Queue des BLE-Stacks voll ist --

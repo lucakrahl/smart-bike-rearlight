@@ -1,10 +1,8 @@
 // main.cpp — Einstieg & kooperativer Scheduler (Bible Kap. 6.8, NFR-RT-03)
 //
-// Dieses File verdrahtet Treiber (lib/drivers) und Logik (lib/logic) ueber
-// einen nicht-blockierenden millis()-Scheduler. NOCH GERUEST: die Task-Rumpfe
-// sind Stubs mit Verweis auf die umzusetzenden Anforderungen. Modul fuer Modul
-// mit Claude Code fuellen (Reihenfolge s. docs/roadmap.md), Logik vor Hardware,
-// jeweils mit Host-Unit-Test (pio test -e native).
+// Verdrahtet Treiber (lib/drivers) und Logik (lib/logic) ueber einen
+// nicht-blockierenden millis()-Scheduler zu den vier Regionen R1..R4 (Bible
+// Kap. 6.6).
 //
 // WICHTIG: kein delay() im Betrieb. Jeder Task-Schritt bleibt kurz (< 10 ms
 // Worst-Case-Loop, NFR-RT-04).
@@ -122,7 +120,7 @@ static logic::GnssSpeedRefOutput lastGnssSpeedRef{};
 static uint32_t t_gnss_speed_ref_prev_ms = 0;  // fuer real gemessenes dt_s zwischen Fixes
 
 // ------------------------------------------------------------------------
-// Task-Stubs — hier kommt die Logik der jeweiligen Region hinein.
+// Tasks — je Region die Verdrahtung von Treiber und Logik.
 // ------------------------------------------------------------------------
 static void taskLifecycleAndTailLight() {
   // 100 Hz. Tickt R1 (Lebenszyklus) + R2 (Ruecklicht). Sicherheitskritisch,
@@ -206,15 +204,6 @@ static void taskLifecycleAndTailLight() {
   drivers::setDutyPercent(PIN_BRAKE_LIGHT, tl.duty_pct);
   lastBrakeLightPct = tl.duty_pct;  // fuer Telemetrie, s. Kommentar bei der Deklaration
   lastSystemState = sys.state;  // fuer FR-BLK-09-Gating in taskBlinker()
-
-  // TODO(temp debug): entfernen, sobald Telemetrie (M5) den Zustand ausgibt.
-  static uint32_t t_debug = 0;
-  if (now - t_debug >= 1000) {
-    t_debug = now;
-    Serial.printf("[R1/R2] sys=%d init_degraded=%d tl=%d duty=%u%% imu_health=%d imu_plausible=%d\n",
-                  (int)sys.state, (int)sys.degraded, (int)tl.state, tl.duty_pct,
-                  (int)health.state, (int)health.plausible);
-  }
 }
 
 static void taskBaro() {
@@ -241,12 +230,6 @@ static void taskBaro() {
   if (measurement_pending) {
     lastBaroSample = drivers::bmp280Read();
     lastBaroValid = true;
-    // TODO(temp debug): entfernen, sobald Telemetrie (M5 Teil B) den Wert
-    // ausgibt. Hinter DEBUG_SERIAL abschaltbar.
-    if (DEBUG_SERIAL) {
-      Serial.printf("[Baro] pressure=%.1f Pa temp=%.2f C\n", lastBaroSample.pressure_pa,
-                    lastBaroSample.temperature_c);
-    }
   }
   drivers::bmp280TriggerMeasurement();
   measurement_pending = true;
@@ -273,13 +256,6 @@ static void taskGnss() {
   t_gnss_speed_ref_prev_ms = now_gnss;
   lastGnssSpeedRef = gnssSpeedRef.update({lastGnssData.speed_kmph / 3.6f, lastGnssData.sats,
                                           lastGnssData.hdop, lastGnssData.location_valid, gnss_dt_s});
-
-  // TODO(temp debug): entfernen, sobald Telemetrie (M5 Teil B) den Wert
-  // ausgibt. Hinter DEBUG_SERIAL abschaltbar.
-  if (DEBUG_SERIAL) {
-    Serial.printf("[GNSS] lat=%.6f lon=%.6f sats=%u hdop=%.2f status=%d\n", lastGnssData.lat,
-                  lastGnssData.lon, lastGnssData.sats, lastGnssData.hdop, (int)lastGnssFix);
-  }
 }
 
 static void taskBlinker() {
@@ -403,20 +379,6 @@ static void taskTelemetry() {
   }
 }
 
-static void taskConfigConsole() {
-  // TODO(temp debug): Watchdog-Verifikationshook -- 'H' ueber den Serial-
-  // Monitor sendet das Board absichtlich in einen Hang; der Task-Watchdog
-  // (FR-SAF-03) muss es binnen WATCHDOG_TIMEOUT_MS selbst neustarten. Nur
-  // hinter DEBUG_SERIAL, vor Auslieferung entfernen.
-  if (DEBUG_SERIAL && Serial.available() && Serial.read() == 'H') {
-    Serial.println(F("[debug] simulating hang for WDT test"));
-    while (true) {}
-  }
-
-  // TODO(FR-CFG-02): nicht-blockierendes serielles Kalibrier-Interface
-  // (get/set/list/reset) ueber Serial (UART0).
-}
-
 // ------------------------------------------------------------------------
 #ifndef BENCH_MODE
 void setup() {
@@ -488,7 +450,10 @@ void setup() {
   // Reset-Aufruf in unserem loop() noetig.
   enableLoopWDT();
 
-  // TODO(FR-CFG-03): Konfiguration aus NVS laden (Defaults bei leerem NVS).
+  // FR-CFG-02 (serielles Kalibrier-Interface) und FR-CFG-03 (Konfiguration aus
+  // NVS) sind nicht Teil des Arbeitsumfangs (Umfangsschnitt 10.08.2026). Alle
+  // Kalibrierwerte sind Uebersetzungszeit-Konstanten in include/config.h; eine
+  // Aenderung erfordert Neuuebersetzung. Begruendung s. Project Bible Kap. 12.
 }
 
 void loop() {
@@ -506,13 +471,18 @@ void loop() {
   drivers::gnssPump();
 
   // Feste Reihenfolge, sicherheitsrelevantes zuerst (NFR-RT-03).
+  // WARUM t_imu = now und nicht t_imu += PERIOD_IMU_MS: die rekursive Variante
+  // erzeugt nach einer Verzoegerung Aufholbursts und verzerrt die
+  // Abtastabstaende zusaetzlich. Der gewaehlte Weg driftet stattdessen nach
+  // oben -- die reale Periode ist PERIOD_IMU_MS plus Restlaufzeit, der Nennwert
+  // 100 Hz wird strukturbedingt nie exakt erreicht. Zulaessig, weil der
+  // Komplementaerfilter mit dem real gemessenen dt_s arbeitet.
   if (now - t_imu  >= PERIOD_IMU_MS)  { t_imu  = now; taskLifecycleAndTailLight(); }
   taskRf();
   taskBlinker();
   if (now - t_baro >= PERIOD_BARO_MS) { t_baro = now; taskBaro(); }
   if (now - t_gnss >= PERIOD_GNSS_MS) { t_gnss = now; taskGnss(); }
   if (now - t_tele >= PERIOD_TELE_MS) { t_tele = now; taskTelemetry(); }
-  taskConfigConsole();
 
   // Fuer den naechsten loop()-Durchlauf vorhalten (s. Kommentar bei der
   // Deklaration): der aktuelle Durchlauf ist erst hier abgeschlossen, kann
@@ -706,12 +676,15 @@ float benchAzJitter(uint32_t t_ms) {
 }
 
 // Experiment D: 2,5 s Ruhe, 4 s konstante Verzoegerung 4,0 m/s^2, 2 s Ruhe.
-// Vorlauf 2500 ms statt urspruenglich 1000 ms (A6.1b): MOTION_ANCHOR_WINDOW_S
-// =1,0 s verlangt 1,0 s zusammenhaengendes STATIC; ein Vorlauf von exakt
-// 1000 ms hat null Marge gegen jede Taktschwankung (s. bench_run_notes.md,
-// Schritt A -- dort dadurch bias_calibrated=0 statt 1). 2500 ms geben 150 %
-// Reserve und lassen zusaetzlich die Stufe-1-Bias-Mittelung sauber
-// abschliessen.
+// Vorlauf 2500 ms statt urspruenglich 1000 ms (A6.1b): zum Zeitpunkt der
+// Aenderung verlangte MOTION_ANCHOR_WINDOW_S=1,0 s ein zusammenhaengendes
+// STATIC-Fenster von 1,0 s; ein Vorlauf von exakt 1000 ms hatte null Marge
+// gegen jede Taktschwankung (s. bench_run_notes.md, Schritt A -- dort
+// dadurch bias_calibrated=0 statt 1). Seit der B-FW.11-Reparaturrunde ist
+// MOTION_ANCHOR_WINDOW_S=0,3 s (Verankerung von der Bias-Kalibrierung
+// entkoppelt, s. config.h); der unveraendert belassene 2500-ms-Vorlauf gibt
+// dagegen jetzt reichlich Reserve und laesst zusaetzlich die
+// Stufe-1-Bias-Mittelung (200 kumulierte STATIC-Samples) sauber abschliessen.
 ImuProfileSample profileD(uint32_t t_ms) {
   const float az = benchAzJitter(t_ms);
   if (t_ms < 2500u) return {0.0f, 0.0f, az, 0.0f};

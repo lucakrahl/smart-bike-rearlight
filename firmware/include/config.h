@@ -1,17 +1,16 @@
 // config.h — Compile-Zeit-Defaults & Konstanten (Bible Kap. 2, FR-CFG)
-// Kalibrierwerte (unten markiert) sind zur Laufzeit ueber NVS ueberschreibbar
-// (FR-CFG-01/02). Struktur-/Normwerte sind fest.
+// Kalibrierwerte (unten markiert) sind Uebersetzungszeit-Konstanten; eine
+// Aenderung erfordert Neuuebersetzung. FR-CFG-02 (serielles Kalibrier-
+// Interface) und FR-CFG-03 (Laufzeit-Konfiguration aus NVS) sind nicht Teil
+// des Arbeitsumfangs (Umfangsschnitt 10.08.2026, s. Project Bible Kap. 12).
 #pragma once
 #include <stdint.h>
-
-// ---- Konfig-Schema (FR-CFG-03) -------------------------------------------
-constexpr uint16_t CONFIG_VERSION = 1;
 
 // ---- Zustandsmaschine / Timing (fest) ------------------------------------
 constexpr uint32_t INIT_TIMEOUT_MS      = 5000;   // FR-STA-01
 constexpr uint32_t BLINKER_TIMEOUT_MS   = 60000;  // FR-BLK-03 (Selbstabschaltung)
 constexpr uint32_t LONGPRESS_MS         = 5000;   // FR-BLK-04/07 (Warnblinker)
-constexpr uint32_t RF_RELEASE_TIMEOUT_MS = 150;   // FR-RF-03 (vorlaeufig, s. Verifikationstest)
+constexpr uint32_t RF_RELEASE_TIMEOUT_MS = 150;   // FR-RF-03 (Erstauslegung; im Feldbetrieb ohne Fehlfunktion bestaetigt, systematische Messung nicht Teil des Arbeitsumfangs)
 
 // ---- LED / PWM (fest, Norm) ----------------------------------------------
 constexpr uint32_t PWM_FREQ_HZ          = 5000;   // CON-02
@@ -25,17 +24,13 @@ constexpr uint8_t  INIT_BLINK_HIGH_PCT  = 50;     // FR-TL-03, C3.1 Helligkeits-
 constexpr float    ESS_BLINK_FREQ_HZ    = 4.0f;   // FR-TL-07 (experimentell)
 constexpr uint8_t  ESS_BLINK_DUTY_PCT   = 50;     // FR-TL-07 Zeit-Duty-Cycle (analog INIT_BLINK_DUTY_PCT)
 
-// ---- Bremskennlinie — KALIBRIERWERTE (NVS-ueberschreibbar, FR-CFG-01) -----
+// ---- Bremskennlinie — KALIBRIERWERTE (Uebersetzungszeit-Konstanten, FR-CFG-01) -----
 constexpr float BRAKE_ON_MS2    = 2.0f;   // FR-TL-06 Einschaltschwelle
 constexpr float BRAKE_OFF_MS2   = 1.5f;   // FR-TL-06 Ausschalthysterese
 constexpr float BRAKE_FULL_MS2  = 5.0f;   // FR-TL-06 Saettigung (100 %)
 constexpr float ESS_ON_MS2      = 5.0f;   // FR-TL-07 Notbrems-Blinken ein
 constexpr float ESS_OFF_MS2     = 3.0f;   // FR-TL-07 Hysterese aus
 constexpr uint32_t BRAKE_MIN_HOLD_MS = 300;  // FR-TL-06 Mindesthaltezeit
-// Historischer Fixwert, seit dem Normbetrags-Gate (Feldtest 06.08.2026)
-// funktional abgeloest durch MOTION_COMPL_TAU_S (dt-normiert); hier nur zur
-// Traceability/Historie unveraendert belassen, nicht mehr verdrahtet.
-constexpr float COMPL_FILTER_ALPHA   = 0.98f; // Bible Kap. 6.4
 
 // ---- Motion-Filter Stufe 1 — Normbetrags-Gate (Feldtest 06.08.2026) -------
 // Physikalischer Diskriminator ueber den Betrag des Beschleunigungsvektors
@@ -171,7 +166,7 @@ constexpr uint32_t BARO_FORCED_CYCLE_MS = 1000;
 // ---- Ringpuffer (NFR-RES-01) ---------------------------------------------
 constexpr uint16_t RINGBUFFER_FRAMES = 600;  // ~60 s @ 10 Hz
 
-// ---- GNSS-Fix-Kriterien — KALIBRIERWERTE (NVS, FR-TEL-05) -----------------
+// ---- GNSS-Fix-Kriterien — KALIBRIERWERTE (Uebersetzungszeit-Konstanten, FR-TEL-05) -----------------
 constexpr uint32_t GNSS_MAX_AGE_MS = 3000;
 constexpr uint8_t  GNSS_MIN_SATS   = 4;
 // Schwelle fuer "noch nie sinnvolle NMEA-Daten empfangen" (NO_DATA statt
@@ -213,12 +208,13 @@ constexpr uint8_t  MPU6050_WHOAMI_VAL = 0x68;  // erwarteter Fixwert (s. dort)
 
 // ---- IMU-Gesundheit / Recovery (fest, FR-SNS-04/05, FR-STA-04) ------------
 constexpr uint8_t  IMU_FAIL_LIMIT               = 5;    // ~50 ms @ 100 Hz, NFR-RT-01-Budget
-constexpr uint16_t IMU_FROZEN_LIMIT             = 30;   // ~300 ms @ 100 Hz [TODO(offen): Feldverifikation]
+constexpr uint16_t IMU_FROZEN_LIMIT             = 30;   // ~300 ms @ 100 Hz [Erstauslegung; Feldverifikation nicht Teil des Arbeitsumfangs, s. Project Bible Kap. 12]
 constexpr float    IMU_ACCEL_MIN_MAGNITUDE_MS2  = 3.0f; // deutlich < 1 g, schliesst "alle Achsen ~0" aus
 // FSR +-16 g (s. imuBegin()): Fahrrad-Stoesse (Bordstein, Schlagloch) bis
 // ~20 g moeglich, ein engeres FSR wuerde dort saettigen und die
 // Plausibilitaetspruefung faelschlich ansprechen lassen. Schwelle dicht am
-// Anschlag (0,95 * 16 g). [TODO(offen): Feldverifikation]
+// Anschlag (0,95 * 16 g). [Erstauslegung; Feldverifikation nicht Teil des
+// Arbeitsumfangs, s. Project Bible Kap. 12]
 constexpr float    IMU_ACCEL_MAX_MAGNITUDE_MS2  = 149.0f;
 constexpr uint8_t  IMU_RECOVERY_MAX_ATTEMPTS    = 3;
 constexpr uint32_t IMU_RECOVERY_MIN_INTERVAL_MS = 5000; // Hintergrund-Reinit-Rate im FAILED-Zustand
@@ -226,13 +222,15 @@ constexpr uint32_t IMU_RECOVERY_MIN_INTERVAL_MS = 5000; // Hintergrund-Reinit-Ra
 // Sprung-/Slew-Plausibilitaet: ein einzelnes Muell-aber-in-Range-Sample darf
 // keine Bremseskalation ausloesen (Fehlerinjektionstest SDA-Kurzschluss,
 // s. lessons_learned.md). Vergleichsbasis ist das jeweils letzte GELESENE
-// (nicht nur plausible) Sample, s. imu_health.cpp. [TODO(offen): Feldverifikation]
+// (nicht nur plausible) Sample, s. imu_health.cpp. [Erstauslegung;
+// Feldverifikation nicht Teil des Arbeitsumfangs, s. Project Bible Kap. 12]
 constexpr float    IMU_ACCEL_MAX_SLEW_MS2        = 80.0f; // ~8 g Sprung/10 ms
 constexpr float    IMU_GYRO_MAX_SLEW_RADS        = 4.0f;
 // Eskalation (hoehere Bremslicht-Duty) erst nach N aufeinanderfolgenden
 // plausiblen Zyklen vertrauen; De-Eskalation bleibt sofort wirksam (main.cpp
 // erzwingt 0 = sicheres Dauer-Schlusslicht, solange nicht vertraut wird).
-// [TODO(offen): Feldverifikation]
+// [Erstauslegung; Feldverifikation nicht Teil des Arbeitsumfangs, s. Project
+// Bible Kap. 12]
 constexpr uint8_t  IMU_ESCALATION_CONFIRM_CYCLES = 3;
 
 // ---- BLE-Telemetrie (fest, FR-TEL-01/02, FR-SYS-04) ------------------------
@@ -251,13 +249,19 @@ constexpr uint16_t BLE_PREFERRED_MTU = 185;
 // waehrend NimBLEDevice::init() (setPower() greift erst danach) -- war daher
 // nicht die Ursache des fruehen Brownout-Bootloops auf dem Altboard, s.
 // docs/ble_brownout_fallstudie.md (Root Cause: Spannungsregler des
-// Altboards). [TODO(offen): Feldverifikation -- haengt von der
+// Altboards). [Erstauslegung; Feldverifikation nicht Teil des
+// Arbeitsumfangs, s. Project Bible Kap. 12 -- haengt von der
 // tatsaechlichen Netzteil-/Kabel-Guete ab]
 constexpr int8_t BLE_TX_POWER_DBM = -12;
 // Anzahl gepufferter Frames, die taskTelemetry() nach einem Reconnect pro
 // 10-Hz-Tick zusaetzlich zum Live-Frame nachliefert (Backfill, FR-TEL-01/04).
-// [TODO(offen): Feldverifikation -- Kompromiss Aufholtempo vs. BLE-Stack-Last]
+// [Erstauslegung; Feldverifikation nicht Teil des Arbeitsumfangs, s. Project
+// Bible Kap. 12 -- Kompromiss Aufholtempo vs. BLE-Stack-Last]
 constexpr uint8_t BLE_BACKFILL_FRAMES_PER_TICK = 5;
 
-// ---- Debug (temporaer) -----------------------------------------------------
-constexpr bool DEBUG_SERIAL = true;  // schaltet TODO(temp debug)-Ausgaben; vor Auslieferung false
+// ---- Debug -----------------------------------------------------------------
+// Auslieferungsstand (10.08.2026): false. Schaltet die verbliebenen, bewusst
+// dauerhaften Diagnose-Ausgaben ab (kein "temp debug" mehr) -- u. a. die
+// Registerauslesung in imu_driver.cpp (DLPF/SMPLRT_DIV-Verifikation) und die
+// Verbindungsdiagnose in ble_telemetry.cpp.
+constexpr bool DEBUG_SERIAL = false;

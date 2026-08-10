@@ -62,15 +62,15 @@ ServerCallbacks g_serverCallbacks;
 }  // namespace
 
 void bleBegin() {
-  // Bracket-Prints mit Serial.flush() um init() -- offener Befund
-  // (open_issues.md "Brown-Out unter Lastspitzen"): der Brownout-Detektor
-  // schlaegt bei marginaler Versorgung waehrend NimBLEDevice::init() selbst
-  // zu (RF-Kalibrierungs-Stromspitze des Controllers), VOR jeder Stelle, an
-  // der eine Sendeleistungs-Einstellung greifen koennte -- belegt dadurch,
-  // dass "nach init()" nie geloggt wird, obwohl "vor init()" es immer wird
-  // (Serial.flush() schliesst aus, dass der Print nur im Puffer verloren
-  // ging). Bewusst NICHT entfernt: bleibt fuer einen Retest nach der
-  // Hardware-Massnahme (Pufferkondensator) nuetzlich.
+  // Bracket-Prints mit Serial.flush() um init(): stammen aus der Eingrenzung
+  // des Brownout-Bootloops auf dem Altboard -- der Brownout-Detektor schlug
+  // bei marginaler Versorgung waehrend NimBLEDevice::init() selbst zu
+  // (RF-Kalibrierungs-Stromspitze des Controllers), VOR jeder Stelle, an der
+  // eine Sendeleistungs-Einstellung greifen koennte (Serial.flush() schloss
+  // aus, dass "nach init()" nur im Puffer verloren ging). Abschlussstand:
+  // auf dem Ersatzboard (Espressif ESP32-DevKitC-32E) unter Volllast nicht
+  // mehr reproduzierbar, s. docs/ble_brownout_fallstudie.md. Bewusst NICHT
+  // entfernt: bleibt fuer einen etwaigen Retest nuetzlich.
   if (DEBUG_SERIAL) {
     Serial.println(F("[BLE] vor NimBLEDevice::init()"));
     Serial.flush();
@@ -121,8 +121,6 @@ void bleBegin() {
 }
 
 bool bleIsConnected() { return g_connected; }
-
-uint16_t bleGetMtu() { return g_negotiatedMtu; }
 
 bool bleNotify(const uint8_t* data, size_t len) {
   if (!g_connected || g_pTelemetryChar == nullptr) {

@@ -24,7 +24,7 @@ struct ButtonDecoderParams {
   uint32_t code_left          = RF_CODE_LEFT;          // FR-RF-01
   uint32_t code_right         = RF_CODE_RIGHT;         // FR-RF-01
   uint8_t  debounce_count     = 2;                      // FR-RF-02
-  uint32_t release_timeout_ms = RF_RELEASE_TIMEOUT_MS;  // FR-RF-03 (vorlaeufig)
+  uint32_t release_timeout_ms = RF_RELEASE_TIMEOUT_MS;  // FR-RF-03 (Erstauslegung; im Feldbetrieb ohne Fehlfunktion bestaetigt, systematische Messung nicht Teil des Arbeitsumfangs)
   uint32_t longpress_ms       = LONGPRESS_MS;           // FR-RF-04, FR-BLK-07
 };
 

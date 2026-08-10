@@ -62,7 +62,15 @@ TailLightOutput TailLightFsm::update(float decel_ms2, SystemState sys_state, uin
         }
       } else {
         below_off_pending_ = false;  // wieder ueber der Hysteresegrenze
-        held_brake_duty_pct_ = static_cast<uint8_t>(brakeDutyPercent(decel_ms2, params_.brake));
+        // WARUM nur oberhalb on_ms2: im Hystereseband (off_ms2..on_ms2) liefert
+        // brakeDutyPercent() bereits den Schlusslichtwert. Uebernaehme man ihn
+        // hier, waere der fuer die Mindesthaltezeit eingefrorene Wert mit dem
+        // Schlusslicht identisch und FR-TL-06 optisch wirkungslos -- der im
+        // Feldtest 08.08.2026 nachgewiesene Defekt.
+        if (decel_ms2 > params_.brake.on_ms2) {
+          held_brake_duty_pct_ =
+              static_cast<uint8_t>(brakeDutyPercent(decel_ms2, params_.brake));
+        }
       }
       break;
     }

@@ -20,7 +20,9 @@ enum class TailLightState {
 };
 
 // Alle Schwellwerte/Dutys als benannte Konstanten aus config.h (FR-CFG-01);
-// zur Laufzeit ueberschreibbar (NVS, M-spaeter). Keine Magic Numbers im .cpp.
+// Uebersetzungszeit-Konstanten, keine Laufzeit-Konfiguration (FR-CFG-02/03
+// nicht Teil des Arbeitsumfangs, Umfangsschnitt 10.08.2026, s. Project Bible
+// Kap. 12). Keine Magic Numbers im .cpp.
 struct TailLightParams {
   BrakeCurveParams brake{ BRAKE_ON_MS2, BRAKE_FULL_MS2, TAILLIGHT_DUTY_PCT };
   float    off_ms2             = BRAKE_OFF_MS2;        // FR-TL-06 Ausschalthysterese

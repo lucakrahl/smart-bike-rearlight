@@ -159,6 +159,15 @@ float MotionFilter::update(const MotionInput& in) {
   // Gyro-Nullpunkt-Schaetzung Stufe 2 (Temperaturdrift-Nachfuehrung, s. o.):
   // laeuft NUR bei ruhiger STATIC-Lage, damit eine echte Drehung/Bremsung
   // nicht faelschlich als Bias gelernt wird.
+  // WARUM auf der ROHEN Drehrate: das Tor soll ausschliesslich echte Ruhe
+  // zulassen. Auf dem bereits korrigierten Wert wuerde sich ein fehlerhaft
+  // eingelaufener Schaetzwert selbst bestaetigen (Mitkopplung), das Tor waere
+  // kein unabhaengiges Kriterium mehr. Bewusst in Kauf genommene Grenze: ein
+  // Exemplar mit Rohbias nahe MOTION_GYRO_BIAS_CLAMP (~5 Grad/s) ueberschreitet
+  // das Tor (~2 Grad/s) auch im Stillstand und wuerde die Stufe-2-Nachfuehrung
+  // nie aktivieren. Hier unkritisch (Restbias nach Stufe 1 ~0,005 Grad/s).
+  // Nicht geaendert, weil eine Verhaltensaenderung ohne Feldbeleg nicht
+  // begruendbar waere.
   if (params_.gyro_bias_enabled && regime == MotionRegime::Static &&
       fabsf(in.gyro_x_rads) < params_.gyro_bias_max_rate) {
     const float alpha_bias = params_.gyro_bias_tau_s / (params_.gyro_bias_tau_s + dt_s);
@@ -170,9 +179,11 @@ float MotionFilter::update(const MotionInput& in) {
 
   // Nickschaetzung je Regime:
   //   STATIC:  wie zuvor, aber dt-normiert (alpha_dyn statt festem alpha).
-  //   DYNAMIC: sehr langsame Beimischung (tau_slow=30s) statt reiner Gyro-
-  //            Propagation -- verhindert Drift, kontaminiert laengere
-  //            Bremsungen aber nur sehr langsam (Minuten-Zeitskala).
+  //   DYNAMIC: sehr langsame Beimischung (tau_slow=90s nach abgeschlossener
+  //            Bias-Kalibrierung, sonst der kuerzere, konservative
+  //            Fallback-Wert tau_slow_uncal=30s, s. Kommentar unten) statt
+  //            reiner Gyro-Propagation -- verhindert Drift, kontaminiert
+  //            laengere Bremsungen aber nur sehr langsam (Minuten-Zeitskala).
   //   SHOCK:   reine Gyro-Propagation (Accel waehrend eines Stosses
   //            unbrauchbar).
   bool accel_blended = false;

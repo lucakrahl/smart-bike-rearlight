@@ -38,8 +38,10 @@ void bmp280TriggerMeasurement();
 // Trigger, keine Wartezeit). Nur sinnvoll, nachdem seit dem letzten
 // bmp280TriggerMeasurement() genug Zeit vergangen ist (Konversionszeit bei
 // den gewaehlten Oversampling-Werten « BARO_FORCED_CYCLE_MS, s. .cpp).
-// TODO(FR-SNS-04/05, Folgeschritt): I2C-Recovery und Plausibilitaetspruefung,
-// analog zum offenen Punkt bei imu_driver.
+// Abgrenzung: I2C-Recovery und Plausibilitaetspruefung (analog imu_driver/
+// imu_health) sind fuer den BMP280 nicht umgesetzt -- der BMP280 ist ein
+// optionaler Sensor (FR-STA-05), sein Ausfall beeinflusst Licht/Blinker
+// nicht und ist daher nicht sicherheitsrelevant.
 BaroSample bmp280Read();
 
 }  // namespace drivers
