@@ -124,3 +124,77 @@ explodieren. Wichtige Unterscheidung: **Funkabriss** (Gerät bleibt an → Backf
 dem RAM-Ringpuffer möglich) vs. **Stromausfall** (RAM-Puffer verloren → Lücke
 endgültig). Vorher/Nachher am Gerät belegbar (Screenshot 1191:44:03/784 km vs.
 korrekte Werte) — geeignet als Validierungs-Abbildung.
+### Ein grüner Testlauf beweist nur das, was die Testeingabe abdeckt (Mangel M-01)
+**Problem:** Die in FR-TL-06 geforderte Mindesthaltezeit von 300 ms war im
+Fahrbetrieb in **allen 14** aufgezeichneten Aktivierungen wirkungslos — obwohl
+drei eigens dafür geschriebene Host-Tests grün liefen und die Funktion am
+Serial-Bench als validiert galt.
+**Ursache:** Der `else`-Zweig der Bremslicht-Zustandsmaschine lief bereits ab
+`BRAKE_OFF_MS2` = 1,5 m/s² und überschrieb den für die Haltezeit eingefrorenen
+Wert mit `brakeDutyPercent()` — und diese Funktion gibt unterhalb der
+Einschaltschwelle von 2,0 m/s² den reinen Schlusslichtwert zurück. Der
+„gehaltene" Wert war damit identisch mit dem Wert, gegen den er halten sollte.
+Jedes reale Bremssignal durchläuft das Band 1,5…2,0 beim Abklingen.
+**Warum die Tests es nicht fanden:** Die drei Haltezeit-Tests speisen
+idealisierte Sprünge (5,0 → 0,0) ein und überspringen das Hystereseband
+vollständig. Ein vierter Test fährt den Wert 2,0 zwar an, prüft danach aber nur
+den *Zustand*, nicht die ausgegebene *Duty*. Die Tests bildeten damit exakt den
+Signalverlauf ab, den der Entwickler beim Schreiben der Logik im Kopf hatte —
+nicht den, den die Physik erzeugt.
+**Erkenntnis:** Grüne Host-Tests belegen die Übereinstimmung der Logik mit den
+*modellierten* Eingangssignalen, nicht mit den realen. Der Defekt entstand nicht
+durch fehlende Abdeckung (die Zeilen waren abgedeckt), sondern durch eine
+Testeingabe, die den kritischen Betriebsbereich systematisch ausließ. Für
+Zustandsmaschinen mit Hysterese heißt das konkret: **mindestens ein Testfall muss
+das Hystereseband monoton durchlaufen**, nicht darüber hinwegspringen. Gefunden
+wurde der Fehler erst durch den Vergleich der aufgezeichneten Ausgangsgröße mit
+einer Nachbildung der Zustandsmaschine, gespeist mit den realen Felddaten
+(Übereinstimmung 98,53 %) — also durch eine Messung, nicht durch einen Test.
+
+### Diagnoseausgaben innerhalb eines Messfensters verfälschen die gemessene Größe
+**Problem:** Die Worst-Case-Schleifenzeit im Fahrbetrieb lag bei 6,7 ms gegenüber
+0,651 ms am Prüfstand. Die Spitzen traten exakt periodisch mit 1,00 s auf und
+wurden deshalb dem 1-Hz-GNSS-Slot zugeschrieben.
+**Ursache der Fehlzuordnung:** Im Aufzeichnungsstand liefen **drei**
+Debug-`printf` mit ebenfalls exakt 1 Hz — und alle drei lagen *innerhalb* des
+Zeitfensters, aus dem `loop_max_us` gebildet wird. Zusammen rund 173 Byte; bei
+115 200 Bd sind das etwa 87 µs je Byte, und sobald der UART-Sendepuffer voll ist,
+blockiert `Serial.printf`. Zwei solcher Ausgaben in einem `loop()`-Durchlauf
+liegen in derselben Größenordnung wie der gemessene Ausreißer.
+**Erkenntnis:** Zwei Vorgänge mit identischer Periode lassen sich aus einer
+Zeitreihe grundsätzlich nicht auseinanderhalten — die Zuordnung war eine
+plausible Vermutung, kein Befund. Allgemeiner: Eine Messinstrumentierung, die im
+Messfenster der Größe liegt, die sie beobachten soll, ist Teil des Messobjekts.
+Das ist ein Beobachtereffekt, der in den Daten selbst nicht sichtbar wird. Zwei
+Konsequenzen: (1) Instrumentierung entweder aus dem Messfenster herausnehmen oder
+ihren Beitrag getrennt beziffern; (2) bei periodischen Störungen immer prüfen, ob
+mehr als ein Vorgang dieselbe Periode hat. Der einzige belastbare Weg zur
+Trennung wäre ein Kontrollversuch mit und ohne Instrumentierung — dieselbe
+Vorgehensweise, die in der BLE-Brownout-Fallstudie zum Ziel führte.
+
+### Mechanische Eigenschaften gehören an die Hardware-Abstraktionsgrenze
+**Problem:** Die Lochrasterplatine musste um 180° in ihrer eigenen Ebene gedreht
+eingebaut werden. Damit kehren sich a_x, a_y, ω_x und ω_y um; die Bremserkennung
+hätte sich invertiert — Bremsen erzeugt kein Bremslicht, Beschleunigen dagegen
+schon. Am Schreibtisch wäre das nicht aufgefallen, weil Boot, I²C-Scan,
+Telemetrie und Regime-Klassifikation unverändert korrekt erscheinen.
+**Lösung:** Die Einbaulage wird als Rotation an der Treibergrenze zurückgerechnet
+(`lib/logic/imu_mount_orientation.h`, aufgerufen in `imuRead()`), nicht als
+zusätzliches Vorzeichen in der Auswertelogik. Dadurch blieb die gesamte
+nachgelagerte Kette unverändert gültig: 126 Host-Tests, der Golden-Vektor, das
+Telemetrie-Frame und die komplette App-Seite mussten nicht angefasst werden.
+**Zwei Fallstricke, die dabei sichtbar wurden:** (1) Accelerometer **und**
+Gyroskop müssen dieselbe Transformation erfahren. Würde nur a_y negiert, gälte
+dθ/dt = ω_x nicht mehr und der Komplementärfilter integrierte die Nickschätzung
+in die falsche Richtung — unsichtbar im Stand, weil ω_x dort null ist, und erst
+während echter Fahrt wirksam. Formal: Die Transformation muss eine echte Rotation
+mit Determinante +1 sein, damit das Koordinatensystem rechtshändig bleibt.
+(2) Das bereits am Board verifizierte `MOTION_BRAKE_SIGN` darf **nicht**
+zusätzlich umgekehrt werden. Die Verifikation erfolgte an den Rohdaten vor dem
+Umbau; die Transformation stellt genau diese Konvention wieder her. Ein zweites
+Vorzeichen wäre eine Doppelanwendung.
+**Erkenntnis:** Eine Eigenschaft des mechanischen Aufbaus ist keine Eigenschaft
+des Auswerteverfahrens. Wird sie dort korrigiert, wo sie entsteht — am Übergang
+Hardware → Logik —, bleibt alles Nachgelagerte unverändert validiert. Wird sie
+weiter hinten korrigiert, repariert man einen Pfad und lässt die übrigen
+gespiegelt zurück.

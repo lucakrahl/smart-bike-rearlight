@@ -1,5 +1,9 @@
 # Roadmap — Firmware-Implementierung
 
+> **Status 10.08.2026: Firmware abgeschlossen und eingefroren**
+> (Commit `835c7b3`, 126/126 Host-Tests grün, geflasht und geprüft).
+> Legende: ✅ erledigt · ☐ offen · ⊘ bewusst abgegrenzt (Bible Kap. 12.2).
+
 > Von Claude Code pflegbar (Fortschritt abhaken). Reihenfolge: sicherheits-
 > kritische Kernfunktion zuerst, dann Komfort/Telemetrie. Jedes Modul: Logik
 > vor Hardware, mit Host-Unit-Test.
@@ -11,6 +15,12 @@ PlatformIO-Projekt, Scheduler-Skelett, CLAUDE.md, Docs, Beispiel-Logik + Test.
 `led_output` (PWM, CON-02) + Bremslicht-State-Machine (FR-TL-01/03/04/05/06),
 Hysterese + Mindesthaltezeit. Notbrems-Blinken (FR-TL-07) als deaktivierbarer
 Zustand. Fail-safe-Grundlicht (FR-SAF-01). Tests der Kennlinie/Hysterese.
+
+**Nachtrag 10.08.2026:** Der am 08.08.2026 im Feld nachgewiesene Mangel M-01
+(Mindesthaltezeit im Fahrbetrieb unwirksam, weil der Haltewert im
+Hystereseband mit dem Schlusslichtwert überschrieben wurde) ist behoben und
+durch einen Regressionstest abgesichert, der das Band monoton durchläuft
+(Bible Kap. 9.5.4).
 
 ## M2 — Lebenszyklus (R1)  ✅
 INIT→RUN mit Sensor-Init-Timeout (FR-STA-01/02), Init-Diagnose-Blinken (FR-TL-03),
@@ -29,7 +39,13 @@ ersetzt beide `TODO(M3)`-Platzhalter (`critical_sensors_ready`, `decel_ms2`).
 **Zurückgestellt, verschoben nach M5:** I²C-Recovery (FR-SNS-04),
 Plausibilitätsprüfung (FR-SNS-05), BMP280, L86/GNSS-Fix-Status (FR-TEL-05).
 Achsen-/Vorzeichenkonvention der IMU ist am realen Board kalibriert
-(`MOTION_BRAKE_SIGN` in `config.h`, kein `TODO(offen)` mehr).
+(`MOTION_BRAKE_SIGN` in `config.h`).
+
+**Nachtrag 07.–10.08.2026:** `motion_filter` wurde nach der Falsifikation vom
+06.08.2026 durch das Normbetrags-Gate (Stufe 1) ersetzt und am 08.08.2026 im
+Feld verifiziert (Bible Kap. 9.5). Die 180°-Drehung der Lochrasterplatine ist
+als Transformation an der Treibergrenze abgebildet
+(`lib/logic/imu_mount_orientation.h`, Bible Kap. 4.3).
 
 ## M4 — Blinker + RF (R3)  ✅
 `rf_input` + `button_decoder` (Entprellung FR-RF-02, Halte-/Release-Erkennung
@@ -76,8 +92,15 @@ Am realen System validiert (Espressif ESP32-DevKitC-32E, Board-Tausch behebt
 den zuvor beobachteten Brownout, s. `docs/ble_brownout_fallstudie.md`):
 Advertising, Verbindung, MTU=185, Volllastbetrieb stabil (Commit `e007cc3`).
 
-## M6 — Konfiguration  ☐
-NVS/`Preferences` + serielles Kalibrier-Interface (FR-CFG-01/02/03).
+## M6 — Konfiguration  ⊘ abgegrenzt (10.08.2026)
+FR-CFG-01 ist erfüllt: alle Kalibrier- und Strukturwerte liegen als benannte
+`constexpr` in `include/config.h`, keine Magic Numbers im Code. **FR-CFG-02**
+(serielles Kalibrier-Interface) und **FR-CFG-03** (NVS-Konfiguration mit
+`config_version`) werden **nicht umgesetzt**. Begründung und Auswirkung:
+Project Bible Kap. 12.2. Kurzfassung: NVS wäre ein struktureller Eingriff
+(alle Kalibrier-Konstanten müssten Laufzeitparameter werden) ohne
+Nachweisnutzen, weil ausschließlich am Entwicklungsrechner parametriert
+wurde. Beide bleiben als Ausblick bestehen.
 
 ## M7 — Integration & Messungen  ☐
 Gesamtsystemtest; Messungen (Bible Kap. 9):
@@ -87,13 +110,22 @@ Gesamtsystemtest; Messungen (Bible Kap. 9):
   (Ansprechschwelle 2,0, Sättigung 5,0, Hysterese + 300-ms-Haltezeit)
 - Fail-Safe bei IMU-Ausfall (FR-SAF-01/FR-STA-04)  ✅ Serial-Bench validiert
 - I²C-Recovery  ✅ (Härtung Teil 1) · Watchdog  ✅ (Härtung Teil 2)
-- Loop-Zykluszeit & RAM-/CPU-Budget  ☐ offen — Messung
+- Loop-Zykluszeit & RAM-/CPU-Budget  ✅ gemessen — Prüfstand 0,651 ms,
+  Fahrbetrieb 6,7 ms Worst Case gegen NFR-RT-04 < 10 ms; RAM 106 912 B
+  (32,6 %), Flash 674 487 B (21,4 %) im Abschlussstand `835c7b3`.
+  Zur Ursachenzuordnung der 1-Hz-Spitze s. Bible Kap. 9.5.5
 - Energiebilanz/Laufzeit unter realen Lastfällen  ☐ offen — Messung
-- Brown-Out unter realer LED-Lastspitze  ☐ offen (Re-Test auf neuem Board)
-- Feldkalibrierung der Bremsschwellen (reale Fahrbedingungen)  ☐ offen —
-  Bench validiert nur die Logik mit den konfigurierten Schwellen, s. Kap. 9.3
-- GNSS-Freiland-Fix  ☐ offen (bisher nur Indoor `NO_FIX`)
-- Feldtest (30-Zone, App-Export + Beobachtung)  ☐ offen
+- Brown-Out unter realer LED-Lastspitze  ☐ offen (Hardware-Punkt, nicht
+  Firmware; Worst-Case-Eingangsstrom 1,18 A beziffert, s. Bible Kap. 5.2)
+- Feldkalibrierung der Bremsschwellen (reale Fahrbedingungen)  ⊘ abgegrenzt —
+  Umfangsschnitt 07.08.2026: die drei Normbetrags-Schwellwerte werden
+  dokumentiert, nicht iteriert (Bible Kap. 12.2)
+- GNSS-Freiland-Fix  ✅ erreicht 06.08.2026; Nebenbefund: Qualitätsflaggen
+  erkennen eine falsche Navigationslösung unter Abschattung nicht (Kap. 9.4)
+- Feldtest (30-Zone, App-Export + Beobachtung)  ✅ zweimal durchgeführt:
+  06.08.2026 (Falsifikation der Erstauslegung) und 08.08.2026
+  (Feldnachweis Stufe 1, Bible Kap. 9.5). Teil A des Messprotokolls
+  (sechs Vergleichsfahrten) ⊘ abgegrenzt, s. Bible Kap. 12.2
 
 ---
 
@@ -111,4 +143,4 @@ Gesamtsystemtest; Messungen (Bible Kap. 9):
 - Echter BLE-Transport `BLEConnectionService` (CoreBluetooth) statt Mock, am
   realen iPhone verifiziert  ✅
 - Cockpit-Personalisierung (`DashboardLayout`-Editor)  ✅
-- Verlaufs-Gesamtübersicht  ☐
+- Verlaufs-Gesamtübersicht  ☐ (Future Work)

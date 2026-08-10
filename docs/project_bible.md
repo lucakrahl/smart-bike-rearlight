@@ -1,6 +1,6 @@
 # Project Bible — Smartes Fahrrad-Rücklicht
 **Bachelorarbeit Krahl · Maschinenbau & Produktentwicklung (B.Eng.)**
-**Version 0.18 · Stand 09.08.2026 · Status: aktiv gepflegt (Single Source of Truth)**
+**Version 0.19 · Stand 10.08.2026 · Status: aktiv gepflegt (Single Source of Truth)**
 
 > Diese Project Bible ist die oberste Wissensinstanz des Projekts. Bei Widersprüchen zwischen Chat-Historie und Project Bible gilt ausschließlich die Project Bible. Chats dienen der Diskussion und Entscheidungsfindung; der offizielle Projektstand steht ausschließlich hier.
 
@@ -41,13 +41,15 @@
 | 0.16 | 06.08.2026 | **Feldtest 06.08.2026:** IMU-Bremserkennung im Realbetrieb falsifiziert (r = −0,132, n = 939). Ursache analytisch belegt. Neues Kap. 9.4. Architekturentscheidung V-B. | Feldtest-Auswertung |
 | **0.17** | **09.08.2026** | **Große Revision. (a) Stufe 1 (`motion_filter`, Normbetrags-Gate) implementiert, host-getestet und am 08.08.2026 im Feld verifiziert — die Bremserkennung funktioniert; neues Kap. 9.5. Der Validierungsstatus von `motion_filter` wird von „im Feld falsifiziert" auf „im Feld verifiziert" heraufgestuft. (b) Zwei neue Firmware-Befunde: die Mindesthaltezeit nach FR-TL-06 ist im Fahrbetrieb unwirksam (Mangel), und `brake_decel_ms2` trägt eine geschwindigkeitsabhängige Grundlinie (quantifizierte Grenze). (c) Zeitverhalten erstmals im Fahrbetrieb gemessen: 6,7 ms Worst Case statt 0,651 ms am Prüfstand. (d) Methodische Korrektur: die Zahl r = −0,132 aus v0.16 wurde ohne Berücksichtigung der Latenz der GNSS-Referenzkette gerechnet und ist als Gütemaß nicht belastbar. (e) Elektronik vollständig geklärt und dokumentiert: Schaltplan Rev. 1.0 erstellt (Kap. 5.4), sechs offene Verdrahtungspunkte geschlossen, Energiebilanz methodisch korrigiert (13 h → ~8 h), GNSS-Antenne als nicht verbaut erkannt. (f) Einbaulage der IMU um 180° gedreht; Achsentransformation spezifiziert, noch nicht implementiert.** | Messfahrt, Schaltplan, Verdrahtungsklärung |
 | **0.18** | **09.08.2026** | **Korrektur der Schalterposition.** SW1 sitzt im **Akkupfad zwischen U1 OUT+ und U2 VIN+** und trennt damit den Eingang des Aufwärtswandlers — nicht, wie in v0.17 und im Schaltplan zunächst dargestellt, zwischen MT3608-Ausgang und 5-V-Schiene. Funktional bleibt die Wirkung gleich (die gesamte 5-V-Schiene ist stromlos), elektrisch ändert sich der Schalterstrom: er fließt nun auf der Akkuseite und beträgt im Worst Case 1,18 A statt 0,79 A. Neuer Befund B-6. Schaltplan Rev. 1.1, Kap. 4.1, 5.1, 5.2, 5.4, 11.2 und 12 angepasst. | Korrekturhinweis des Verfassers |
+| **0.19** | **10.08.2026** | **Firmware-Abschluss (Commit `835c7b3`, geflasht).** (a) Einbaulage-Transformation implementiert und auf das Gerät gebracht: `imu_mount_orientation.h` an der Treibergrenze, `IMU_MOUNT_SIGN_X/Y/Z` = −1/−1/+1 auf Beschleunigung und Drehrate, eigener Host-Test. Kap. 4.3 wechselt von [geplant] auf [umgesetzt]. (b) **Mangel M-01 behoben:** der Haltewert der Mindesthaltezeit wird nur noch oberhalb der Einschaltschwelle nachgeführt; Regressionstest ergänzt, der das Hystereseband monoton durchläuft. (c) **Umfangsschnitt Firmware:** FR-CFG-02 (serielles Kalibrier-Interface) und FR-CFG-03 (NVS-Konfiguration) werden nicht umgesetzt und als begründete Abgrenzung geführt (neues Kap. 12.2); alle Kalibrierwerte sind Übersetzungszeit-Konstanten. (d) Auslieferungsstand: alle Debug-Ausgaben entfernt, `DEBUG_SERIAL = false`. Daraus folgt eine **Korrektur an Befund B7**: die Zuordnung der 6,7 ms Worst-Case-Schleifenzeit allein zum GNSS-Slot war nicht belegt, weil drei 1-Hz-Debug-Prints im selben Messfenster lagen (Kap. 9.5.5). (e) `lib_deps` versionsfest gepinnt (Reproduzierbarkeit, NFR-EXT-01); tote Symbole entfernt; alle `TODO(offen)`-Marker in begründete Abgrenzungen umformuliert. (f) Host-Tests **126/126** grün. **Die Firmware ist damit abgeschlossen und eingefroren.** | Firmware-Abschluss |
 
 ### 0.4 Datengrundlage
 | Quelle | Zeitstempel | Aussagekraft |
 |---|---|---|
 | Projektübergabe-Dokument | „Stand Juni 2026" | Detaillierteste Einzelquelle der Frühphase |
-| Repo `smart-bike-rearlight` (Monorepo, PlatformIO), Commit `1178017` | 07.08.2026 | Maßgeblicher Implementierungsstand |
-| `firmware/include/pins.h`, `config.h` | Commit `1178017` | Verbindliche Pin- und Parameterquelle |
+| **Repo `smart-bike-rearlight`, Commit `835c7b3` (Firmware-Abschluss)** | **10.08.2026** | **Maßgeblicher und endgültiger Firmware-Stand** |
+| Repo `smart-bike-rearlight`, Commit `1178017` | 07.08.2026 | Stand der Messfahrt-Aufzeichnung vom 08.08.2026 |
+| `firmware/include/pins.h`, `config.h` | Commit `835c7b3` | Verbindliche Pin- und Parameterquelle |
 | **Verdrahtungsklärung mit dem Verfasser** | **09.08.2026** | **Sechs bis dahin offene Elektronikpunkte geklärt (Kap. 5)** |
 | **Schaltplan Rev. 1.0 (`schaltplan_fahrrad_ruecklichtsystem.kicad_sch/.pdf`)** | **09.08.2026** | **Gültiger Zeichnungsstand; ersetzt Schaltplan v2** |
 | ~~Schaltplan v2.pdf~~ | 20.05.2026 | **überholt** — an drei Stellen nachweislich falsch, nicht mehr verwenden |
@@ -207,9 +209,9 @@ Hinweis: Sekundärquellen; für die Thesis am Primärtext (§ 67) gegenprüfen. 
 
 | ID | Anforderung | Status |
 |---|---|---|
-| FR-CFG-01 | **Parametrierbar (NVS):** Bremsschwellen, Mindesthaltezeit, GNSS-Fix-Kriterien, Aktivierungs-Flag FR-TL-07. **Fest im Code:** Pinbelegung, PWM-Frequenz, Blinkfrequenz, Timeouts, RF-Codes, Sampling-/Telemetrie-Raten, **Einbaulage der IMU (Kap. 4.3)**. | gesichert |
-| FR-CFG-02 | Serielles Kalibrier-/Konfigurations-Interface über UART0, nicht-blockierend. | gesichert |
-| FR-CFG-03 | Bei leerem/fehlendem NVS Compile-Zeit-Defaults; `config_version`-Schlüssel. | gesichert |
+| FR-CFG-01 | Alle Kalibrier- und Strukturwerte sind benannte Konstanten in `include/config.h`, keine Magic Numbers im Code: Bremsschwellen, Mindesthaltezeit, GNSS-Fix-Kriterien, Aktivierungs-Flag FR-TL-07, Pinbelegung, PWM-Frequenz, Blinkfrequenz, Timeouts, RF-Codes, Sampling-/Telemetrie-Raten, **Einbaulage der IMU (Kap. 4.3)**. | **erfüllt** — Umsetzung als Übersetzungszeit-Konstanten statt zur Laufzeit; Änderung erfordert Neuübersetzung |
+| FR-CFG-02 | Serielles Kalibrier-/Konfigurations-Interface über UART0, nicht-blockierend. | **abgegrenzt (10.08.2026)** — nicht umgesetzt, Begründung Kap. 12.2 |
+| FR-CFG-03 | Bei leerem/fehlendem NVS Compile-Zeit-Defaults; `config_version`-Schlüssel. | **abgegrenzt (10.08.2026)** — nicht umgesetzt, Begründung Kap. 12.2 |
 
 ### 2.12 Testbarkeit & Erweiterbarkeit — Block H
 
@@ -293,17 +295,23 @@ Der MPU6050-INT-Pin bleibt unbeschaltet (GPIO4 durch RF belegt) → Polling. Die
 
 **I²C-Bus-Initialisierung [gesichert]:** `Wire.begin(SDA,SCL)` + `Wire.setTimeOut(I2C_TIMEOUT_MS)` erfolgen zentral einmalig in `main.cpp`/`setup()`. `imu_driver` und `bmp280_driver` sind reine Bus-Nutzer. Pull-Up-Widerstände existieren ausschließlich modulintern gegen +3,3 V.
 
-### 4.3 Einbaulage der IMU [geplant — geändert, Umsetzung ausstehend]
+### 4.3 Einbaulage der IMU [umgesetzt und geflasht 10.08.2026]
 
 Die Lochrasterplatine wurde am 09.08.2026 um **180° in ihrer eigenen Ebene** gedreht verbaut (Rotation R_z(180°)). Damit kehren sich die Vorzeichen von a_x, a_y, ω_x und ω_y um; a_z und ω_z bleiben unverändert. Die Y-Achse des Sensors zeigt seitdem **in** Fahrtrichtung statt entgegen.
 
 **Konsequenz ohne Gegenmaßnahme:** Die Bremserkennung kehrt sich um — Bremsen erzeugt kein Bremslicht, Beschleunigen dagegen schon. Der Fehler ist am Schreibtisch nicht auffällig, weil Boot, I²C-Scan, Telemetrie und Regime-Klassifikation unverändert korrekt erscheinen.
 
-**Beschlossene Lösung [geplant]:** Die Einbaulage wird als Transformation an der Hardware-Abstraktionsgrenze abgebildet, nicht als Vorzeichen in der Auswertelogik. In `config.h` werden `IMU_MOUNT_SIGN_X = −1`, `IMU_MOUNT_SIGN_Y = −1` und `IMU_MOUNT_SIGN_Z = +1` geführt und in `imuRead()` auf Beschleunigung **und** Drehrate angewandt. `MOTION_BRAKE_SIGN` bleibt bei +1. Damit sieht die gesamte nachgelagerte Kette — Filter, Kennlinie, Telemetrie, App, Golden-Vektor, alle Host-Tests — exakt die validierten Signale.
+**Umgesetzte Lösung [gesichert, Commit `835c7b3`]:** Die Einbaulage ist als Transformation an der Hardware-Abstraktionsgrenze abgebildet, nicht als Vorzeichen in der Auswertelogik. `config.h` führt `IMU_MOUNT_SIGN_X = −1`, `IMU_MOUNT_SIGN_Y = −1` und `IMU_MOUNT_SIGN_Z = +1`; das hardwarefreie Modul `lib/logic/imu_mount_orientation.h` wendet sie in `imuRead()` (`lib/drivers/imu_driver.cpp`) auf Beschleunigung **und** Drehrate an. `MOTION_BRAKE_SIGN` bleibt bei +1. Damit sieht die gesamte nachgelagerte Kette — Filter, Kennlinie, Telemetrie, App, Golden-Vektor, alle Host-Tests — exakt die validierten Signale.
+
+**Warum `MOTION_BRAKE_SIGN` unverändert bleibt.** Die Vorzeichenkonvention wurde vor dem Umbau am realen Board an den Rohdaten verifiziert (Bremsen erzeugt einen positiven Wert der gravitationskompensierten Y-Beschleunigung). Die Rotation kehrt das Rohsignal um, die Transformation stellt es wieder her — die Auswertelogik sieht danach dieselbe Konvention wie vor dem Umbau. Ein zweites Vorzeichen in `motion_filter` wäre eine Doppelanwendung und würde die Bremserkennung erneut invertieren.
+
+**Warum an der Treibergrenze und nicht in der Auswertelogik.** Die Einbaulage ist eine mechanische Eigenschaft des Aufbaus, keine Eigenschaft des Auswerteverfahrens. Wird sie am Übergang Hardware → Logik zurückgerechnet, bleibt jeder nachgelagerte Baustein unverändert gültig: die 126 Host-Tests, der Golden-Vektor, das Telemetrie-Frame und die App-Seite mussten nicht angefasst werden. Ein Vorzeichen in `motion_filter` hätte dagegen nur den Bremspfad korrigiert und Nick- und Querachse gespiegelt gelassen.
 
 **Zwingende Randbedingung:** Die Transformation muss eine echte Rotation mit Determinante +1 sein. Würde nur a_y negiert und ω_x unverändert gelassen, gälte dθ/dt = ω_x nicht mehr; der Komplementärfilter integrierte die Nickschätzung dann in die falsche Richtung. Das wäre am Schreibtisch unsichtbar, weil ω_x im Stand null ist.
 
-**Verifikationskriterien am Board (vor der nächsten Messfahrt):**
+**Absicherung.** Der Host-Test `test/test_imu_mount_orientation/` prüft die Transformation isoliert. Am Gerät ist der Umbau im Normalbetrieb geprüft: Boot, Schlusslicht, Bremslichtauslösung und Telemetrie verhalten sich unauffällig; eine Bremsung erzeugt Bremslicht, eine Beschleunigung nicht.
+
+**Referenzwerte für einen späteren Abgleich** (aus der Messfahrt 08.08.2026, aufgenommen im Zustand **vor** dem Umbau — eine systematische Nachmessung ist nach dem Umfangsschnitt vom 10.08.2026 nicht mehr Teil der Arbeit, s. Kap. 12.2):
 
 | Prüfung | Sollwert |
 |---|---|
@@ -312,7 +320,7 @@ Die Lochrasterplatine wurde am 09.08.2026 um **180° in ihrer eigenen Ebene** ge
 | Ruhezustand auf dem Rad, nach Verankerung | `pitch_rad` ≈ **−4,42°** (Referenzwert der Messfahrt 08.08.2026) |
 | Gyro-Nullpunkt nach Kalibrierung | ≈ **−4,08 °/s** (Referenzwert der Messfahrt 08.08.2026) |
 
-Werden diese Werte nicht reproduziert, ist die Achsentransformation fehlerhaft. Bis zur Verifikation gilt die Firmware als **nicht fahrbereit**.
+**Zwingende Randbedingung, geprüft:** Determinante der Transformation = (−1)·(−1)·(+1) = **+1**. Das Koordinatensystem bleibt rechtshändig, dθ/dt = ω_x gilt unverändert. Wäre nur a_y negiert worden, integrierte der Komplementärfilter die Nickschätzung in die falsche Richtung — ein Fehler, der am Schreibtisch unsichtbar bliebe, weil ω_x im Stand null ist.
 
 ---
 
@@ -390,14 +398,24 @@ Der frühere Schaltplan v2 vom 20.05.2026 ist damit **überholt**. Seine drei do
 ## 6. Firmware
 
 ### 6.1 Entwicklungsumgebung
-VS Code + **PlatformIO** + **Claude Code**. Plattform **pioarduino** → Arduino-ESP32-Core **3.3.11** (ESP-IDF 5.5.x). Board `esp32dev`, Partition `huge_app.csv` (No-OTA, CON-03). Host-Unit-Tests im `native`-Env (NFR-TST-03). Konfiguration über `Preferences` (NVS).
+VS Code + **PlatformIO** + **Claude Code**. Plattform **pioarduino** → Arduino-ESP32-Core **3.3.11** (ESP-IDF 5.5.x). Board `esp32dev`, Partition `huge_app.csv` (No-OTA, CON-03). Host-Unit-Tests im `native`-Env (NFR-TST-03). Konfiguration ausschließlich über Übersetzungszeit-Konstanten in `include/config.h` (s. Kap. 12.2).
 
 **Begründung pioarduino:** Die offizielle PlatformIO-Plattform `espressif32` liefert nur Arduino-Core 2.0.17 (kein `ledcAttach`).
 
 **Build-Voraussetzung (macOS):** `liblzma` muss vorhanden sein (`brew install xz`).
 
-### 6.2 Bibliotheken
-Adafruit MPU6050, Adafruit BMP280, Adafruit Unified Sensor, TinyGPSPlus, RCSwitch, NimBLE-Arduino. Versionen in `firmware/platformio.ini`.
+### 6.2 Bibliotheken [versionsfest seit Commit `835c7b3`]
+
+Alle Abhängigkeiten sind in `firmware/platformio.ini` auf exakte Versionen gepinnt. Begründung: Ohne Pinning löst PlatformIO bei jedem sauberen Build die jeweils neueste kompatible Version auf; ein Nachbau der Arbeit könnte damit gegen anderen Bibliothekscode laufen als der dokumentierte Validierungsstand (NFR-EXT-01, Reproduzierbarkeit).
+
+| Bibliothek | Version | Verwendung |
+|---|---|---|
+| Adafruit MPU6050 | 2.2.9 | IMU-Treiber |
+| Adafruit BMP280 | 3.0.0 | Barometer-Treiber |
+| Adafruit Unified Sensor | 1.1.15 | gemeinsame Sensor-Abstraktion der Adafruit-Treiber |
+| TinyGPSPlus | 1.1.0 | NMEA-Parser (L86) |
+| rc-switch | 2.6.4 | 433-MHz-Dekodierung |
+| NimBLE-Arduino | 2.5.0 | BLE-Transport |
 
 ### 6.3 Konventionen
 PWM ausschließlich über `ledcAttach()`/`ledcWrite()`. Kooperativer nicht-blockierender Scheduler, kein `delay()` im Betrieb, statische Speicherverwaltung, Trennung Logik ↔ Hardware, ID-Referenzen in Kommentaren.
@@ -410,8 +428,8 @@ PWM ausschließlich über `ledcAttach()`/`ledcWrite()`. Kooperativer nicht-block
 | Ordner | Modul | Inhalt |
 |---|---|---|
 | `include/` | `pins.h` | GPIO-Zuordnung |
-| `include/` | `config.h` | alle Konstanten (inkl. Motion-Filter-Parameter, künftig Einbaulage) |
-| `src/` | `main.cpp` | kooperativer Scheduler, Tasks, Bench-Harness |
+| `include/` | `config.h` | alle Konstanten (Motion-Filter-Parameter, Einbaulage, Schwellwerte) — einzige Konfigurationsquelle |
+| `src/` | `main.cpp` | kooperativer Scheduler, Tasks, Bench-Harness (`BENCH_MODE`) |
 | `lib/logic/` | `brake_curve` | Bremskennlinie FR-TL-06 (Proportionalteil, zustandslos) |
 | `lib/logic/` | `tail_light_fsm` | Zustandsautomat Rücklicht/Bremslicht (R2), Hysterese und Mindesthaltezeit |
 | `lib/logic/` | `lifecycle_fsm` | Lebenszyklus Init→Run, degraded (R1) |
@@ -421,6 +439,7 @@ PWM ausschließlich über `ledcAttach()`/`ledcWrite()`. Kooperativer nicht-block
 | `lib/logic/` | `button_decoder` | RF-Signale → Tastenereignisse |
 | `lib/logic/` | `blinker_fsm` | Zustandsautomat Blinker L/R/Warn (R3) |
 | `lib/logic/` | `imu_health` | Plausibilität/Recovery/Fail-Safe |
+| `lib/logic/` | `imu_mount_orientation` | **Rückabbildung der Einbaulage (Kap. 4.3), hardwarefrei, wird an der Treibergrenze aufgerufen** |
 | `lib/logic/` | `telemetry_frame`, `telemetry_buffer` | Serialisierung und Ringpuffer |
 | `lib/drivers/` | `led_output` | PWM-Ansteuerung LEDs |
 | `lib/drivers/` | `imu_driver` | MPU6050 über I²C, DLPF/Sample-Rate fest konfiguriert |
@@ -428,22 +447,24 @@ PWM ausschließlich über `ledcAttach()`/`ledcWrite()`. Kooperativer nicht-block
 | `lib/drivers/` | `bmp280_driver` | BMP280 über I²C |
 | `lib/drivers/` | `gnss_driver` + `gnss_fix` | L86 über UART2, Fix-Status |
 | `lib/drivers/` | `ble_telemetry` | BLE-Notify-Transport (NimBLE) |
-| `test/` (native, Unity) | u. a. `test_motion_filter`, `test_tail_light_fsm`, `test_telemetry_frame`, `test_telemetry_window_agg` | **120/120 grün** |
+| `test/` (native, Unity) | 15 Testdateien, u. a. `test_motion_filter`, `test_tail_light_fsm`, `test_imu_mount_orientation`, `test_frame_v3_golden`, `test_telemetry_window_agg` | **126/126 grün** (Commit `835c7b3`) |
 
-### 6.5 Implementierungsstand [Stand Commit `1178017`, 07.08.2026]
+### 6.5 Implementierungsstand [abgeschlossen, Commit `835c7b3`, 10.08.2026]
 
 - **M0 Grundgerüst** ✅
-- **M1 Rücklicht/Bremslicht R2** ✅ HW-validiert; **Einschränkung:** die Mindesthaltezeit ist im Fahrbetrieb unwirksam (Mangel M-01, Kap. 9.5.4).
+- **M1 Rücklicht/Bremslicht R2** ✅ HW-validiert. Der am 08.08.2026 im Feld nachgewiesene Mangel M-01 (unwirksame Mindesthaltezeit) ist am **10.08.2026 behoben** und durch einen Regressionstest abgesichert (Kap. 9.5.4).
 - **M2 Lebenszyklus R1** ✅ HW-validiert.
-- **M3 Sensorik/Bremserkennung** ✅ **Stufe 1 umgesetzt und feldverifiziert (08.08.2026).** `imu_driver` mit fest gesetztem DLPF (44 Hz) und Sample-Rate (200 Hz); `motion_filter` mit Normbetrags-Gate, entkoppelter Bias-Kalibrierung und Nickwinkel-Verankerung. Der Validierungsstatus wird von „im Feld falsifiziert" (v0.16) auf **„im Feld verifiziert"** heraufgestuft (Kap. 9.5).
+- **M3 Sensorik/Bremserkennung** ✅ **Stufe 1 umgesetzt und feldverifiziert (08.08.2026).** Einbaulage-Transformation nach Kap. 4.3 umgesetzt (10.08.2026). `imu_driver` mit fest gesetztem DLPF (44 Hz) und Sample-Rate (200 Hz); `motion_filter` mit Normbetrags-Gate, entkoppelter Bias-Kalibrierung und Nickwinkel-Verankerung. Der Validierungsstatus wird von „im Feld falsifiziert" (v0.16) auf **„im Feld verifiziert"** heraufgestuft (Kap. 9.5).
 - **M4 Blinker + RF** ✅ Funktion HW-validiert (physische L/R-Zuordnung offen).
 - **M5 Teil A Barometer** ✅ validiert.
 - **M5 Teil B GNSS** ✅ validiert, Freilandfix erreicht.
 - **M5 Teil C2 BLE-Telemetrie** ✅ am realen System validiert; **Frame-Schema v3 (113 Byte)** mit GNSS-Referenz, Filter-Innensicht und 100-Hz-Fensteraggregaten.
 - **Härtung** ✅ am Board per Fehlerinjektion verifiziert.
-- **Host-Unit-Tests:** **120/120 grün**.
+- **M6 Konfiguration** — **abgegrenzt (10.08.2026).** FR-CFG-02 und FR-CFG-03 werden nicht umgesetzt; Begründung Kap. 12.2.
+- **Host-Unit-Tests:** **126/126 grün** (125 bestehende + Regressionstest zu M-01).
+- **Auslieferungsstand:** alle Debug-Ausgaben entfernt, `DEBUG_SERIAL = false`, keine `TODO`- oder `FIXME`-Marker im eigenen Quellcode. Binärgröße `esp32dev`: 674 487 B Flash (21,4 %), 106 912 B RAM (32,6 %).
 - **Kreuztest über Toolchain-Grenzen** ✅ `testdata/frame_v3_golden.hex` (113 Byte, 41 unterscheidbare Werte): die Firmware erzeugt die Bytefolge, der Produktions-Decoder der iOS-App liest genau diese Bytes gegen die Wertetabelle — nicht gegen den eigenen Encoder.
-- **Nächste:** Achsentransformation nach Kap. 4.3 implementieren und am Board verifizieren; Entscheidung zu Mangel M-01; danach Wiederholungs-Messfahrt (Teil A des Messprotokolls, sechs Fahrten auf der Strecke vom 06.08.).
+- **Status: Die Firmware ist mit Commit `835c7b3` abgeschlossen und eingefroren.** Sie ist auf das Gerät geflasht und im Normalbetrieb geprüft. Weitere Änderungen sind nur noch bei einem funktionsverhindernden Fehler vorgesehen.
 
 ### 6.6 Zustandsmodell (vier parallele Regionen) [Block B/C/D]
 
@@ -503,10 +524,15 @@ stateDiagram-v2
 Fail-safe auf Schlusslicht; Prioritätsordnung Schlusslicht > Bremslicht > Blinker > Telemetrie. IMU-Ausfall → sicheres Schlusslicht + Flag + Reinit; optionale Sensoren → Weiterbetrieb + Flag. I²C zeitbegrenzt, gestufte Recovery. Watchdog ~2 s. BLE-Isolation.
 
 ### 6.8 Ausführungsmodell [Block F]
-Kooperativer, nicht-blockierender Scheduler: schnelle `loop()`, `millis()`-getaktete Tasks in fester Reihenfolge. Raster: IMU/Bremslicht 100 Hz, BMP 10 Hz, GNSS 1 Hz, Blinker 1,5 Hz, Telemetrie 10 Hz, Watchdog je Durchlauf. **Gemessenes Zeitverhalten im Fahrbetrieb s. Kap. 9.5.5** — die dominierende Einzellast ist der 1-Hz-NMEA-Parselauf.
+Kooperativer, nicht-blockierender Scheduler: schnelle `loop()`, `millis()`-getaktete Tasks in fester Reihenfolge. Raster: IMU/Bremslicht 100 Hz, BMP 10 Hz, GNSS 1 Hz, Blinker 1,5 Hz, Telemetrie 10 Hz, Watchdog je Durchlauf. **Gemessenes Zeitverhalten im Fahrbetrieb s. Kap. 9.5.5.** Die dort gemessenen Spitzen fallen in den 1-Hz-Slot; ihre Ursachenzuordnung ist im Auslieferungsstand nicht mehr nachprüfbar (s. Kap. 9.5.5).
 
 ### 6.9 Konfiguration, Test & Erweiterbarkeit [Block G/H]
-Konfiguration: Kalibrierwerte in NVS, Struktur-/Sicherheitswerte fest im Code; serielles Kalibrier-Interface (UART0); `config_version`. Testbarkeit: Trennung Logik ↔ Hardware, Host-Unit-Tests + On-Target-Validierung + Golden-Vektor-Kreuztest. Erweiterbarkeit: modulare Schnittstellen, versioniertes Telemetrie-Frame.
+
+**Konfiguration:** Sämtliche Kalibrier-, Struktur- und Sicherheitswerte liegen als benannte `constexpr` in `include/config.h`; eine Änderung erfordert Neuübersetzung und Neuprogrammierung. Laufzeitkonfiguration über NVS und ein serielles Kalibrier-Interface waren als FR-CFG-02/03 spezifiziert und sind am 10.08.2026 abgegrenzt worden (Kap. 12.2). Der praktische Nachteil ist gering, weil im Rahmen dieser Arbeit ausschließlich am Entwicklungsrechner parametriert wurde; die Anforderung bleibt als Ausblick bestehen.
+
+**Testbarkeit:** Trennung Logik ↔ Hardware (NFR-TST-01), Host-Unit-Tests im `native`-Env (126/126), On-Target-Validierung und Golden-Vektor-Kreuztest über die Toolchain-Grenze hinweg.
+
+**Erweiterbarkeit:** modulare Schnittstellen, versioniertes Telemetrie-Frame (Schema v3), versionsfest gepinnte Bibliotheken.
 
 ---
 
@@ -552,31 +578,31 @@ Nicht begonnen. Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/War
 |---|---|
 | ESP32-Grundfunktion | ✅ validiert |
 | SRX882S RF-Empfang · Fernbedienungscodes | ✅ validiert |
-| Fernbedienung Kurz-/Langdruck- & Wiederhol-Timing | ❌ offen — Verifikation FR-RF-03/04 |
-| BMP280 (I²C 0x76), FORCED-Mode | ✅ validiert (Befund s. 9.1) |
+| Fernbedienung Kurz-/Langdruck- & Wiederhol-Timing | ⚠️ **abgegrenzt (Kap. 12.2)** — im Feldbetrieb ohne Fehlfunktion bestätigt, systematische Messung des Wiederholintervalls nicht Teil des Arbeitsumfangs |
+| BMP280 (I²C 0x76), FORCED-Mode | ✅ validiert (Befund s. 9.1); Plausibilitätsprüfung/Recovery abgegrenzt (Kap. 12.2) |
 | MPU6050 (I²C 0x68) | ✅ validiert |
 | IMU-Rohdatenerfassung (`imu_driver`, DLPF 44 Hz / 200 Hz Sensorrate) | ✅ HW-validiert, Registerauslesung bestätigt |
 | **Bremserkennung (`motion_filter`, Stufe 1)** | ✅ **im Feld verifiziert (08.08.2026):** alle neun Referenz-Bremsvorgänge erkannt; r = +0,85 gegen die GNSS-Referenz bei festem Versatz; keine Fehlauslösung beim Beschleunigen; Ruhesockel verschwunden (Kap. 9.5) |
 | Bremslicht-Kennlinie (FR-TL-06), Proportionalteil | ✅ **bench- und feldvalidiert** (Feld: 194/194 Zeilen auf ±1 Prozentpunkt) |
-| **Mindesthaltezeit 300 ms (FR-TL-06)** | ❌ **Anforderungsabweichung (Mangel M-01):** im Fahrbetrieb in keinem der 14 Fälle wirksam (Kap. 9.5.4) |
+| **Mindesthaltezeit 300 ms (FR-TL-06)** | ✅ **behoben 10.08.2026.** Im Fahrbetrieb war sie in keinem der 14 Fälle wirksam (Mangel M-01); Ursache korrigiert, Regressionstest durch das Hystereseband ergänzt, am Gerät bestätigt (Kap. 9.5.4). Feldmessung des korrigierten Verhaltens nicht durchgeführt (Kap. 12.2) |
 | Bremslicht-Reaktionszeit ≤ 50 ms (NFR-RT-01) | ✅ Serial-Bench validiert (≤ 10 ms) |
-| **Loop-Zykluszeit < 10 ms (NFR-RT-04)** | ✅ **im Fahrbetrieb erfüllt:** Worst Case 6,7 ms, 0,00 % der Fenster über 10 ms (Kap. 9.5.5) |
+| **Loop-Zykluszeit < 10 ms (NFR-RT-04)** | ✅ **im Fahrbetrieb erfüllt:** Worst Case 6,7 ms, 0,00 % der Fenster über 10 ms (Kap. 9.5.5). Ursachenzuordnung der 1-Hz-Spitze zurückgenommen; im Auslieferungsstand entfällt die UART-Last |
 | Bias-Kalibrierung / Nickwinkel-Verankerung | ✅ im Feld wirksam (`bias_calibrated` ab dem ersten Frame) |
-| Feldkalibrierung der Bremsschwellen | ⚠️ nicht weiterverfolgt (Umfangsschnitt 07.08.2026); Verhalten dokumentiert statt iteriert |
+| Feldkalibrierung der Bremsschwellen | ⚠️ **abgegrenzt** (Umfangsschnitt 07.08.2026); Verhalten dokumentiert statt iteriert |
 | GPS L86 – NMEA/UART · GPS-Fix (Freiland) | ✅ validiert |
 | GNSS-Integrität unter Abschattung | ❌ kritischer Befund (Kap. 9.4) — Qualitätsflaggen erkennen falsche Navigationslösung nicht |
-| PlatformIO-Umgebung, Host-Unit-Tests | ✅ 120/120 grün |
+| PlatformIO-Umgebung, Host-Unit-Tests | ✅ **126/126 grün** (Commit `835c7b3`) |
 | Golden-Vektor-Kreuztest Firmware ↔ App | ✅ bestanden |
 | R1-Lebenszyklus · R2-Zustandslogik | ✅ HW-validiert |
 | Blinker-Funktion | ✅ HW-validiert; physische L/R-Zuordnung ❌ offen |
 | I²C-Bus-Recovery · Watchdog-Reset · Fail-Safe | ✅ per Fehlerinjektion verifiziert |
 | BLE-Transport · iOS-App gegen reale Verbindung | ✅ validiert |
-| **Schaltplan Rev. 1.0, Verbindungsprüfung** | ✅ **maschinell über die Netzliste geprüft (Kap. 5.4)** |
+| **Schaltplan Rev. 1.1, Verbindungsprüfung** | ✅ **maschinell über die Netzliste geprüft (Kap. 5.4)**; 32 Netze, keine unerwarteten Einzelknoten |
 | Energiebilanz/Laufzeit unter realen Lastfällen | ❌ offen — Messung (NFR-PWR-02) |
 | Brown-Out unter realer LED-Lastspitze | ❌ offen |
 | Verlustleistung AMS1117 unter Spitzenlast (B-2) | ❌ offen — Messung |
 | Ladeinfrastruktur unter Last (B-3) | ❌ offen — Messung |
-| Achsentransformation nach dem Umbau (Kap. 4.3) | ❌ **offen — Sperrschritt vor der nächsten Fahrt** |
+| Achsentransformation nach dem Umbau (Kap. 4.3) | ✅ **umgesetzt und geflasht 10.08.2026.** Host-Test vorhanden, Determinante +1 geprüft, im Normalbetrieb am Gerät bestätigt. Systematische Nachmessung der Referenzwerte abgegrenzt (Kap. 12.2) |
 | Lichtstärke (cd) nach § 67 | ❌ offen — photometrische Messung |
 | Gehäuse | ❌ nicht begonnen |
 
@@ -676,7 +702,7 @@ Die einzige Fehlauslösung liegt im rauesten Streckenabschnitt bei einem Jerk vo
 
 **Regimeverteilung:** STATIC 26,2 %, DYNAMIC 69,2 %, SHOCK 4,6 % der übertragenen 100-Hz-Abtastungen.
 
-#### 9.5.4 Mangel M-01 — Mindesthaltezeit unwirksam [gesichert]
+#### 9.5.4 Mangel M-01 — Mindesthaltezeit unwirksam [gesichert; **behoben 10.08.2026**]
 
 FR-TL-06 fordert eine Mindesthaltezeit von 300 ms. In der Aufzeichnung fällt der Ausgang in **allen 14 Aktivierungen** innerhalb eines Abtastschritts (0,10 s, auflösungsbegrenzt) auf den Schlusslicht-Grundwert zurück, sobald `brake_decel_ms2` die Einschaltschwelle unterschreitet. Der Wert in der jeweils folgenden Zeile liegt in 13 von 14 Fällen zwischen 1,45 und 1,97 m/s², also im Hystereseband. Vier Aktivierungen sind kürzer als 300 ms; zwei der elf Anzeigevorgänge zerfallen in Teilaktivierungen.
 
@@ -684,7 +710,13 @@ FR-TL-06 fordert eine Mindesthaltezeit von 300 ms. In der Aufzeichnung fällt de
 
 **Absicherung.** Eine Nachbildung der Zustandsmaschine, gespeist mit dem aufgezeichneten `brake_decel_ms2`, reproduziert die aufgezeichnete `brake_light_pct` in **98,53 %** der Zeilen. Unabhängig davon stimmt der Ausgang bei `brake_decel ≥ 2,0` in **194 von 194** Zeilen auf ±1 Prozentpunkt mit der spezifizierten Kennlinie überein — die Proportionalstufe selbst arbeitet korrekt.
 
-**Warum die Unit-Tests das nicht gefunden haben.** `test_tail_light_fsm.cpp` enthält drei Tests zur Mindesthaltezeit, alle grün. Sie speisen idealisierte Sprünge (5,0 → 0,0) ein und überspringen das Hystereseband vollständig; der dritte Test führt zwar den Wert 2,0 im Band ein, prüft danach aber nur den Zustand, nicht die ausgegebene Duty. **Methodischer Befund für die Arbeit:** Grüne Host-Tests belegen die Korrektheit der Logik gegenüber den *modellierten* Eingangssignalen, nicht deren Übereinstimmung mit realen.
+**Warum die Unit-Tests das nicht gefunden haben.** `test_tail_light_fsm.cpp` enthielt drei Tests zur Mindesthaltezeit, alle grün. Sie speisen idealisierte Sprünge (5,0 → 0,0) ein und überspringen das Hystereseband vollständig; der dritte Test führt zwar den Wert 2,0 im Band ein, prüft danach aber nur den Zustand, nicht die ausgegebene Duty. **Methodischer Befund für die Arbeit:** Grüne Host-Tests belegen die Korrektheit der Logik gegenüber den *modellierten* Eingangssignalen, nicht deren Übereinstimmung mit realen. Der Defekt war nicht durch mangelnde Testabdeckung entstanden, sondern durch eine Testeingabe, die den kritischen Betriebsbereich systematisch ausließ.
+
+**Behebung [Commit `835c7b3`, 10.08.2026].** Der `else`-Zweig führt `held_brake_duty_pct_` nur noch nach, wenn `decel_ms2 > BRAKE_ON_MS2` gilt — also nur dann, wenn der Wert tatsächlich einen Bremslichtwert darstellt. Innerhalb des Hysteresebands bleibt der zuletzt oberhalb der Einschaltschwelle erreichte Wert eingefroren, und die Mindesthaltezeit nach FR-TL-06 wird wirksam. Die Hysteresestruktur selbst (`below_off_pending_`, `below_off_since_ms_`, `min_hold_ms`) blieb unverändert; sie war korrekt.
+
+**Absicherung der Behebung.** Ein neuer Regressionstest speist einen monoton abklingenden Bremsvorgang ein, der das Hystereseband durchläuft (4,0 → 2,5 → 1,8 → 1,0 m/s²), und sichert zu, dass die Duty während der Haltezeit oberhalb des Schlusslichtwerts bleibt und erst danach abfällt. Host-Tests danach **126/126** grün. Am Gerät nach dem Flashen im Normalbetrieb bestätigt: das Bremslicht fällt nach dem Ende einer Bremsung nicht mehr abrupt ab, sondern hält sichtbar nach.
+
+**Einordnung für die Arbeit.** Der Mangel ist damit nicht nur dokumentiert, sondern geschlossen — und die Kette Feldmessung → Quelltextlokalisierung → Simulation → Korrektur → Regressionstest → Nachweis am Gerät ist vollständig belegt. Die aufgezeichnete Messfahrt vom 08.08.2026 bildet weiterhin den **Zustand vor der Korrektur** ab; sie ist die Beweisgrundlage des Mangels, nicht des korrigierten Verhaltens.
 
 #### 9.5.5 Zeitverhalten im Fahrbetrieb [gesichert]
 
@@ -697,7 +729,15 @@ FR-TL-06 fordert eine Mindesthaltezeit von 300 ms. In der Aufzeichnung fällt de
 | Anteil Fenster > 10 ms | — | **0,00 %** | ✅ |
 | `dt_max_ms` > 10 ms | — | 10,15 % (max. 13 ms) | — |
 
-Die Spitzen treten **periodisch mit 1,00 s** auf und betreffen 9,9 % der Fenster — deckungsgleich mit dem GNSS-Slot (`PERIOD_GNSS_MS` = 1000). Dieselben Fenster tragen auch die dt-Ausreißer. Ohne diese Fenster liegt die Schleifenzeit im Median bei 92 µs. **Bewertung:** NFR-RT-04 ist erfüllt, aber die Prüfstandszahl unterschätzt den Fahrbetrieb um den Faktor 10; die verbleibende Reserve beträgt 33 %, nicht die scheinbaren 93 %. Der 1-Hz-NMEA-Parselauf ist die dominierende Einzellast der Hauptschleife.
+Die Spitzen treten **periodisch mit 1,00 s** auf und betreffen 9,9 % der Fenster. Dieselben Fenster tragen auch die dt-Ausreißer. Ohne diese Fenster liegt die Schleifenzeit im Median bei 92 µs.
+
+**Ursachenzuordnung — methodische Korrektur [10.08.2026].** In der Erstauswertung wurde die Spitze dem GNSS-Slot (`PERIOD_GNSS_MS` = 1000) zugeschrieben. Diese Zuordnung war nicht belegt. Im Aufzeichnungsstand liefen **drei** Debug-Ausgaben mit exakt 1 Hz, und zwar alle innerhalb des Messfensters von `loop_max_us`: `[R1/R2]` (≈ 72 B), `[Baro]` (≈ 41 B) und `[GNSS]` (≈ 60 B), zusammen rund 173 Byte. Bei 115 200 Bd entspricht das etwa 87 µs je Byte; sobald der UART-Sendepuffer gefüllt ist, blockiert `Serial.printf`. Fallen zwei dieser Ausgaben in denselben `loop()`-Durchlauf, liegt der Beitrag in derselben Größenordnung wie die gemessenen 6,7 ms. Aus den Felddaten allein sind beide Ursachen **nicht trennbar**, weil beide exakt mit 1,00 s periodisch sind.
+
+**Bewertung.** NFR-RT-04 (< 10 ms) ist in jedem Fall erfüllt — das ist die für die Anforderung maßgebliche Aussage und sie bleibt unberührt. Nicht belegbar ist dagegen die Aussage, der NMEA-Parselauf sei die dominierende Einzellast; sie wird zurückgenommen. Belegbar ist: Die Prüfstandszahl von 0,651 ms unterschätzt den Fahrbetrieb um rund den Faktor 10, und die Reserve zur Anforderung betrug im Aufzeichnungsstand 33 %.
+
+**Konsequenz für den Auslieferungsstand.** Mit Commit `835c7b3` sind alle drei Ausgaben entfernt und `DEBUG_SERIAL` steht auf `false`. Der ausgelieferte Stand trägt diese Last daher nicht mehr; die tatsächliche Reserve dürfte deutlich über 33 % liegen. Eine Nachmessung, die die beiden Ursachen trennen würde, ist nach dem Umfangsschnitt vom 10.08.2026 nicht mehr Teil der Arbeit (Kap. 12.2) — der offengelegte Diskriminierungsversuch (Messung mit und ohne Debug-Ausgaben) gehört als Empfehlung in den Ausblick.
+
+**Methodischer Befund für die Arbeit.** Zwei Vorgänge mit identischer Periode lassen sich aus einer Zeitreihe allein nicht auseinanderhalten. Diagnoseausgaben, die innerhalb des Messfensters einer Zeitmessung liegen, verfälschen genau die Größe, die sie beobachten sollen — ein Beobachtereffekt, der in der Aufzeichnung nicht sichtbar wird.
 
 #### 9.5.6 Grenze G-01 — geschwindigkeitsabhängige Grundlinie [gesichert]
 
@@ -777,63 +817,143 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5b abgeschlossen.
 | **Schaltplan als echte KiCad-Datei statt Zeichnung** (09.08.) | bearbeitbar, maschinell auf Verbindungsvollständigkeit prüfbar, Netzliste exportierbar; die Verbindungsprüfung hat dabei zwei rein optisch verbundene Abzweige aufgedeckt | Grafikprogramm / Blockdiagramm |
 | **LED-Zweige an +5 V hinter SW1, alle Module an +3,3 V** (09.08.) | dokumentierter realer Aufbau; ein Nebeneffekt ist, dass an keiner Schnittstelle eine Pegelwandlung nötig ist | — (Bestandsaufnahme) |
 
+| **Einbaulage als Transformation an der Treibergrenze, nicht als Vorzeichen in der Auswertelogik** (10.08.) | Die Einbaulage ist eine mechanische Eigenschaft des Aufbaus, keine Eigenschaft des Auswerteverfahrens. Am Übergang Hardware → Logik zurückgerechnet, bleiben alle nachgelagerten Bausteine unverändert gültig: 126 Host-Tests, Golden-Vektor, Frame-Schema und App-Seite mussten nicht angefasst werden. Determinante +1 erhält die Rechtshändigkeit, damit gilt dθ/dt = ω_x weiter. | Vorzeichen in `motion_filter` (korrigiert nur den Bremspfad, spiegelt Nick- und Querachse); `MOTION_BRAKE_SIGN` umkehren (bricht die validierte Konvention und alle Host-Tests) |
+| **Haltewert der Mindesthaltezeit nur oberhalb der Einschaltschwelle nachführen** (10.08.) | Behebt Mangel M-01. Im Hystereseband liefert die Kennlinie bereits den Schlusslichtwert; sein Einfrieren macht FR-TL-06 wirkungslos. Die Einschränkung auf `decel > BRAKE_ON_MS2` ist der kleinstmögliche Eingriff und lässt Hysterese und Zeitverhalten unverändert. | als Anforderungsabweichung dokumentieren (eine spezifizierte, getestete und nicht wirkende Funktion ist ein Mangel); Hysterese-Grenzen verschieben (ändert das Schaltverhalten) |
+| **Umfangsschnitt Firmware: FR-CFG-02 und FR-CFG-03 werden nicht umgesetzt** (10.08.) | NVS-Konfiguration ist kein Zusatzmodul, sondern ein struktureller Eingriff: alle Kalibrier-`constexpr` müssten zu Laufzeitparametern werden, `TailLightParams` und `MotionParams` ziehen ihre Vorgabewerte heute direkt daraus. Der Nutzen für den Nachweis der Arbeit ist null — parametriert wurde ausschließlich am Entwicklungsrechner. Das Zeitbudget bis zur Abgabe wird für Auswertung und Text gebraucht. | beide umsetzen (größter verbleibender Eingriff ohne Nachweisnutzen); nur FR-CFG-02 umsetzen (halber Aufwand, gleicher Nullnutzen) |
+| **Nicht feldverifizierte Parameter bleiben im Code als solche gekennzeichnet, statt die Marker zu entfernen** (10.08.) | Ein Parameter ohne Kennzeichnung liest sich wie ein gemessener Wert. Die Umformulierung von `TODO(offen): Feldverifikation` in „Erstauslegung; Feldverifikation nicht Teil des Arbeitsumfangs" hält den Geltungsanspruch korrekt, ohne Arbeitsumfang zu erzeugen. | Marker ersatzlos löschen (erzeugt einen falschen Eindruck von Absicherung); Feldverifikation durchführen (nicht im Zeitbudget) |
+| **Bibliotheksversionen pinnen** (10.08.) | Ohne Pinning löst PlatformIO bei jedem sauberen Build die neueste kompatible Version auf; ein Nachbau liefe dann gegen anderen Bibliothekscode als der dokumentierte Validierungsstand. Reproduzierbarkeit ist eine Voraussetzung wissenschaftlicher Nachvollziehbarkeit, nicht eine Komfortfrage. | offene Versionsbereiche belassen |
+
 *Hinweis: Kalendertage einzelner Altentscheidungen nicht durchgängig belegt ([Annahme]).*
 
 ---
 
 ## 11. Offene Punkte
 
-### 11.1 Kritisch
-- **Achsentransformation nach dem Umbau (Kap. 4.3) — Sperrschritt.** Bis zur Implementierung und Verifikation der drei Vorzeichenprüfungen am Board ist die Firmware nicht fahrbereit; ohne sie kehrt sich die Bremserkennung um.
-- **Mangel M-01, Mindesthaltezeit (Kap. 9.5.4) — Entscheidung erforderlich.** Entweder korrigieren (der Haltewert darf nur oberhalb der Einschaltschwelle aktualisiert werden; erfordert eine erneute Verifikation der Ausgangsstufe und mindestens einen Test, der das Hystereseband durchläuft) oder als Anforderungsabweichung in der Validierungstabelle führen. Eine spezifizierte und getestete Funktion, die nachweislich nicht wirkt, ist ein Mangel und als solcher zu dokumentieren.
-- **Befund B-1, UART-Pegel (Kap. 5.4) — Entscheidung erforderlich.** Serienwiderstand 1 kΩ oder Teiler 1 k/10 k in der Leitung GPIO17 → RXD1, oder als dokumentierte Abweichung führen.
-- **Rechtliche Zulässigkeit FR-TL-07:** nach § 67 Abs. 4 unzulässig → default deaktiviert; als Zielkonflikt dokumentieren.
+> **Abgrenzung zum Arbeitsumfang.** Mit dem Umfangsschnitt vom 10.08.2026 ist die
+> Firmware abgeschlossen. Die hier geführten Punkte sind entweder Dokumentations-
+> arbeiten oder bewusst nicht mehr verfolgte Nachweise; letztere stehen als
+> begründete Abgrenzung in Kap. 12.2 und im Ausblick, nicht als Restaufgaben.
 
-### 11.2 Wichtig
-- **Teil A des Messprotokolls:** sechs Fahrten auf der Strecke vom 06.08.2026 für den direkten Streckenvergleich. Muss nach dem Umbau ohnehin wiederholt werden.
-- **Messung Verlustleistung AMS1117 unter Spitzenlast** (B-2), sinnvollerweise zusammen mit NFR-PWR-02.
-- **Messung Ladeverhalten des TP4056 unter Last** (B-3).
-- **Brown-Out unter LED-Lastspitzen:** neuer Bezugswert ist der Worst-Case-Eingangsstrom von 1,18 A (Kap. 5.2); MT3608-Auslegung dagegen prüfen.
-- **RF-Verifikationstest (FR-RF-03/04):** Wiederhol-Intervall der Fernbedienung messen → finaler Release-Timeout. Nach dem Umbau zusätzlich die Reichweite prüfen, da sich die Antennenlage geändert hat.
-- **BOM-Korrekturen:** GNSS-Antenne Namvo als nicht verbaut kennzeichnen; RF-Empfänger einheitlich als SRX882S führen (nicht „PT2262"); Positionen 10-kΩ-Pull-Down (3×), Drucktaster IP65 8 mm, LP103454, Widerstandsnetze RN1–RN3 ergänzen.
-- **Nennstrom von SW1 prüfen** (B-6): Der Schalter führt im Worst Case 1,18 A. Datenblatt beschaffen oder den Spannungsabfall über dem geschlossenen Kontakt unter Last messen.
-- **Fehlende HF-Entkopplung am L86** (B-4) dokumentieren oder nachrüsten.
-- **IMU-Plausibilitäts-/Recovery-Schwellen** in `config.h` weiterhin Erstschätzung.
+### 11.1 Firmware — abgeschlossen
+
+Keine offenen Punkte. Stand Commit `835c7b3` vom 10.08.2026: 126/126 Host-Tests
+grün, beide Build-Umgebungen fehlerfrei, keine `TODO`- oder `FIXME`-Marker im
+eigenen Quellcode, Auslieferungsstand geflasht und im Normalbetrieb geprüft.
+
+Geschlossen mit diesem Stand: Einbaulage-Transformation (Kap. 4.3), Mangel M-01
+(Kap. 9.5.4), Auslieferungsstand der Debug-Ausgaben, Versionsfestigkeit der
+Bibliotheken. Abgegrenzt statt umgesetzt: FR-CFG-02 und FR-CFG-03 (Kap. 12.2).
+
+### 11.2 Hardware und Elektronik
+
+- **Befund B-1, UART-Pegel (Kap. 5.4) — Entscheidung erforderlich.** Der ESP32
+  treibt GPIO17 mit 3,3 V, das L86-Datenblatt nennt für RXD1 V_IHmax = 3,1 V.
+  Serienwiderstand 1 kΩ, Teiler 1 k/10 k, oder als dokumentierte Abweichung
+  führen. Der Betrieb ist seit Wochen unauffällig; eine Zerstörung ist nicht zu
+  erwarten, der Betrieb liegt aber außerhalb der zugesicherten Bedingungen.
+- **Nennstrom von SW1 prüfen (Befund B-6).** Der Schalter führt seit der
+  Korrektur der Schalterposition den Akkustrom, im Worst Case 1,18 A. Für den
+  verbauten 8-mm-Drucktaster liegt kein Datenblatt vor. Herstellerangabe
+  beschaffen oder den Spannungsabfall über dem geschlossenen Kontakt unter Last
+  messen.
+- **Fehlende HF-Entkopplung am L86 (Befund B-4)** dokumentieren oder nachrüsten.
+- **BOM-Korrekturen:** GNSS-Antenne Namvo als nicht verbaut kennzeichnen;
+  RF-Empfänger einheitlich als SRX882S führen (nicht „PT2262"); Positionen
+  10-kΩ-Pull-Down (3×), Drucktaster IP65 8 mm, LP103454 und die Widerstandsnetze
+  RN1–RN3 ergänzen.
 - **Physische Blinker-L/R-Zuordnung** noch nicht festgelegt.
+- **Datenblatt der 3-W-COB-LED** (Hersteller Vrabocry) fehlt weiterhin;
+  V_f = 2,2 V ist der Mittelwert der Produktangabe 2,0–2,4 V.
+- **Anordnung der Patch-Antenne im Gehäuse** gegen die Datenblattvorgaben prüfen
+  (Kap. 8).
 
-### 11.3 Zu verifizieren / offen
-- **Lichtstärke (cd) nach § 67:** photometrische Messung, separate Hardware-Eigenschaft.
-- **Datenblatt der 3-W-COB-LED** (Hersteller Vrabocry) fehlt weiterhin; V_f = 2,2 V ist der Mittelwert der Produktangabe 2,0–2,4 V.
-- **Wirkungsgrad des MT3608 unter realer Last** (angenommen η = 0,90).
-- **BMP280-Temperatur im eingeschwungenen Zustand** erneut messen.
-- **Anordnung der Patch-Antenne im Gehäuse** gegen die Datenblattvorgaben prüfen (Kap. 8).
-- **`pitch_rad`-Restwert:** Auf dem Rad im Stillstand −4,42° (Messfahrt 08.08.). Ob das die tatsächliche Aufstelllage abbildet, wird durch die Vorzeichenprüfung nach dem Umbau mitbeantwortet (Kap. 4.3).
-- **Debug-Ausgaben hinter `DEBUG_SERIAL`** vor Abgabe deaktivieren.
+### 11.3 Dokumentation und Thesis-Text
+
+- **`loop_max_us` eindeutig definieren.** Das Frame-Feld ist das Maximum je
+  100-ms-Fenster (App zeigt 53 µs), der Nachweis für NFR-RT-04 ist der Worst Case
+  über den gesamten Lauf (0,651 ms Prüfstand, 6,7 ms Fahrbetrieb). Ohne diese
+  Festlegung stünden in der Arbeit zwei Zahlen für dieselbe Anforderung.
+- **Effektive Ansprechschwelle 2,13 m/s² ausweisen.** Die verbleibende
+  Filterdämpfung von 5,9 % bedeutet, dass die nominelle Schwelle von 2,0 m/s²
+  real erst bei etwa 2,13 m/s² erreicht wird. Eine Angabe von „2,0 m/s²" wäre
+  nicht belegbar.
+- **Firmware-Git-Hash im Golden-Vektor.** `testdata/frame_v3_golden.md` um den
+  Hash `1178017` ergänzen (Stand, gegen den kreuzvalidiert wurde).
+- **Feldanzahl im Golden-Vektor vereinheitlichen** — Firmware-Seite nennt 41
+  „unterscheidbare Werte", App-Seite 43 getroffene Felder (unterschiedliche
+  Zählweise bei Booleans). Eine Zahl festlegen.
+- **Entscheidungs-Kürzel:** die iOS-Nachtragsentscheidungen sind in **V3-1 bis
+  V3-4** umbenannt; App Bible und `CSV_Format_v3_Validierungsexport.md` sind
+  entsprechend nachzuziehen. Die Feldtest-Kürzel E1–E5 bleiben unverändert.
+- **`docs/Validierung/measurement_log.md` korrigieren:** nicht belegbare
+  Firmware-Hash-Angabe (`d8a4e75`); die zu weit gefasste Aussage, die Bench speise
+  „denselben Signalpfad" wie der Normalbetrieb (`BENCH_MODE` umgeht
+  `motion_filter` und `lifecycle_fsm`); die falsche Behauptung einer
+  15-prozentigen Ratenverzerrung der Gyro-Integration (`dt_s` wird real gemessen).
+- **Doppelte App-Bible-Fassung:** neben `claude/app_bible.md` (kanonisch, v0.22)
+  liegt der veraltete Schnappschuss `App_Bible_v0.21.md`. Vor der Abgabe entfernen
+  oder eindeutig als überholt kennzeichnen.
+- **`ios-app/SmartBikeRearLight/README.md`** fehlt (App Bible Kap. 9 führt es auf).
+- **Rechtliche Zulässigkeit FR-TL-07:** nach § 67 Abs. 4 unzulässig, daher
+  standardmäßig deaktiviert; als Zielkonflikt im Text ausführen.
 
 ---
 
-## 12. Risiken (technisch / Projekt / Thesis)
+## 12. Risiken und Abgrenzung
+
+### 12.1 Risiken (technisch / Projekt / Thesis)
 
 | Risiko | Wirkung | Bewertung / Gegenmaßnahme |
 |---|---|---|
-| **Falsche Achsentransformation nach dem Umbau** | Bremserkennung kehrt sich um; am Schreibtisch unsichtbar | **hoch, aktuell offen.** Drei Vorzeichenprüfungen am Board vor der nächsten Fahrt (Kap. 4.3); Transformation muss Determinante +1 haben |
-| Mindesthaltezeit unwirksam (M-01) | Bremslicht fällt abrupt ab; in rauen Abschnitten Unterbrechung während eines Bremsvorgangs | **realisiert und quantifiziert** (Kap. 9.5.4). Entscheidung korrigieren/dokumentieren offen |
-| UART-Pegel überschreitet L86-Spezifikation (B-1) | Betrieb außerhalb zugesicherter Bedingungen; Zerstörung nicht zu erwarten | **realisiert.** Serienwiderstand oder Teiler; Entscheidung offen |
+| ~~Falsche Achsentransformation nach dem Umbau~~ | — | **geschlossen (10.08.2026).** Transformation an der Treibergrenze umgesetzt, Determinante +1 geprüft, Host-Test vorhanden, am Gerät im Normalbetrieb bestätigt (Kap. 4.3) |
+| ~~Mindesthaltezeit unwirksam (M-01)~~ | — | **geschlossen (10.08.2026).** Ursache behoben, Regressionstest ergänzt, am Gerät bestätigt (Kap. 9.5.4) |
+| UART-Pegel überschreitet L86-Spezifikation (B-1) | Betrieb außerhalb zugesicherter Bedingungen; Zerstörung nicht zu erwarten | **realisiert.** Serienwiderstand oder Teiler; Entscheidung offen (Kap. 11.2) |
 | Geschwindigkeitsabhängige Grundlinie (G-01) | Reserve zur Ansprechschwelle bei Reisegeschwindigkeit nur noch 0,32 m/s² | **realisiert und quantifiziert** (Kap. 9.5.6). Als Grenze dokumentiert; Stufe 2 adressiert genau diesen Offset |
+| **Ursache der 6,7-ms-Schleifenzeit nicht eindeutig zugeordnet (B7)** | Aussage über die dominierende Einzellast der Hauptschleife nicht belegbar | **erkannt und offengelegt (Kap. 9.5.5).** NFR-RT-04 bleibt in jeder Lesart erfüllt; die Ursachenbehauptung ist zurückgenommen, der Diskriminierungsversuch als Empfehlung dokumentiert |
 | ~~Thermisches Weglaufen der Vorwiderstandslösung~~ | — | **herabgestuft auf gering (09.08.2026).** Rechnerisch steigt der LED-Strom über 50 K Erwärmung nur um 3,6 %, weil über dem Widerstand mehr Spannung abfällt als über der LED (Kap. 5.4) |
-| Stromreduktion vs. § 67-Mindestlichtstärke | ggf. nicht zulassungsfähig | photometrische Prüfung offen |
+| Stromreduktion vs. § 67-Mindestlichtstärke | ggf. nicht zulassungsfähig | photometrische Prüfung offen; separate Hardware-Eigenschaft |
 | FR-TL-07 verstößt gegen § 67 Abs. 4 | im Auslieferzustand unzulässig | standardmäßig deaktiviert, dokumentiert |
-| Brown-Out unter LED-Lastspitzen | ungewollter Neustart | Worst Case jetzt beziffert: 1,18 A aus dem Akku (Kap. 5.2). Messung offen |
+| Brown-Out unter LED-Lastspitzen | ungewollter Neustart | Worst Case beziffert: 1,18 A aus dem Akku (Kap. 5.2). Am Ersatzboard nicht mehr reproduzierbar; Messung offen |
 | Verlustleistung am AMS1117 (B-2) | Übertemperatur im SOT-223-Gehäuse | 0,60 W im Worst Case; Messung offen |
 | Kein Verpolungs-/Überstromschutz (B-5) | Kurzschluss- und Verpolungsrisiko | bestätigter Aufbaustand; Sicherungskonzept als Ausblick |
 | Schalterstrom über SW1 im Akkupfad (B-6) | Kontakterwärmung, Spannungsabfall vor dem Wandlereingang | 1,18 A im Worst Case; Nennstrom unbelegt, Messung offen |
 | Kein Tiefentladeschutz über DW01 hinaus | Akkuschädigung | systemseitigen Schutz bewerten |
-| Firmware-Hang | Systemausfall | Task-Watchdog (~2 s), Auto-Reset |
+| Firmware-Hang | Systemausfall | Task-Watchdog (~2 s), Auto-Reset; per Fehlerinjektion verifiziert |
 | GNSS meldet gültigen Fix bei falscher Navigationslösung | sicherheitsrelevante Fehlentscheidung eines Fallbacks | **realisiert und dokumentiert** (Kap. 9.4). GNSS nicht als Primärpfad (V-B) |
 | ~~Bremserkennung im Feld funktionsunfähig~~ | — | **geschlossen (08.08.2026).** Stufe 1 im Feld verifiziert (Kap. 9.5). Die Falsifikation vom 06.08. bleibt als methodisch sauberer Validierungsbefund verwertbar |
-| Energiebilanz nur gerechnet | Laufzeitangabe unbelegt | Messung unter Last (NFR-PWR-02) |
-| **Nur eine Messfahrt nach Stufe 1** | Fehlauslösungsrate nicht belastbar hochrechenbar; kein Streckenvergleich | Teil A des Messprotokolls nachholen (Kap. 11.2); Grenze in Kap. 9.5.7 offen benannt |
-| Zeitbudget bis Abgabe | Nachweise unvollständig | Umfangsschnitt vom 07.08.2026 gilt; nur funktionsblockierende Punkte werden umgesetzt |
+| Energiebilanz nur gerechnet | Laufzeitangabe unbelegt | Messung unter Last (NFR-PWR-02) offen |
+| **Nur eine Messfahrt nach Stufe 1** | Fehlauslösungsrate nicht belastbar hochrechenbar; kein Streckenvergleich | **als Grenze der Arbeit geführt** (Kap. 9.5.7, Kap. 12.2). Teil A des Messprotokolls wird nicht nachgeholt |
+| **Korrigierte Firmware nicht im Feld nachgemessen** | Die Wirksamkeit der M-01-Behebung ist am Gerät geprüft, aber nicht über eine Messfahrt quantifiziert | **bewusst in Kauf genommen** (Kap. 12.2). Die Behebung ist durch Quelltext, Regressionstest und Beobachtung am Gerät belegt; die Feldmessung vom 08.08.2026 dokumentiert den Zustand davor |
+| Zeitbudget bis Abgabe | Nachweise unvollständig | Umfangsschnitte vom 07.08. und 10.08.2026 gelten; nur funktionsblockierende Punkte werden umgesetzt |
+
+### 12.2 Abgrenzung des Arbeitsumfangs [Umfangsschnitt 10.08.2026]
+
+Die folgenden Punkte sind bewusst **nicht** Teil dieser Arbeit. Sie sind hier
+einzeln mit Begründung und Auswirkung geführt, damit sie im Ergebnis von
+übersehenen Punkten unterscheidbar bleiben. Alle betroffenen Stellen im
+Quelltext tragen einen entsprechenden Kommentar mit Verweis auf dieses Kapitel.
+
+| Nicht umgesetzt | Begründung | Auswirkung auf die Systemfunktion |
+|---|---|---|
+| **FR-CFG-02** — serielles Kalibrier-/Konfigurations-Interface über UART0 | Kein Nachweisnutzen: parametriert wurde ausschließlich am Entwicklungsrechner. Aufwand (Zeilenpuffer, Tokenizer, Parameter-Registry, vier Kommandos, nicht-blockierend) steht in keinem Verhältnis. | Keine. Parameteränderungen erfordern Neuübersetzung — im Laborbetrieb der Regelfall. |
+| **FR-CFG-03** — Konfiguration aus NVS mit `config_version` | Struktureller Eingriff, kein Zusatzmodul: alle Kalibrier-`constexpr` müssten zu Laufzeitparametern werden, `TailLightParams` und `MotionParams` beziehen ihre Vorgabewerte heute direkt daraus. Risiko einer Regression kurz vor Abgabe. | Keine im Betrieb. Für ein Serienprodukt wäre es erforderlich; als Ausblick geführt. |
+| **Feldverifikation der IMU-Plausibilitäts- und Recovery-Schwellen** (`IMU_FROZEN_LIMIT`, `IMU_ACCEL_MAX_MAGNITUDE_MS2`, `IMU_ACCEL_MAX_SLEW_MS2`, `IMU_GYRO_MAX_SLEW_RADS`, `IMU_ESCALATION_CONFIRM_CYCLES`) | Die Werte sind physikalisch hergeleitet und im Betrieb ohne Fehlfunktion bestätigt. Eine systematische Parametrierung wäre Produktentwicklung, nicht Thesisumfang. | Die Schwellen wirken; ihre Randbereiche sind nicht ausgemessen. Im Zweifel lösen sie zu früh aus, was auf den sicheren Zustand (Schlusslicht) führt. |
+| **Feldverifikation der BLE-Parameter** (`BLE_TX_POWER_DBM`, `BLE_BACKFILL_FRAMES_PER_TICK`) | Verbindung und Nachlieferung sind am realen iPhone verifiziert; eine Optimierung von Sendeleistung und Nachliefertempo bringt keinen Nachweis. | Keine. |
+| **Messung des Wiederholintervalls der Fernbedienung** (`RF_RELEASE_TIMEOUT_MS` = 150 ms) | Der Wert ist im Feldbetrieb ohne Fehlfunktion bestätigt. | Keine beobachtete. Bei einer anderen Fernbedienung müsste der Wert neu bestimmt werden. |
+| **I²C-Recovery und Plausibilitätsprüfung für den BMP280** (FR-SNS-04/05) | Der BMP280 ist ein optionaler Sensor (FR-STA-05) und nicht sicherheitsrelevant. Sein Ausfall degradiert nur die Zusatztelemetrie. | Ein stummer BMP280 liefert unplausible Werte mit gesetztem Gültigkeitsflag in die Telemetrie. Für die Auswertung der Druckdaten ist das zu beachten. |
+| **Verifikation des SCL-Release am real hängenden Bus** | Die Recovery ist per SDA-Kurzschluss-Fehlerinjektion am Gerät verifiziert; der Sonderfall eines von der Gegenstelle gehaltenen SCL ist nicht gesondert nachgestellt. | Keine beobachtete. |
+| **Teil A des Messprotokolls** — sechs Vergleichsfahrten nach dem Umbau | Der Vorher-Nachher-Nachweis der Bremserkennung ist mit der Messfahrt vom 08.08.2026 erbracht (Kap. 9.5). Ein Streckenvergleich würde die Kennzahlen verbessern, nicht die Kernaussage ändern. Zeitbudget. | Die Fehlauslösungsrate ist nicht belastbar hochrechenbar (Kap. 9.5.7). |
+| **Trennung der beiden Ursachen von Befund B7** | Erfordert eine zusätzliche Aufzeichnung mit und ohne Debug-Ausgaben. NFR-RT-04 ist in jeder Lesart erfüllt. | Die Ursachenaussage ist zurückgenommen (Kap. 9.5.5); die Anforderung bleibt nachgewiesen. |
+| **Nachmessung des `pitch_rad`-Restwerts nach dem Umbau** | Der Wert von −4,42° stammt aus der Messfahrt vor dem Umbau und ist als Referenz dokumentiert. | Ob der Restwert die reale Aufstelllage abbildet oder ein Restfehler ist, bleibt offen (Kap. 4.3). |
+| **Frequenzbereichsanalyse des Restrauschens (EMV-Hypothese)** | Bereits am 07.08.2026 abgegrenzt: die Streuung zwischen Wiederholungen ist größer als der zu messende Effekt; ein belastbarer Nachweis bräuchte Wiederholungen je Laststufe. | Keine. Als Ausblick geführt. |
+| **Weitere Iteration der drei Normbetrags-Schwellwerte** (`MOTION_NORM_STATIC_BAND`, `_JERK_DELTA`, `_SHOCK_DELTA`) | Bereits am 07.08.2026 abgegrenzt. Die Messfahrt dokumentiert ihr Verhalten, statt sie nachzuführen. | Verhalten dokumentiert (Kap. 9.5); keine Fehlanpassung festgestellt. |
+
+**Gemeinsame Begründung.** Die Arbeit weist die Funktionsfähigkeit eines
+Prototyps nach, nicht die Serienreife eines Produkts. Der Nachweis der
+Bremserkennung ist erbracht und im Feld belegt; die verbleibenden Punkte würden
+die Kennzahlen verfeinern, nicht die Kernaussage ändern. Das Zeitbudget bis zur
+Abgabe wird für Auswertung, Konstruktion und Text benötigt. Jede abgegrenzte
+Position ist im Ausblick der Arbeit als konkrete Empfehlung wiederzugeben.
 
 ---
 

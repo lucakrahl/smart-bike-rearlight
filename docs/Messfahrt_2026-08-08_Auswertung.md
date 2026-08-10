@@ -22,9 +22,9 @@
 | B2 | Bei identischer Auswertung und identischem Zeitversatz (−2,0 s) beträgt die Korrelation zwischen GNSS-Referenz und `brake_decel_ms2` am 08.08. **r = +0,85**, an den Vergleichsfahrten vom 06.08. im Median **+0,15**. | Kernergebnis, **gesichert** |
 | B3 | Der Ruhesockel von ~3,0 m/s² aus dem Vorzustand ist im Stillstand nicht mehr nachweisbar (Median 0,00 m/s², P99 0,08, kein Bremslicht) — belegt über 11,8 s Stillstand. | **gesichert**, schmale Datenbasis |
 | B4 | Keine Fehlauslösung in Beschleunigungsphasen (0 von 25 Epochen mit ≥ 1,0 m/s² Beschleunigung, robust über alle geprüften Fensterbreiten). | **gesichert** |
-| B5 | **Neu:** Die in FR-TL-06 geforderte Mindesthaltezeit von 300 ms ist im Fahrbetrieb in **keinem** der 14 Fälle wirksam geworden. Ursache im Quelltext lokalisiert, durch Simulation reproduziert, Testlücke benannt. | **Mangel**, gesichert |
+| B5 | **Neu:** Die in FR-TL-06 geforderte Mindesthaltezeit von 300 ms ist im Fahrbetrieb in **keinem** der 14 Fälle wirksam geworden. Ursache im Quelltext lokalisiert, durch Simulation reproduziert, Testlücke benannt. | **Mangel**, gesichert — **behoben am 10.08.2026, s. Nachtrag** |
 | B6 | **Neu:** `brake_decel_ms2` trägt eine geschwindigkeitsabhängige Grundlinie (r = +0,80; Partialkorrelation unter Kontrolle der Fahrbahnneigung +0,75). Bei 25–35 km/h verbleiben im 99-%-Quantil nur **0,32 m/s²** Reserve zur Ansprechschwelle. | **Grenze**, gesichert |
-| B7 | **Neu:** Die Worst-Case-Schleifenzeit liegt im Fahrbetrieb bei **6,7 ms** statt der am Prüfstand gemessenen 0,651 ms; Ursache ist der 1-Hz-GNSS-Slot. NFR-RT-04 (< 10 ms) bleibt erfüllt, die Reserve beträgt 33 % statt scheinbar 93 %. | **gesichert** |
+| B7 | **Neu:** Die Worst-Case-Schleifenzeit liegt im Fahrbetrieb bei **6,7 ms** statt der am Prüfstand gemessenen 0,651 ms. NFR-RT-04 (< 10 ms) bleibt erfüllt, die Reserve beträgt 33 % statt scheinbar 93 %. | Messwert **gesichert**; die ursprüngliche Ursachenzuordnung zum GNSS-Slot ist **zurückgenommen**, s. Nachtrag |
 | B8 | Die Aufzeichnung ist formal einwandfrei: 35 Spalten nach Vertrag, 1773 von 1776 Frames, kein Fenster mit fehlenden IMU-Abtastungen, keine Bereichsverletzung. | **gesichert** |
 | B9 | **Methodisch:** Die am 06.08. berichtete Korrelation r = −0,132 wurde ohne Berücksichtigung der Latenz der GNSS-Referenzkette gerechnet und ist als Gütemaß nicht belastbar. | **Korrektur der Erstauswertung** |
 
@@ -717,3 +717,83 @@ Mittelungsbreite (4.2), die Temperaturerklärung der Bias-Differenz (7.1), die
 Aufteilung des Nickwinkelhubs in reale Fahrzeugbewegung und Restkontamination (7.3)
 sowie der Anteil der Gleichrichtung an der Grundlinie (8.2). Alle Quelltextaussagen
 beziehen sich auf den Stand des Commits `1178017`.
+
+---
+
+## Nachtrag vom 10.08.2026 — Firmware-Abschluss
+
+> Dieser Nachtrag hält fest, was sich nach dem Erstellen der Auswertung geändert
+> hat. Die Auswertung selbst bleibt unverändert: Sie dokumentiert den Zustand
+> der Firmware am 08.08.2026 (Commit `1178017`) und ist die Beweisgrundlage
+> beider Befunde. Der korrigierte Stand ist Commit `835c7b3`.
+
+### N.1 Befund B5 ist behoben
+
+Der in Abschnitt 9 lokalisierte Defekt ist am 10.08.2026 korrigiert worden.
+`held_brake_duty_pct_` wird im `else`-Zweig der Bremslicht-Zustandsmaschine nur
+noch nachgeführt, wenn `decel_ms2 > BRAKE_ON_MS2` gilt — also nur dann, wenn der
+Wert tatsächlich einen Bremslichtwert darstellt. Innerhalb des Hysteresebands
+bleibt der zuletzt oberhalb der Einschaltschwelle erreichte Wert eingefroren, und
+die Mindesthaltezeit nach FR-TL-06 wird wirksam. Hysterese und Zeitverhalten
+blieben unverändert; sie waren korrekt.
+
+Die in Abschnitt 9.4 benannte Testlücke ist geschlossen: Ein Regressionstest
+speist einen monoton abklingenden Bremsvorgang ein, der das Hystereseband
+durchläuft (4,0 → 2,5 → 1,8 → 1,0 m/s²), und sichert zu, dass die Duty während
+der Haltezeit oberhalb des Schlusslichtwerts bleibt und erst danach abfällt. Die
+Host-Testsuite umfasst damit 126 Tests, alle grün. Am Gerät ist die Wirkung nach
+dem Flashen im Normalbetrieb bestätigt: Das Bremslicht fällt nach dem Ende einer
+Bremsung nicht mehr abrupt ab, sondern hält sichtbar nach.
+
+**Für die Arbeit maßgeblich:** Die hier ausgewerteten Daten bilden weiterhin den
+Zustand **vor** der Korrektur ab. Eine Nachmessung im Feld ist nach dem
+Umfangsschnitt vom 10.08.2026 nicht mehr Teil der Arbeit (Project Bible
+Kap. 12.2); die Wirksamkeit der Korrektur ist durch Quelltext, Regressionstest
+und Beobachtung am Gerät belegt, nicht durch eine Messfahrt quantifiziert. Die
+Kette Feldmessung → Quelltextlokalisierung → Simulation → Korrektur →
+Regressionstest → Nachweis am Gerät ist damit vollständig dokumentiert.
+
+### N.2 Befund B7 — Ursachenzuordnung wird zurückgenommen
+
+In Abschnitt 10 ist die periodisch mit 1,00 s auftretende Spitze der
+Schleifenzeit dem GNSS-Slot (`PERIOD_GNSS_MS` = 1000) zugeschrieben und der
+NMEA-Parselauf als dominierende Einzellast bezeichnet worden. **Diese Zuordnung
+war nicht belegt und wird zurückgenommen.**
+
+Im aufgezeichneten Firmware-Stand liefen **drei** Debug-Ausgaben mit ebenfalls
+exakt 1 Hz, und alle drei lagen innerhalb des Zeitfensters, aus dem `loop_max_us`
+gebildet wird: `[R1/R2]` (≈ 72 Byte), `[Baro]` (≈ 41 Byte) und `[GNSS]`
+(≈ 60 Byte), zusammen rund 173 Byte. Bei 115 200 Bd entspricht das etwa 87 µs je
+Byte; sobald der UART-Sendepuffer gefüllt ist, blockiert `Serial.printf`. Fallen
+zwei dieser Ausgaben in denselben `loop()`-Durchlauf, liegt ihr Beitrag in
+derselben Größenordnung wie der gemessene Ausreißer von 6,7 ms.
+
+Aus der Zeitreihe allein sind beide Ursachen **nicht trennbar**, weil beide exakt
+mit 1,00 s periodisch sind. Der Messwert selbst bleibt gültig, ebenso die daraus
+abgeleitete und für die Anforderung maßgebliche Aussage: **NFR-RT-04 (< 10 ms)
+ist erfüllt**, und die Prüfstandszahl von 0,651 ms unterschätzt den Fahrbetrieb
+um rund den Faktor zehn. Nicht belegbar ist allein die Behauptung über die
+dominierende Einzellast.
+
+Im Auslieferungsstand (Commit `835c7b3`) sind alle drei Ausgaben entfernt und
+`DEBUG_SERIAL` steht auf `false`; die UART-Last entfällt damit. Der
+Diskriminierungsversuch — eine Aufzeichnung mit und ohne Debug-Ausgaben — ist
+nicht mehr Teil des Arbeitsumfangs und gehört als konkrete Empfehlung in den
+Ausblick.
+
+**Methodischer Befund, der in die Arbeit gehört.** Zwei Vorgänge mit identischer
+Periode lassen sich aus einer Zeitreihe grundsätzlich nicht auseinanderhalten;
+die ursprüngliche Zuordnung war eine plausible Vermutung, kein Messergebnis.
+Allgemeiner: Eine Diagnoseausgabe, die im Messfenster derjenigen Größe liegt, die
+sie beobachten soll, wird selbst Teil des Messobjekts. Dieser Beobachtereffekt
+wird in den Daten nicht sichtbar.
+
+### N.3 Einbaulage
+
+Der in Abschnitt 13 genannte Umbau (180°-Drehung der Lochrasterplatine) ist
+umgesetzt: Die Einbaulage wird als Rotation an der Treibergrenze zurückgerechnet
+(`lib/logic/imu_mount_orientation.h`, `IMU_MOUNT_SIGN_X/Y/Z` = −1/−1/+1 auf
+Beschleunigung und Drehrate, Determinante +1). Die dort genannten Referenzwerte —
+Nickwinkel **−4,42°** und Gyro-Nullpunkt **−4,08 °/s** — bleiben als
+dokumentierte Vergleichsgrößen bestehen; eine systematische Nachmessung ist nach
+dem Umfangsschnitt nicht mehr vorgesehen.

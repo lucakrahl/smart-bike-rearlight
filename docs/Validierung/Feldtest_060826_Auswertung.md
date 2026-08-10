@@ -487,3 +487,77 @@ Für die wissenschaftliche Redlichkeit sind folgende Einschränkungen der Auswer
 - Madgwick, S. O. H.: *An efficient orientation filter for inertial and inertial/magnetic sensor arrays*, 2010 — Prinzip der beschleunigungsbasierten Korrekturunterdrückung.
 - Mahony, R.; Hamel, T.; Pflimlin, J.-M.: *Nonlinear Complementary Filters on the Special Orthogonal Group*, IEEE TAC 53(5), 2008.
 - ECE R50, § 67 StVZO — normativer Rahmen der Bremslichtfunktion (bereits in der Project Bible Kap. 2.8 geführt).
+---
+
+## Nachtrag vom 10.08.2026 — methodische Korrektur und Stand der Befunde
+
+> Dieser Nachtrag korrigiert eine Aussage dieses Berichts und ordnet die Befunde
+> in den inzwischen erreichten Entwicklungsstand ein. Der Bericht selbst bleibt
+> unverändert: Er dokumentiert den Versuch vom 06.08.2026 und ist die
+> Beweisgrundlage der Falsifikation. Kanonische Fassung des Projektstands:
+> Project Bible v0.19, Kap. 9.4 und 9.5.
+
+### N.1 Die Korrelation r = −0,132 ist als Gütemaß nicht belastbar
+
+In Kapitel 4.1 wird die Pearson-Korrelation zwischen der aus der GNSS-Geschwindigkeit
+differenzierten Referenzbeschleunigung und `brake_decel_ms2` mit **r = −0,132
+(n = 939)** angegeben und als „über alle sechs Fahrten stabil, kein Zufallsbefund"
+bewertet. Kapitel 13 führt sie als Abb. F1 („Kernaussage in einem Bild").
+
+**Diese Rechnung wurde ohne Korrektur des Zeitversatzes zwischen den beiden
+Signalketten durchgeführt und ist als Gütemaß deshalb nicht belastbar.** Die
+GNSS-Referenzkette trägt eine Transportlatenz von etwa ein bis zwei Sekunden
+(interne Lösungslatenz des L86 von 100–300 ms, s. Kapitel 6.3, zuzüglich
+`PERIOD_GNSS_MS` = 1000 ms Abtastung in der Firmware), und die verwendete
+Rückwärtsdifferenz erzeugt einen weiteren konstruktionsbedingten Versatz von einer
+halben Abtastperiode. Bei einem Vergleich zweier Ketten mit unterschiedlicher
+Latenz ist die Korrelation bei Nullversatz kein Gütemaß.
+
+Rechnet man dieselben Fahrten 1–4 mit Versatzkorrektur, steigt r vom Median −0,18
+auf den Median **+0,29**. Kapitel 11 dieses Berichts nennt sechs Einschränkungen der
+Aussagekraft; die fehlende Latenzkorrektur ist dort **nicht** aufgeführt und
+ergänzt diese Liste als siebte.
+
+**Was unberührt bleibt.** Die Falsifikation selbst steht auf drei voneinander
+unabhängigen Beinen und ist durch diesen Fehler nicht betroffen:
+
+1. der analytische Nachweis aus dem Quelltext (Fehlermechanismus A, Kapitel 5.2:
+   τ = α·Δt/(1−α) = 0,49 s gegenüber einer typischen Bremsdauer von 1,85 s),
+2. die Verteilung der Bremslicht-Duty (93–100 % der Zeilen je Fahrt auf dem
+   Schlusslicht-Grundwert, obwohl Fahrt 2 aus fünf vollständigen Bremsungen bis zum
+   Stillstand bestand, Kapitel 4.2) und die Einzelereignisse in Kapitel 4.3/4.4
+   (eine reale Verzögerung von −5,75 m/s² erzeugt firmwareseitig 0,18 m/s²),
+3. die spätere Prüfstandsmessung vom 07.08.2026 (Bench-Experiment D: Legacy-Filter
+   3,924 → 0,000 m/s² gegenüber neuem Filter 3,9 → 3,836 m/s²).
+
+**Für die Thesis:** Die Zahl −0,132 darf nicht als Kennzahl der Erkennungsgüte
+geführt werden. Verwendbar sind die Duty-Verteilung, die Einzelereignisse und der
+Prüfstandsvergleich. Der Fehler selbst ist als methodischer Befund verwertbar —
+er gehört in die Methodenkritik.
+
+### N.2 Stand der in Kapitel 12 offenen Entscheidungen E1–E5
+
+Alle fünf sind entschieden und in Project Bible Kap. 10 sowie im Decision Log
+kanonisch geführt: **E1** `gnss_accel_ms2` ins Frame (umgesetzt, Schema v3),
+**E2** 10-Hz-Aufzeichnung (umgesetzt, App-Validierungsmodus), **E3** NFR-RT-01
+bleibt bei 50 ms, **E4** `temperature_c` aus dem CSV-Export entfernt (im
+Persistenzmodell erhalten), **E5** Stufe-2-Fusion bleibt deaktiviert.
+
+Die Kürzel E1–E5 bleiben unverändert; die kollidierenden iOS-Nachtragsentscheidungen
+wurden in **V3-1 bis V3-4** umbenannt.
+
+### N.3 Wirksamkeitsnachweis (Abb. F7) ist erbracht
+
+Der in Kapitel 13 vorgeschlagene Vorher-Nachher-Nachweis liegt vor: Messfahrt vom
+08.08.2026, ausgewertet in `docs/Messfahrt_2026-08-08_Auswertung.md`. Kernwerte:
+alle **9 von 9** aus der GNSS-Referenz identifizierten Bremsvorgänge angezeigt;
+r = **+0,85** bei identischem Auswerteverfahren und festem Versatz von −2,0 s
+gegenüber einem Median von **+0,15** für die Fahrten 1–4 dieses Berichts; keine
+Fehlauslösung in 25 Beschleunigungsepochen; der Ruhesockel von rund 3,0 m/s² ist
+nicht mehr nachweisbar.
+
+Einschränkung: Es handelt sich um **eine** Fahrt von knapp drei Minuten, nicht um
+die in Kapitel 13 vorgesehene Wiederholung des vollständigen Sechs-Fahrten-Protokolls.
+Diese ist nach dem Umfangsschnitt vom 10.08.2026 nicht mehr Teil der Arbeit
+(Project Bible Kap. 12.2); die Fehlauslösungsrate ist daher nicht belastbar
+hochrechenbar.
