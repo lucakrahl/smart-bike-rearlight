@@ -7,6 +7,7 @@
 #include <Adafruit_Sensor.h>
 #include "pins.h"
 #include "config.h"
+#include "imu_mount_orientation.h"
 
 namespace drivers {
 
@@ -157,13 +158,25 @@ bool imuRead(ImuSample& out) {
   }
   sensors_event_t accel, gyro, temp;
   mpu.getEvent(&accel, &gyro, &temp);
-  out = ImuSample{
+  // Einbaulage-Rueckabbildung an der Treibergrenze (s. IMU_MOUNT_SIGN_* in
+  // config.h) -- alle nachgelagerten Komponenten (motion_filter, ...) sehen
+  // weiterhin die urspruengliche, validierte Achsenkonvention.
+  logic::RawImuSample raw{
     accel.acceleration.x,
     accel.acceleration.y,
     accel.acceleration.z,
     gyro.gyro.x,
     gyro.gyro.y,
     gyro.gyro.z,
+  };
+  logic::applyMountOrientation(raw);
+  out = ImuSample{
+    raw.accel_x_ms2,
+    raw.accel_y_ms2,
+    raw.accel_z_ms2,
+    raw.gyro_x_rads,
+    raw.gyro_y_rads,
+    raw.gyro_z_rads,
   };
   return true;
 }

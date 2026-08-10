@@ -15,6 +15,15 @@ final class TelemetryStore {
     /// Aus dem letzten Frame abgeleitete System-/Sensorwarnungen (AR-LIVE-03).
     private(set) var lastWarnings: [LiveWarning] = []
 
+    // v3-Innensicht-Status (AP4). Genau zwei binäre Größen mit sofortiger Aussage; die
+    // 11 Analyse-/Aggregatfelder werden bewusst NICHT gespiegelt (bleiben in `latestFrame`
+    // und gehen nur in die Persistenz). Keine Cockpit-Warn-Chips daraus (AR-UX-01): kurz
+    // nach Boot ist `bias_calibrated == 0` normal — kein Fehlalarm. Anzeige erst in AP8.
+    /// Stufe-1-Bias-Kalibrierung abgeschlossen (v3-Feld; `false`, wenn Feld fehlt/0).
+    private(set) var biasCalibrated: Bool = false
+    /// GNSS-Referenzbeschleunigung aktuell gültig (v3-Feld; `false`, wenn Feld fehlt/0).
+    private(set) var gnssAccelValid: Bool = false
+
     /// Warnungen greifen nur bei frischer Verbindung (Stale/kein Fix sind separat behandelt).
     var warnings: [LiveWarning] { liveState == .fresh ? lastWarnings : [] }
 
@@ -45,6 +54,8 @@ final class TelemetryStore {
         latestFrame = frame
         lastFrameAt = Date()
         isGnssValid = frame.isGnssValid
+        biasCalibrated = (frame.biasCalibrated == 1)     // v3-Status; nil/0 → false
+        gnssAccelValid = (frame.gnssAccelValid == 1)
         lastWarnings = SystemWarnings.derive(from: frame)
         var s = snapshot
         s.speedKmph = Double(frame.speedKmph)

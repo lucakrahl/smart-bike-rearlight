@@ -130,6 +130,21 @@ constexpr uint32_t MOTION_BIAS_CALIB_SAMPLE_THRESHOLD = 200;
 // "Bremsen" zaehlt; entgegen der urspruenglichen Annahme ist das +1 (nicht -1).
 constexpr float MOTION_BRAKE_SIGN = 1.0f;
 
+// Einbaulage der Platine (mechanische Eigenschaft, deshalb an der Hardware-
+// Abstraktionsgrenze gefuehrt und NICHT als weiteres Vorzeichen in der
+// Auswertelogik verdrahtet, s. imu_driver.cpp imuRead()): die Lochraster-
+// platine sitzt um 180 Grad in ihrer eigenen Ebene gedreht (Rotation
+// R_z(180 Grad)) im Gehaeuse. X/Y kehren sich dadurch um, Z (Rotationsachse)
+// bleibt unveraendert. Determinante der Transformation ist +1, das
+// Koordinatensystem bleibt rechtshaendig. Accel UND Gyro MUESSEN dieselbe
+// Transformation erfahren, sonst gilt dtheta/dt = omega_x nicht mehr und der
+// Komplementaerfilter integriert die Nickschaetzung in die falsche Richtung
+// -- auf dem Tisch unsichtbar, weil omega_x im Stand ohnehin ~0 ist, faellt
+// aber erst waehrend echter Fahrt auf.
+constexpr float IMU_MOUNT_SIGN_X = -1.0f;
+constexpr float IMU_MOUNT_SIGN_Y = -1.0f;
+constexpr float IMU_MOUNT_SIGN_Z = 1.0f;
+
 // ---- Notbrems-Blinken default AUS (FR-TL-07, § 67 Abs. 4) -----------------
 constexpr bool ESS_ENABLED_DEFAULT = false;
 

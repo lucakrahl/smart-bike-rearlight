@@ -8,13 +8,15 @@
 Die Überarbeitung des `motion_filter` (Stufe 1, Normbetrags-Gate) ist
 **implementiert, host-getestet und auf der Hardware nachgewiesen**. Der
 Kernbeleg der Arbeit liegt gemessen vor. Die Telemetrie wurde auf Schema v3
-erweitert, um die Feldvalidierung überhaupt auswertbar zu machen. Offen sind:
-ein ungeklärter Ruhewert des Filterausgangs, zwei kleine Konfigurations-
-korrekturen, die Wiederholungs-Messfahrt und der Dokumentations-Durchgang.
+erweitert, um die Feldvalidierung überhaupt auswertbar zu machen. Die
+Reparaturrunde vom Abend des 07.08.2026 hat alle Befunde des Ruhetests
+aufgelöst. **Die Firmware ist damit fahrbereit.** Offen sind nur noch die
+Wiederholungs-Messfahrt und der Dokumentations-Durchgang.
 
-**Build-Stand:** `pio test -e native` 117/117 grün · `pio run -e esp32dev`
-grün (RAM 32,6 % / 106 904 B, Flash 21,5 % / 675 283 B) · `pio run -e
-esp32dev_bench` grün (RAM 7,8 %, Flash 12,0 %). Nichts committet.
+**Build-Stand:** `pio test -e native` **120/120** grün · `pio run -e esp32dev`
+grün · `pio run -e esp32dev_bench` grün · Debug-Code entfernt, finale Firmware
+geflasht und Boot verifiziert. **Commit `1178017`** (Firmware + Doku +
+iOS-Track AP1–AP3), nicht gepusht.
 
 ---
 
@@ -102,20 +104,44 @@ Referenzdatei bewusst fehl, damit ein fehlendes Golden-File nicht als
 
 ---
 
-## 3. Befunde des Ruhetests (07.08.2026) — teilweise offen
+## 3. Ruhetest und Reparaturrunde (07.08.2026) — abgeschlossen
 
-Gerät auf dem Tisch, `esp32dev`-Normalbuild, 80 s.
+Gerät auf dem Tisch, `esp32dev`-Normalbuild.
 
-| Größe | Messwert | Erwartung / Bewertung |
-|---|---|---|
-| `gyro_bias_rads` (eingeschwungen) | −0,0014 °/s | unkritisch ✅ |
-| `loop_max_us` | 0,651 ms | NFR-RT-04 erfüllt ✅ |
-| `bias_calibrated` | bleibt 0 über 80 s | ❌ Konstruktionsfehler, s. u. |
-| `norm_delta`-Spanne | −0,73 … +0,61 m/s² | ~3× über der Datenblatt-Erwartung |
-| STATIC-Anteil | 72,3 % | zu niedrig für ein ruhendes Gerät |
-| `brake_decel_ms2` im Ruhezustand | wiederholt ≈ 3,0–3,2 | ❌ **ungeklärt** |
+| Größe | Ruhetest (vormittags) | Nach Reparaturrunde | Bewertung |
+|---|---|---|---|
+| `loop_max_us` | 0,651 ms | unverändert | NFR-RT-04 erfüllt ✅ |
+| `bias_calibrated` | bleibt 0 über 80 s | **1 nach ≈ 3 s** | behoben ✅ |
+| gemessener Gyro-Offset | nie kalibriert | **−4,61 °/s**, kompensiert | erstmals erfasst ✅ |
+| STATIC-Anteil im Ruhezustand | 72,3 % | **90–100 %** | behoben ✅ |
+| `brake_decel_ms2` im Ruhezustand | ≈ 3,0–3,2 | **kein Sockel mehr** | geklärt ✅ |
 
-### 3.1 Sensorkonfiguration — Aliasing nachgewiesen
+### 3.0 Ursache des Ruhewerts von 3,0 m/s² — geklärt
+
+Der Drehratensensor lieferte im Stillstand einen konstanten Nullpunktfehler
+von **−4,61 °/s**, der mangels funktionierender Kalibrierung nie abgezogen
+wurde. Über die bereits früher hergeleitete Beziehung ε = b · τ ergibt das bei
+der wirksamen Zeitkonstante von 4 s einen stationären Lagefehler von 18,4° und
+damit g · sin(18,4°) = **3,1 m/s²** — genau der beobachtete Sockel. Ursache,
+analytische Beziehung und Messwert stimmen überein.
+
+Für die Arbeit verwertbar: Ein Befund, der zunächst wie ein Filterdefekt
+aussah, ließ sich vollständig auf eine einzelne unkompensierte Sensorgröße
+zurückführen, und die zuvor aufgestellte Beziehung sagt den gemessenen Wert
+korrekt voraus.
+
+**Neigungstest (Nachweis Fehlermechanismus A behoben):** Bei einer Neigung von
+23,5° erreicht der Ausgang lediglich 1,07 m/s² und bleibt damit deutlich unter
+der Ansprechschwelle von 2,0 — eine reine Neigung löst kein Bremslicht mehr
+aus. Nach dem Ablegen klingt der Ausgang mit rund 3–4 s Zeitkonstante gegen
+null ab, wie für `MOTION_COMPL_TAU_S = 3,0 s` zu erwarten.
+
+**Notiert, nicht verfolgt:** `pitch_rad` pendelt sich nach dem Ablegen auf
+einen stabilen Restwert von ≈ 4,2° ein. Ob das die tatsächliche Auflagefläche
+abbildet oder ein Restfehler ist, wird aus den Fahrdaten beantwortet, nicht am
+Schreibtisch (s. `open_issues.md`).
+
+### 3.1 Sensorkonfiguration — Aliasing nachgewiesen und behoben
 
 Aus den Registern zurückgelesen: `DLPF_CFG = 0` (260 Hz Bandbreite),
 `SMPLRT_DIV = 0` (interne Rate 8 kHz), `AFS_SEL = 3` (±16 g),
@@ -132,7 +158,12 @@ die ungünstigsten sind.
 0,34–0,45; STATIC-Anteil **85,7 %** statt 68–73 %. Deutliche Verbesserung der
 Klassifikationsstabilität, aber ein Teil des Rauschens bleibt unerklärt.
 
-### 3.2 Kalibrierfenster praktisch unerreichbar
+**Umgesetzt (Reparaturrunde):** `DLPF_CFG = 3` (44 Hz) und `SMPLRT_DIV = 4`
+(200 Hz Sensorrate) fest in `imu_driver.cpp`, mit Register-Readback-
+Verifikation am Board bestätigt (`CONFIG=0x03 … SMPLRT_DIV=4 … -> OK`).
+Zusätzliche Gruppenlaufzeit 4,9 ms gegen NFR-RT-01 ≤ 50 ms unkritisch.
+
+### 3.2 Kalibrierfenster praktisch unerreichbar — behoben
 
 Das Verankerungsfenster verlangt 100 **zusammenhängende** STATIC-Abtastungen.
 Bei real 72 % (bzw. 85,7 % nach der Filterkorrektur) STATIC-Anteil reißt die
@@ -149,21 +180,12 @@ Zusammenhang, weil sie eine kohärente Lagereferenz bildet — die Bias-Mittelun
 nicht, denn einem Mittelwert über ruhige Abtastungen ist Nachbarschaft
 gleichgültig.
 
-### 3.3 Ungeklärt: Ruhewert 3,0 m/s²
+**Umgesetzt (Reparaturrunde):** Verankerung mit 0,3-s-Fenster und Toleranz für
+zwei aufeinanderfolgende Ausreißer; Bias-Kalibrierung über 200 kumulierte
+STATIC-Abtastungen ohne Zusammenhangsforderung. Am Board erreicht
+`bias_calibrated` nach etwa 3 s den Wert 1 — vorher nie innerhalb von 80 s.
 
-Ein statisch geneigtes Gerät hat ‖a‖ = g; der Komplementärfilter muss die
-Neigung schätzen und den Schwerkraftanteil abziehen. Bei einer wirksamen
-Zeitkonstante von rund 4 s müsste der Ausgang nach 30 s Ruhe praktisch null
-sein. Ein dauerhafter Wert von 3,0 m/s² ist damit unvereinbar.
-
-Zwei Hypothesen: (a) die Neigungsachse ist eine andere als angenommen — die
-18° wurden aus dem Messwert selbst zurückgerechnet, also zirkulär; (b) die
-Accelerometer-Korrektur wird erst nach abgeschlossener Verankerung angewendet,
-und die schließt nie ab — dann wäre der Filter zu reiner Gyro-Integration
-degeneriert. **Der Neigungstest (kippen, halten, ablegen, 30 s nachlaufen)
-entscheidet das experimentell.**
-
-### 3.4 EMV-Hypothese nicht auflösbar
+### 3.3 EMV-Hypothese nicht auflösbar
 
 Rauschspanne bei 0 / 20 / 100 % LED-Duty: 0,360 / 0,446 / 0,242 — kein
 monotoner Zusammenhang. Die Streuung zwischen unabhängigen Wiederholungen
@@ -183,15 +205,16 @@ Der Untersuchungsumfang wurde bewusst begrenzt. Es werden **nur noch Punkte
 umgesetzt, die die Funktion blockieren**; alles Übrige wird als Grenze der
 Arbeit dokumentiert.
 
-1. **Reparaturrunde** (~½ Tag): Neigungstest zur Klärung von 3.3;
-   `DLPF_CFG = 3` und `SMPLRT_DIV = 4` fest setzen; Verankerungsfenster
-   1,0 s → 0,3 s mit Toleranzzähler; Bias-Kalibrierung auf kumulierte
-   STATIC-Abtastungen umstellen.
-2. **Messfahrt** (~½ Tag): identisches Protokoll wie 06.08.2026 (sechs
-   Fahrten, gleiche Strecke, App- und Strava-Aufzeichnung) für den direkten
-   Vorher-Nachher-Vergleich.
-3. **Dokumentation** (~1 Tag): Project Bible, Decision Log, Validierungs-
-   unterlagen, Korrektur von `measurement_log.md`.
+1. ~~**Reparaturrunde**~~ — **erledigt 07.08.2026, Commit `1178017`.**
+2. **Messfahrt** (~½ Tag) — **nicht mehr blockiert, App-Seite ist fertig.**
+   Identisches Protokoll wie 06.08.2026 (sechs Fahrten, gleiche Strecke, App-
+   und Strava-Aufzeichnung) für den direkten Vorher-Nachher-Vergleich, ergänzt
+   um acht definierte Einzelmanöver (`Messprotokoll_Fahrt.pdf` liegt vor).
+   Empfohlen vorab: zweiminütige Testaufzeichnung am Schreibtisch, CSV
+   exportieren und die 35 Spalten auf plausible Werte prüfen.
+3. **Dokumentation** (~1 Tag): Project Bible, App Bible Kap. 10, Roadmap,
+   Lessons Learned, Validierungsunterlagen, Korrektur von
+   `measurement_log.md`.
 
 **Ausdrücklich nicht mehr vorgesehen:** weitere Optimierungsschleifen an den
 Schwellwerten. `MOTION_NORM_STATIC_BAND`, `_JERK_DELTA` und `_SHOCK_DELTA`
@@ -201,19 +224,48 @@ Fehlanpassung, wird das als begründetes Ergebnis mit Empfehlung festgehalten.
 
 ---
 
-## 5. iOS-App (paralleler Track, Claude in Xcode)
+## 5. iOS-App (paralleler Track, Claude in Xcode) — Schema v3 abgeschlossen
 
-MVP funktionsfertig und am realen iPhone gegen die echte BLE-Verbindung
-verifiziert. Für Schema v3 liegt ein Umsetzungsplan in neun Arbeitspaketen vor
-(`docs/Umsetzungsplan_Schema_v3_iOS.md`): Decoder auf v3 mit
-Mindestversions-/Längenregel, Golden-Bytes-Kreuztest, Persistenz-Migration
-(additiv + optional), 10-Hz-Validierungsmodus (E2), CSV-Export 23 → 35 Spalten
-(E4), Diagnoseansicht unter Settings. Umsetzung läuft.
+**Stand App Bible v0.22 (07.08.2026): Frame-Schema-v3-Migration AP0–AP8
+abgeschlossen, 89 Tests grün** (SmartBikeCore 57, App-Unit 29, UITest 3),
+committet. Damit ist die Messfahrt nicht mehr blockiert.
+
+Umgesetzt: Decoder auf 113 Byte mit Mindestversions-/Längenregel (statt
+`version == 2` nun `version ≥ 2 & len ≥ 81` für v2-Felder, `≥ 3 & ≥ 113` für
+v3-Felder, überzählige Bytes ignorieren, `< 81` oder `version < 2` verwerfen);
+reiner Decoder mit Ergebnis-Enum, Zähler im Store; gemeinsamer
+`TelemetryFrameEncoder` als einzige Byte-Quelle für Mock und Round-Trip-Test;
+Persistenz additiv um die 13 v3-Felder erweitert (leichtgewichtige Migration,
+Altdaten laden mit nil); umschaltbarer 10-Hz-Validierungsmodus mit
+Batch-Persistenz (~1 Save/s, Skalentest 6000 Samples ohne Verlust);
+CSV-Export mit 35 Spalten und eingefrorenem Golden-Header; read-only
+Diagnoseansicht unter Settings.
+
+**Golden-Vektor-Kreuztest bestanden.** Der Produktions-Decoder liest den von
+der Firmware erzeugten 113-Byte-Golden-Vektor
+(`testdata/frame_v3_golden.hex/.md`) und prüft jedes Feld gegen die
+Firmware-Wertetabelle — ausdrücklich **nicht** über den eigenen Encoder. Das
+ist der geräteunabhängige Nachweis, dass Firmware und App dieselbe
+Bytebelegung meinen. Round-Trip-Tests je Seite hätten einen gemeinsamen
+Denkfehler nicht aufgedeckt.
+
+**Am realen iPhone verifiziert:** `truncatedV3FrameCount = 0`,
+`dt_max_ms = 10`, `loop_max_us = 53`.
+
+**Format-Referenz für jede externe Auswertung:**
+`docs/CSV_Format_v3_Validierungsexport.md` bzw.
+`claude/CSV_Format_v3_Validierungsexport.md` — 35 Spalten, Semikolon,
+deutsches Dezimalkomma, CRLF, UTF-8 mit BOM, Präambel mit Geräte-Frame-Version
+und `frame_version_gemischt`.
 
 Entschiedene Sonderfälle: Ein zu kurzes v3-Frame wird gelesen (v2-Ebene), aber
-in einem eigenen Zähler `truncatedV3FrameCount` geführt — weder verwerfen noch
-verschweigen. Bei gemischten Frame-Versionen in einer Fahrt trägt die
-CSV-Präambel das **Minimum** plus die Zeile `# frame_version_gemischt;ja`.
+in `truncatedV3FrameCount` geführt — weder verwerfen noch verschweigen. Bei
+gemischten Frame-Versionen in einer Fahrt trägt die CSV-Präambel das
+**Minimum** plus die Zeile `# frame_version_gemischt;ja`.
+
+**Weiterhin offen (App):** Cockpit-Editor (AR-LIVE-08), finale SF-Symbol-Wahl,
+optionale Höhen-Referenzdruck-Kalibrierung — alles nach der Messfahrt bzw.
+Future Work.
 
 ---
 

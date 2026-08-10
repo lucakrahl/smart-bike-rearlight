@@ -52,11 +52,11 @@ struct TelemetryStoreV3StatusTests {
         store.consume(.ok(v3Frame(biasCalibrated: 1, gnssAccelValid: 1)))
 
         let analysisFields: Set<String> = [
-            "gnssAccelMs2", "pitchRad", "gyroBiasRads", "norm_delta_min".camelStub,
+            "gnssAccelMs2", "pitchRad", "gyroBiasRads",
             "normDeltaMin", "normDeltaMax", "jerkMax",
             "regimeStaticN", "regimeDynamicN", "regimeShockN",
             "dtMaxMs", "loopMaxUs",
-        ]
+        ]   // 11 Analyse-/Aggregatfelder
         // Gespiegelte Stored-Property-Namen (@Observable-Backing hat führenden „_").
         let propertyNames = Set(Mirror(reflecting: store).children.compactMap { child -> String? in
             guard let label = child.label else { return nil }
@@ -72,9 +72,4 @@ struct TelemetryStoreV3StatusTests {
         // Das ganze Frame bleibt weiterhin verfügbar (dort liegen die Analysefelder).
         #expect(store.latestFrame?.jerkMax == 3.0)
     }
-}
-
-private extension String {
-    /// Dummy, damit versehentliche Snake-Case-Namen im Set nicht zufällig matchen.
-    var camelStub: String { self }
 }
