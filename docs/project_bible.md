@@ -1,6 +1,6 @@
 # Project Bible — Smartes Fahrrad-Rücklicht
 **Bachelorarbeit Krahl · Maschinenbau & Produktentwicklung (B.Eng.)**
-**Version 0.19 · Stand 10.08.2026 · Status: aktiv gepflegt (Single Source of Truth)**
+**Version 0.20 · Stand 10.08.2026 · Status: aktiv gepflegt (Single Source of Truth)**
 
 > Diese Project Bible ist die oberste Wissensinstanz des Projekts. Bei Widersprüchen zwischen Chat-Historie und Project Bible gilt ausschließlich die Project Bible. Chats dienen der Diskussion und Entscheidungsfindung; der offizielle Projektstand steht ausschließlich hier.
 
@@ -42,6 +42,7 @@
 | **0.17** | **09.08.2026** | **Große Revision. (a) Stufe 1 (`motion_filter`, Normbetrags-Gate) implementiert, host-getestet und am 08.08.2026 im Feld verifiziert — die Bremserkennung funktioniert; neues Kap. 9.5. Der Validierungsstatus von `motion_filter` wird von „im Feld falsifiziert" auf „im Feld verifiziert" heraufgestuft. (b) Zwei neue Firmware-Befunde: die Mindesthaltezeit nach FR-TL-06 ist im Fahrbetrieb unwirksam (Mangel), und `brake_decel_ms2` trägt eine geschwindigkeitsabhängige Grundlinie (quantifizierte Grenze). (c) Zeitverhalten erstmals im Fahrbetrieb gemessen: 6,7 ms Worst Case statt 0,651 ms am Prüfstand. (d) Methodische Korrektur: die Zahl r = −0,132 aus v0.16 wurde ohne Berücksichtigung der Latenz der GNSS-Referenzkette gerechnet und ist als Gütemaß nicht belastbar. (e) Elektronik vollständig geklärt und dokumentiert: Schaltplan Rev. 1.0 erstellt (Kap. 5.4), sechs offene Verdrahtungspunkte geschlossen, Energiebilanz methodisch korrigiert (13 h → ~8 h), GNSS-Antenne als nicht verbaut erkannt. (f) Einbaulage der IMU um 180° gedreht; Achsentransformation spezifiziert, noch nicht implementiert.** | Messfahrt, Schaltplan, Verdrahtungsklärung |
 | **0.18** | **09.08.2026** | **Korrektur der Schalterposition.** SW1 sitzt im **Akkupfad zwischen U1 OUT+ und U2 VIN+** und trennt damit den Eingang des Aufwärtswandlers — nicht, wie in v0.17 und im Schaltplan zunächst dargestellt, zwischen MT3608-Ausgang und 5-V-Schiene. Funktional bleibt die Wirkung gleich (die gesamte 5-V-Schiene ist stromlos), elektrisch ändert sich der Schalterstrom: er fließt nun auf der Akkuseite und beträgt im Worst Case 1,18 A statt 0,79 A. Neuer Befund B-6. Schaltplan Rev. 1.1, Kap. 4.1, 5.1, 5.2, 5.4, 11.2 und 12 angepasst. | Korrekturhinweis des Verfassers |
 | **0.19** | **10.08.2026** | **Firmware-Abschluss (Commit `835c7b3`, geflasht).** (a) Einbaulage-Transformation implementiert und auf das Gerät gebracht: `imu_mount_orientation.h` an der Treibergrenze, `IMU_MOUNT_SIGN_X/Y/Z` = −1/−1/+1 auf Beschleunigung und Drehrate, eigener Host-Test. Kap. 4.3 wechselt von [geplant] auf [umgesetzt]. (b) **Mangel M-01 behoben:** der Haltewert der Mindesthaltezeit wird nur noch oberhalb der Einschaltschwelle nachgeführt; Regressionstest ergänzt, der das Hystereseband monoton durchläuft. (c) **Umfangsschnitt Firmware:** FR-CFG-02 (serielles Kalibrier-Interface) und FR-CFG-03 (NVS-Konfiguration) werden nicht umgesetzt und als begründete Abgrenzung geführt (neues Kap. 12.2); alle Kalibrierwerte sind Übersetzungszeit-Konstanten. (d) Auslieferungsstand: alle Debug-Ausgaben entfernt, `DEBUG_SERIAL = false`. Daraus folgt eine **Korrektur an Befund B7**: die Zuordnung der 6,7 ms Worst-Case-Schleifenzeit allein zum GNSS-Slot war nicht belegt, weil drei 1-Hz-Debug-Prints im selben Messfenster lagen (Kap. 9.5.5). (e) `lib_deps` versionsfest gepinnt (Reproduzierbarkeit, NFR-EXT-01); tote Symbole entfernt; alle `TODO(offen)`-Marker in begründete Abgrenzungen umformuliert. (f) Host-Tests **126/126** grün. **Die Firmware ist damit abgeschlossen und eingefroren.** | Firmware-Abschluss |
+| **0.20** | **10.08.2026** | **Werkstoffkorrektur Gehäuse: PETG statt PLA.** Frühere Fassungen nannten in Kap. 4.1 und Kap. 8 durchgängig PLA; gefertigt wird im FDM-Verfahren aus PETG. Die Angabe war eine Fehlangabe, keine Änderung der Auslegung. Thermisch günstiger (höhere Glasübergangstemperatur, zäher, witterungsbeständiger). Ergänzt: Verbindungstechnik mit Einschmelzgewinden M3 × 5 × 5 sowie Schrauben M3 × 6 und M3 × 8; Hinweis, dass die Konstruktion bearbeitet und gedruckt ist und der Konstruktionsstand noch aufzunehmen ist. | Korrekturhinweis des Verfassers |
 
 ### 0.4 Datengrundlage
 | Quelle | Zeitstempel | Aussagekraft |
@@ -274,7 +275,7 @@ I²C (Sensoren), UART2 (GNSS), UART0 (Debug/Konfig), digitaler GPIO-Eingang (RF)
 | ANT2 | Drahtantenne 17,3 cm (λ/4) | – | 433-MHz-Empfang | an U4 ANT | verbaut |
 | ~~ANT1~~ | ~~GNSS-Antenne Namvo~~ | Namvo | – | – | **nicht verbaut.** Der L86 nutzt seine interne Patch-Antenne (18,4 × 18,4 × 4 mm); EX_ANT ist unbeschaltet. Aus der BOM zu streichen. |
 
-**Anmerkungen.** Alle drei LED-Kanäle sind mit dem 3-W-COB-Bauteil bestückt und werden bewusst mit rund 224 mA statt des Nennstroms von 400–500 mA betrieben (thermische Reserve im PLA-Gehäuse). Sämtliche Peripheriemodule liegen an +3,3 V; dadurch ist an keiner Schnittstelle eine Pegelwandlung erforderlich. Der Micro-USB-Anschluss des DevKitC dient ausschließlich der Programmierung und ist im montierten Zustand nicht zugänglich; beim Flashen wird der Akkupfad getrennt.
+**Anmerkungen.** Alle drei LED-Kanäle sind mit dem 3-W-COB-Bauteil bestückt und werden bewusst mit rund 224 mA statt des Nennstroms von 400–500 mA betrieben (thermische Reserve im gedruckten Gehäuse, Werkstoff PETG — s. Kap. 8). Sämtliche Peripheriemodule liegen an +3,3 V; dadurch ist an keiner Schnittstelle eine Pegelwandlung erforderlich. Der Micro-USB-Anschluss des DevKitC dient ausschließlich der Programmierung und ist im montierten Zustand nicht zugänglich; beim Flashen wird der Akkupfad getrennt.
 
 ### 4.2 Pinbelegung [gesichert]
 
@@ -564,7 +565,13 @@ Gratis-Weg über ein Personal Team. Installation per USB aus Xcode; Profil läuf
 
 ## 8. Konstruktion
 
-Nicht begonnen. Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/Wartung, Kabelführung, Bauraum, Wärmeabfuhr (PLA-Grenzen), Schraubverbindungen, Vibrationsfestigkeit, Feuchtigkeit/Outdoor. Bauraum-Referenz Akku: LP103454 (10,3 × 34 × 54 mm).
+Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/Wartung, Kabelführung, Bauraum, Wärmeabfuhr (Werkstoffgrenzen PETG), Schraubverbindungen, Vibrationsfestigkeit, Feuchtigkeit/Outdoor. Bauraum-Referenz Akku: LP103454 (10,3 × 34 × 54 mm).
+
+**Werkstoff [gesichert, 10.08.2026]:** Das Gehäuse wird im FDM-Verfahren aus **PETG** gefertigt, nicht aus PLA. Frühere Fassungen dieser Bible nannten durchgängig PLA; das war eine Fehlangabe. Die Korrektur ist thermisch relevant: PETG besitzt eine höhere Glasübergangstemperatur als PLA und ist zäher sowie witterungsbeständiger, was für den Outdoor-Einsatz und für die Nähe zur Leistungs-LED günstiger ist. Die Auslegung des LED-Stroms auf rund 224 mA statt des Nennstroms bleibt davon unberührt und ist weiterhin in Kap. 5.4 begründet.
+
+**Verbindungstechnik [gesichert, 10.08.2026]:** Gehäuse und Lochrasterplatine werden verschraubt. Eingesetzt werden **Einschmelzgewinde M3 × 5 × 5** in den gedruckten Bauteilen sowie Schrauben **M3 × 6** und **M3 × 8**.
+
+**Konstruktionsstand:** vom Verfasser bearbeitet (Bauraumanalyse, Gehäusekonzept, Druck erfolgt). Eine detaillierte Aufnahme des Konstruktionsstands in diese Bible steht noch aus.
 
 **Neue Randbedingung aus dem L86-Datenblatt (Kap. 4.1.2) [09.08.2026]:** Da die interne Patch-Antenne genutzt wird, fordert der Hersteller freie Sicht nach oben, ein nichtmetallisches Gehäuse im Antennenbereich, mindestens 10 mm Abstand zu Bauteilen über 6 mm Höhe und mindestens 10 mm Abstand zu anderen Antennen. Die BLE-Antenne des ESP32 sitzt auf derselben Lochrasterplatine — der Abstand ist bei der Gehäusekonstruktion und einer eventuellen Neuanordnung zu beachten.
 
