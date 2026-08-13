@@ -2,7 +2,9 @@
 
 **Elektrischer Schaltplan – Intelligentes IoT-Fahrrad-Rücklichtsystem**
 **Bachelorarbeit · Hochschule Düsseldorf · Luca Krahl**
-**Zeichnungsstand:** Rev. 1.1 vom 09.08.2026 · Blatt 1 von 1 · A4 Querformat
+**Zeichnungsstand:** Rev. 1.3 vom 10.08.2026 · Blatt 1 von 1 · A4 Querformat
+**Änderung gegenüber Rev. 1.2:** Die Gate-Pull-Down-Widerstände **R2, R4 und R6 (je 10 kΩ) sind entfallen** — sie sind nicht bestückt. Das Gate jedes MOSFET liegt ausschließlich über den Serienwiderstand R1/R3/R5 am GPIO, die Source direkt an der Masse-Sammelschiene. Neuer Befund B-9. Bauteilzahl 27 → 24.
+**Änderung gegenüber Rev. 1.1:** (a) Die Drahtantenne ANT2 am SRX882S ist entfallen — sie ist nicht verbaut; der Pin ANT trägt jetzt eine Nichtanschluss-Markierung. (b) Vollständige Neuanordnung des Blattes: die Blockrahmen A und C überschnitten sich, und in Block D lagen die Versorgungssymbole auf dem Rahmen. (c) In Block D ersetzen zwei durchgehende Sammelschienen (+5 V und GND) die neun einzelnen Versorgungssymbole.
 **Änderung gegenüber Rev. 1.0:** Position von SW1 korrigiert — der Schalter sitzt im Akkupfad zwischen U1 OUT+ und U2 VIN+.
 **Quellen:** Project Bible Kap. 4/5 · `firmware/include/pins.h` und `config.h` (Commit `1178017`) · Datenblätter im Projekt · Verdrahtungsklärung vom 09.08.2026
 
@@ -24,10 +26,8 @@
 | IC3 | BMP280 | Barometer, Höhe | +3V3 | I²C 0x76 |
 | IC4 | Quectel L86-M33 | GNSS GPS+GLONASS, interne Patch-Antenne | +3V3 (VCC und V_BCKP) | UART, 9600 Bd |
 | U4 | SRX882S V2.0 | 433-MHz-Empfänger, superheterodyn | +3V3 (VCC und CS) | Digitalausgang DATA |
-| ANT2 | Drahtantenne 17,3 cm (λ/4) | Empfangsantenne 433 MHz | — | an U4 ANT |
 | Q1–Q3 | IRLZ44N (3×) | Low-Side-PWM-Treiber | — | Gate an GPIO |
 | R1/R3/R5 | 100 Ω (3×) | Gate-Serienwiderstand | — | — |
-| R2/R4/R6 | 10 kΩ (3×) | Gate-Pull-Down gegen GND | — | — |
 | RN1–RN3 | je 8 × 100 Ω parallel = 12,5 Ω | Strombegrenzung je LED-Kanal | in Reihe zur LED | — |
 | D1 | LED rot, 3-W-COB | Schluss- und Bremslicht | Anode an +5 V | PWM über Q2 |
 | D2 | LED gelb, 3-W-COB | Blinker links | Anode an +5 V | PWM über Q1 |
@@ -35,6 +35,8 @@
 | — | QIACHIP-Handsender, 2 Tasten | Blinkerauslösung, Codes 10967538 / 10967537 | eigene Batterie | 433 MHz ASK, drahtlos |
 
 **Nicht verbaut, aber bisher in der Stückliste geführt:** die GNSS-Antenne „Namvo". Der L86 nutzt seine interne Patch-Antenne (18,4 × 18,4 × 4 mm); der Pin EX_ANT ist unbeschaltet.
+
+**Ebenfalls nicht verbaut:** eine Drahtantenne am SRX882S. Bis Rev. 1.1 war am Pin ANT eine λ/4-Drahtantenne von 17,3 cm eingezeichnet. Die Längenangabe war für 433,92 MHz rechnerisch korrekt (λ = c/f = 69,1 cm, λ/4 = 17,3 cm), entsprach aber nicht dem gebauten Aufbau: Es ist kein Draht angeschlossen. Der Pin ANT ist ab Rev. 1.2 als Nichtanschluss gezeichnet. Zur beobachteten Wirkung s. Befund B-7.
 
 Der Micro-USB-Anschluss des DevKitC dient ausschließlich der Programmierung und ist im montierten Zustand nicht zugänglich. Seine Masse liegt hardwareseitig auf derselben GND-Schiene; beim Flashen wird der Akkupfad getrennt.
 
@@ -90,7 +92,7 @@ Zugrunde gelegt: I_LED = (5 V − 2,2 V) / 12,5 Ω = 224 mA je Kanal; ESP32 mit 
 
 **BLE 4.2** überträgt die Telemetrie unidirektional vom Gerät zur iOS-App. Es ist eine reine Funkstrecke ohne Leitungsbezug und im Schaltplan als Annotation am ESP32 vermerkt.
 
-**433 MHz** bildet die Strecke vom QIACHIP-Handsender zu ANT2/U4. Der Sender ist ein gekauftes Gerät mit eigener Batterie und nicht Bestandteil der Leiterplatte.
+**433 MHz** bildet die Strecke vom QIACHIP-Handsender zu U4. Der Sender ist ein gekauftes Gerät mit eigener Batterie und nicht Bestandteil der Leiterplatte.
 
 ---
 
@@ -100,7 +102,7 @@ Die Prüfung wurde am fertigen Schaltplan durchgeführt. Die Verbindungsprüfung
 
 ### E.1 Verbindungsprüfung (maschinell, bestanden)
 
-Die exportierte Netzliste enthält 32 Netze. Alle 28 Bauteile sind vollständig verdrahtet; jedes Netz trägt mindestens zwei Knoten. Die einzigen Einzelknoten sind die sechs bewusst offenen Pins des L86 (1PPS, FORCE_ON, AADET_N, RESET, EX_ANT, NC), die im Schaltplan mit Nichtanschluss-Markierungen versehen sind. Stichproben: `GND` verbindet 19 Knoten, `+3V3` acht, `+5V` sechs, `I2C_SDA` und `I2C_SCL` je drei. Die Schalterposition ist maschinell bestätigt: SW1 liegt zwischen `Net-(U1-OUT+)` und `Net-(U2-VIN+)`.
+Die exportierte Netzliste enthält 32 Netze. Alle 24 Bauteile sind vollständig verdrahtet; jedes Netz trägt mindestens zwei Knoten. Die einzigen Einzelknoten sind die sechs bewusst offenen Pins des L86 (1PPS, FORCE_ON, AADET_N, RESET, EX_ANT, NC) sowie der Pin ANT des SRX882S — alle im Schaltplan mit Nichtanschluss-Markierungen versehen. Stichproben: `GND` verbindet 16 Knoten, `+3V3` acht, `+5V` sechs, `I2C_SDA` und `I2C_SCL` je drei. Die Schalterposition ist maschinell bestätigt: SW1 liegt zwischen `Net-(U1-OUT+)` und `Net-(U2-VIN+)`.
 
 ### E.2 Befunde
 
@@ -130,13 +132,31 @@ Da SW1 vor dem Aufwärtswandler sitzt, führt er dessen Eingangsstrom. Im Worst 
 
 **UART-Kreuzung.** TX und RX sind korrekt gekreuzt (GPIO17 → RXD1, TXD1 → GPIO16).
 
-**MOSFET-Ansteuerung.** Der IRLZ44N ist ein Logic-Level-Typ mit einer Gate-Schwellspannung von 1,0 bis 2,0 V. Bei 3,3 V Ansteuerung und 224 mA Laststrom liegt der Durchlasswiderstand bei etwa 0,05 Ω, die Verlustleistung damit bei 2,5 mW je Transistor — thermisch belanglos. Die Gate-Zeitkonstante beträgt mit 100 Ω und einer Eingangskapazität von rund 3,3 nF etwa 0,33 µs; bei 5 kHz Schaltfrequenz (200 µs Periode) entfallen damit unter 1 % der Periode auf die Umschaltvorgänge. Die 10-kΩ-Pull-Downs halten die Gates während Reset und Bootvorgang sicher auf Masse. Der Transistor ist mit 47 A Nennstrom für 224 mA erheblich überdimensioniert; das ist kein Fehler, sondern eine Folge der Bauteilverfügbarkeit und darf so begründet werden.
+**MOSFET-Ansteuerung.** Der IRLZ44N ist ein Logic-Level-Typ mit einer Gate-Schwellspannung von 1,0 bis 2,0 V. Bei 3,3 V Ansteuerung und 224 mA Laststrom liegt der Durchlasswiderstand bei etwa 0,05 Ω, die Verlustleistung damit bei 2,5 mW je Transistor — thermisch belanglos. Die Gate-Zeitkonstante beträgt mit 100 Ω und einer Eingangskapazität von rund 3,3 nF etwa 0,33 µs; bei 5 kHz Schaltfrequenz (200 µs Periode) entfallen damit unter 1 % der Periode auf die Umschaltvorgänge. Ein Gate-Pull-Down ist **nicht bestückt**; zur Folge für den Reset- und Bootzustand s. Befund B-9. Der Transistor ist mit 47 A Nennstrom für 224 mA erheblich überdimensioniert; das ist kein Fehler, sondern eine Folge der Bauteilverfügbarkeit und darf so begründet werden.
 
 **LED-Zweige.** Jeder Kanal besitzt eine Strombegrenzung. Die Verlustleistung im Widerstandsnetz beträgt 0,63 W, verteilt auf acht Widerstände also 78 mW je Bauteil — bei 0,25-W-Typen eine Auslastung von 31 %.
 
 **Thermische Stabilität der Vorwiderstandslösung.** Der in Kap. 12 der Project Bible geführte Verdacht auf thermisches Weglaufen lässt sich entkräften. Mit I = (5 V − V_f)/12,5 Ω und einem Temperaturkoeffizienten der Flussspannung von etwa −2 mV/K ergibt sich dI/dT = 0,16 mA/K. Über eine Erwärmung von 50 K steigt der Strom damit um 8 mA, also um 3,6 %. Entscheidend ist, dass über dem Widerstand mit 2,8 V mehr Spannung abfällt als über der LED mit 2,2 V — die Schaltung ist dadurch hinreichend steif. Ein thermisches Weglaufen ist bei dieser Dimensionierung **nicht zu erwarten**. Das Risiko kann in der Bible entsprechend herabgestuft werden.
 
 ---
+
+**B-7 · SRX882S ohne Antenne betrieben [beobachtet, nicht gemessen].**
+Der Empfänger arbeitet ohne angeschlossene Antenne; der Empfang erfolgt über die Anschlussfahne und die Leiterbahnen des Moduls. Der Verfasser berichtet, dass die Funkverbindung ohne den zuvor angeschlossenen 17,3-cm-Draht **zuverlässiger** arbeitet als mit ihm.
+
+Das ist plausibel, aber nicht gemessen. Eine λ/4-Monopolantenne setzt eine leitende Gegenfläche (Counterpoise) von mindestens λ/4 Ausdehnung voraus; auf einem Lochrasteraufbau ohne durchgehende Massefläche fehlt diese. Der Draht wirkt dann weniger als abgestimmter Strahler denn als breitbandige Sammelfläche und koppelt bevorzugt die Störspektren des MT3608-Schaltreglers und der 5-kHz-PWM-Stufe ein, die beide unmittelbar daneben liegen. Der Superheterodyn-Empfänger verliert dadurch Rauschabstand, obwohl seine Empfindlichkeit steigt. Ohne Draht sinken Empfindlichkeit **und** Störpegel; bei den hier auftretenden Entfernungen von wenigen Metern überwiegt offenbar der Gewinn an Rauschabstand.
+
+**Einordnung.** Die Aussage, ohne Antenne sei der Empfang besser, ist eine Beobachtung des Verfassers und keine Messung. Belastbar wäre sie erst über eine Reichweitenmessung mit und ohne Draht bei gleicher Sendeleistung und gleicher Ausrichtung. Diese Messung ist nach dem Umfangsschnitt vom 10.08.2026 nicht Teil der Arbeit. Für die Zeichnung gilt der gebaute Zustand: kein Draht, Nichtanschluss am Pin ANT. In den Ausblick gehört der Hinweis, dass eine durchgehende Massefläche unter dem Empfängermodul die Voraussetzung dafür wäre, eine abgestimmte Antenne überhaupt sinnvoll zu betreiben.
+
+**B-9 · Kein Gate-Pull-Down bestückt [dokumentierte Abweichung].**
+Die ursprünglich vorgesehenen Widerstände R2, R4 und R6 (je 10 kΩ, Gate gegen Masse) sind im Aufbau nicht vorhanden. Das Gate jedes IRLZ44N ist ausschließlich über den Serienwiderstand von 100 Ω mit dem zugehörigen GPIO verbunden, die Source liegt direkt an Masse.
+
+**Wirkung im Normalbetrieb: keine.** Sobald die Firmware den Pin über `ledcAttach()` als PWM-Ausgang konfiguriert hat, treibt der GPIO das Gate niederohmig; der Pull-Down wäre in diesem Zustand ohnehin nur eine parallele Last von 10 kΩ und ohne Einfluss. Die Gate-Zeitkonstante von 0,33 µs bleibt unverändert.
+
+**Wirkung außerhalb des Normalbetriebs.** Zwischen dem Aufheben des Reset und der Pin-Konfiguration in `setup()` ist der GPIO hochohmig. Ohne Pull-Down ist das Gate in diesem Fenster **potentialfrei**. Bei einer Eingangskapazität von rund 3,3 nF und einer Gate-Schwellspannung des IRLZ44N von 1,0 bis 2,0 V genügt eine geringe eingekoppelte Ladung, um den Transistor teilweise leitend werden zu lassen. Die Dauer des Fensters umfasst Bootloader und Arduino-Initialisierung und liegt in der Größenordnung einiger hundert Millisekunden; sie wurde **nicht gemessen**.
+
+**Bewertung der Folgen.** Für den roten Kanal ist die mögliche Fehlwirkung ein kurzzeitiges Aufleuchten des Schluss-/Bremslichts — für eine Rückleuchte die sichere Richtung, weil sie die Sichtbarkeit erhöht statt sie zu verringern. Für die beiden gelben Kanäle wäre es ein kurzzeitiges Fehlsignal in eine Abbiegerichtung; da es ausschließlich unmittelbar nach dem Einschalten auftreten kann, also im Stand, ist die praktische Gefährdung gering. Beim Flashen und bei den Boot-Kontrollen ist ein solches Aufleuchten **nicht beobachtet** worden.
+
+**Warum keine Nachbesserung erfolgt.** Ein interner Pull-Down des ESP32 (typisch 45 kΩ) ließe sich in `setup()` aktivieren, wäre aber erst nach der Pin-Konfiguration wirksam und würde das Fenster deshalb nur verkürzen, nicht schließen. Vollständig schließen lässt es sich nur durch einen physischen Widerstand am Gate. Die Firmware ist seit dem 10.08.2026 eingefroren (Project Bible Kap. 12.2), und der Aufbau wird nicht mehr geändert. Der Punkt wird deshalb als **dokumentierte Abweichung** geführt und gehört als konkrete Empfehlung in den Ausblick: In einer Leiterplattenausführung ist ein Gate-Pull-Down von 10 bis 100 kΩ je Kanal vorzusehen.
 
 ## F. Offene Punkte
 
@@ -152,6 +172,10 @@ Da SW1 vor dem Aufwärtswandler sitzt, führt er dessen Eingangsstrom. Im Worst 
 | F-8 | Namvo-GNSS-Antenne in der Stückliste als nicht verbaut kennzeichnen | Dokumentationskorrektur |
 | F-9 | Anordnung der Patch-Antenne im Gehäuse | Datenblatt fordert freie Sicht nach oben, nichtmetallisches Gehäuse, ≥ 10 mm Abstand zur BLE-Antenne des ESP32 |
 | F-10 | Nennstrom und Kontaktwiderstand von SW1 (B-6) | Datenblatt fehlt; Messung des Spannungsabfalls unter Last empfohlen |
+| F-11 | Reichweite der 433-MHz-Strecke ohne Antenne (B-7) | Beobachtung des Verfassers, nicht gemessen; Vergleichsmessung mit und ohne Draht wäre der Beleg |
+| F-12 | Stückliste: Drahtantenne 17,3 cm am SRX882S als nicht verbaut kennzeichnen | Dokumentationskorrektur analog F-8 |
+| F-13 | Stückliste: Positionen 10-kΩ-Pull-Down (3×) **streichen** statt ergänzen (B-9) | Sie sind nicht bestückt; der bisherige offene Punkt forderte fälschlich ihre Aufnahme |
+| F-14 | Dauer des potentialfreien Gate-Fensters nach Reset messen (B-9) | Nicht gemessen; für die Bewertung der Fehlwirkung wäre der Wert die fehlende Größe |
 
 Alle Größen im Schaltplan stammen aus belegten Projektquellen. Erfunden wurde nichts; die einzige rechnerische Annahme ist die mittlere Flussspannung von 2,2 V, die als solche gekennzeichnet ist.
 

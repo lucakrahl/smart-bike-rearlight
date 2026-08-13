@@ -1,6 +1,6 @@
 # Project Bible — Smartes Fahrrad-Rücklicht
 **Bachelorarbeit Krahl · Maschinenbau & Produktentwicklung (B.Eng.)**
-**Version 0.20 · Stand 10.08.2026 · Status: aktiv gepflegt (Single Source of Truth)**
+**Version 0.24 · Stand 13.08.2026 · Status: aktiv gepflegt (Single Source of Truth)**
 
 > Diese Project Bible ist die oberste Wissensinstanz des Projekts. Bei Widersprüchen zwischen Chat-Historie und Project Bible gilt ausschließlich die Project Bible. Chats dienen der Diskussion und Entscheidungsfindung; der offizielle Projektstand steht ausschließlich hier.
 
@@ -43,6 +43,10 @@
 | **0.18** | **09.08.2026** | **Korrektur der Schalterposition.** SW1 sitzt im **Akkupfad zwischen U1 OUT+ und U2 VIN+** und trennt damit den Eingang des Aufwärtswandlers — nicht, wie in v0.17 und im Schaltplan zunächst dargestellt, zwischen MT3608-Ausgang und 5-V-Schiene. Funktional bleibt die Wirkung gleich (die gesamte 5-V-Schiene ist stromlos), elektrisch ändert sich der Schalterstrom: er fließt nun auf der Akkuseite und beträgt im Worst Case 1,18 A statt 0,79 A. Neuer Befund B-6. Schaltplan Rev. 1.1, Kap. 4.1, 5.1, 5.2, 5.4, 11.2 und 12 angepasst. | Korrekturhinweis des Verfassers |
 | **0.19** | **10.08.2026** | **Firmware-Abschluss (Commit `835c7b3`, geflasht).** (a) Einbaulage-Transformation implementiert und auf das Gerät gebracht: `imu_mount_orientation.h` an der Treibergrenze, `IMU_MOUNT_SIGN_X/Y/Z` = −1/−1/+1 auf Beschleunigung und Drehrate, eigener Host-Test. Kap. 4.3 wechselt von [geplant] auf [umgesetzt]. (b) **Mangel M-01 behoben:** der Haltewert der Mindesthaltezeit wird nur noch oberhalb der Einschaltschwelle nachgeführt; Regressionstest ergänzt, der das Hystereseband monoton durchläuft. (c) **Umfangsschnitt Firmware:** FR-CFG-02 (serielles Kalibrier-Interface) und FR-CFG-03 (NVS-Konfiguration) werden nicht umgesetzt und als begründete Abgrenzung geführt (neues Kap. 12.2); alle Kalibrierwerte sind Übersetzungszeit-Konstanten. (d) Auslieferungsstand: alle Debug-Ausgaben entfernt, `DEBUG_SERIAL = false`. Daraus folgt eine **Korrektur an Befund B7**: die Zuordnung der 6,7 ms Worst-Case-Schleifenzeit allein zum GNSS-Slot war nicht belegt, weil drei 1-Hz-Debug-Prints im selben Messfenster lagen (Kap. 9.5.5). (e) `lib_deps` versionsfest gepinnt (Reproduzierbarkeit, NFR-EXT-01); tote Symbole entfernt; alle `TODO(offen)`-Marker in begründete Abgrenzungen umformuliert. (f) Host-Tests **126/126** grün. **Die Firmware ist damit abgeschlossen und eingefroren.** | Firmware-Abschluss |
 | **0.20** | **10.08.2026** | **Werkstoffkorrektur Gehäuse: PETG statt PLA.** Frühere Fassungen nannten in Kap. 4.1 und Kap. 8 durchgängig PLA; gefertigt wird im FDM-Verfahren aus PETG. Die Angabe war eine Fehlangabe, keine Änderung der Auslegung. Thermisch günstiger (höhere Glasübergangstemperatur, zäher, witterungsbeständiger). Ergänzt: Verbindungstechnik mit Einschmelzgewinden M3 × 5 × 5 sowie Schrauben M3 × 6 und M3 × 8; Hinweis, dass die Konstruktion bearbeitet und gedruckt ist und der Konstruktionsstand noch aufzunehmen ist. | Korrekturhinweis des Verfassers |
+| **0.21** | **11.08.2026** | **Normkorrektur, konstruktive Anforderungen und Quellenprüfung.** (a) **ECE R6 ist für Fahrrad-Fahrtrichtungsanzeiger nicht einschlägig.** § 67 Abs. 5 StVZO nennt UN/ECE R50 bzw. UN R148 (Genehmigung), R74 (Anbau) und R60 (Bedienteile). Der Zahlenwert 1,5 Hz ist primär in UN-R53 § 6.3.8.1 belegt (90 ± 30/min) und wird als **Analogie** geführt, weil R53 für Krafträder gilt. Kap. 0.4, 2.7, 2.8 und das Glossar angepasst. (b) **§ 67 Abs. 5 StVZO lässt Fahrtrichtungsanzeiger am Fahrrad ausdrücklich zu** — die gegenteilige Aussage in `Parameterherleitung.md` ist zu korrigieren. (c) **Neuer Block 2.13: zehn konstruktive Anforderungen (KON-01 bis KON-10)**, abgeleitet aus dem eingefrorenen Elektronikstand, mit Unterscheidung in Forderung und Wunsch. (d) **Trockenbetrieb als ausdrückliche Systemgrenze**: es gibt keine Umgebungsanforderungen, ein Dichtheitsnachweis wurde nicht geführt. (e) Vier Befunde aus der Datenblattprüfung des IRLZ44N und aus [Hering u. a.]: C_iss ist 1700 pF und nicht 3,3 nF, R_DS(on) ist bei 3,3 V nicht spezifiziert, V_GS(th) ist bei 250 µA definiert und keine Vollansteuerungsgrenze, und der Temperaturkoeffizient der LED-Durchlassspannung beträgt **−1 mV/K** statt −2 mV/K. Kap. 5.4 und 12.1 angepasst. (f) Rollen der Funkstrecke geklärt und Kennwerte des SRX882S aufgenommen; die Empfindlichkeit beträgt −107 dBm und nicht −114 dBm. (g) Werkstoffbegründung PETG auf die thermische Belastung gestützt, Witterungsbeständigkeit als Nebeneffekt geführt. | Quellenprüfung, Kapitel 3 der Thesis |
+| **0.22** | **12.08.2026** | **Rücknahme des GNSS-Integritätsbefunds und Kapitel 4 der Thesis.** (a) **Der Befund „73 km/h Scheingeschwindigkeit im Stand bei FIX_OK" ist zurückgezogen.** Fahrt 5 des Feldtests vom 06.08.2026 wurde nach Klarstellung des Verfassers aus dem *fahrenden* Auto durchgeführt. Die gemeldete Geschwindigkeit war damit real und kein Integritätsfehler. Die Abdeckung hat das Signal nicht ausreichend gedämpft, der Versuch ist ergebnislos und **kein Beleg**. Kap. 0.4, 9. (Validierungstabelle), 9.4, 10 und 12.1 angepasst. (b) Die Architekturentscheidung V-B bleibt unverändert bestehen. Sie trägt auf vier voneinander unabhängigen, weiterhin belegten Punkten: Höchstrate 10 Hz gegen 100 Hz, Latenz 200–400 ms gegen NFR-RT-01, rund 20 s bis zum Erstfix und ein 90-%-Quantil des Differentiationsrauschens bis 1,97 m/s² gegen eine Ansprechschwelle von 2,0 m/s². (c) **Kapitel 4 der Thesis (Systemkonzept) geschrieben**, mit Tabelle 4-1 (Variantenvergleich) und den Abbildungen 4-1 bis 4-4. Das Kriterium „wissenschaftlicher Gehalt für die Arbeit" aus der internen Variantenbewertung wird in der Thesis-Tabelle bewusst nicht geführt, weil es kein ingenieurtechnisches Kriterium ist. (d) Der ausgelieferte Firmwarestand entspricht funktional V-C mit vorbereiteter, aber abgeschalteter Stufe 2. Diese Formulierung wird in der Arbeit so verwendet. | Klarstellung des Verfassers, Thesis-Kapitel 4 |
+| **0.23** | **13.08.2026** | **Hardwarestand gegen Fotos, Schaltplan Rev. 1.3 und zwei neue Datenblätter abgeglichen; Kapitel 5 der Thesis geschrieben.** (a) **Bestückungskorrekturen:** SW1 ist ein **Wippschalter** und kein Drucktaster IP65. Die **Gate-Ableitwiderstände R2/R4/R6 sind nicht bestückt** — Schaltplan Rev. 1.3 führt das als Befund B-9. **ANT2 ist nicht verbaut**, der Empfang erfolgt über die Anschlussflächen des Moduls; der Widerspruch zwischen Kap. 4.1 und 11.2 ist damit aufgelöst. (b) **Datenblatt der roten Leuchte beschafft** (NTE30180-R, typgleiches Vergleichsbauteil): Dauerstrom **800 mA** statt der bisher geführten 400–500 mA, Durchlassspannung 2,0–2,6 V bei 400 mA, Sperrschichttemperatur typisch 115 °C gegen Grenzwert 120 °C. Der Kanalstrom wird als Spanne **208 bis 240 mA** mit 224 mA als Rechenwert geführt. (c) **Wirkungsgrad des MT3608 bleibt eine Annahme.** Das Datenblatt nennt nur „bis zu 97 %" ohne Arbeitspunkt und ohne Kennlinie; η = 0,90 wird beibehalten, die Laufzeit zusätzlich als Spanne 7,9 bis 8,8 h angegeben. (d) **Latenzangabe korrigiert:** die 200–400 ms waren eine eigene Abschätzung und nicht aus dem Datenblatt belegbar. Maßgeblich ist der gemessene Versatz von 1,6 bis 2,0 s aus der Messfahrt. Ratengrenze des Empfängers und Grenze der seriellen Schnittstelle werden getrennt geführt. (e) **Funkstrecke erstmals gemessen:** 19 von 20 bzw. 18 von 20 erkannten Tastendrücken in Einbaulage mit Körper im Signalweg, ohne Drahtantenne. Der offene Punkt aus Kap. 11.2 ist damit geschlossen. (f) Schaltplanstand auf **Rev. 1.3 (10.08.2026)** gehoben. (g) Fotodokumentation des Aufbaus in die Datengrundlage aufgenommen. | Fotoabgleich, Datenblätter, Thesis-Kapitel 5 |
+| **0.24** | **13.08.2026** | **Präzisierungen aus der Quellenarbeit zu Kapitel 5.1.** (a) Das **ersetzte Mikrocontrollerboard wird namentlich geführt**: AZ-Delivery ESP-32 Dev Kit C V2, belegt über die Herstelleranleitung AZ281 aus der Projektablage. Bisher stand dort nur „Board eines anderen Anbieters". (b) **Wichtige Präzisierung zum Board-Tausch:** Beide Boards tragen denselben Reglertyp AMS1117-3.3. Der Brownout ist deshalb **keine generische Eigenschaft** dieses Reglertyps oder der Plattform, sondern nach der Fallstudie eine Grenze oder ein Defekt des konkreten Altboards, wahrscheinlich durch umfangreiches Rework verursacht. Diese Einordnung ist im Thesis-Text zu übernehmen. (c) **L86 präzisiert:** Empfang von GPS und GLONASS auf L1; SBAS und QZSS sind unterstützt, am Einsatzort ist davon nur SBAS in Form von EGNOS wirksam, weil QZSS ein regionales System über Asien und Ozeanien ist. (d) Belegliste auf [17] bis [27] erweitert; die Alternativen der Komponentenauswahl sind jetzt einzeln belegt. | Quellenarbeit Kapitel 5.1 |
 
 ### 0.4 Datengrundlage
 | Quelle | Zeitstempel | Aussagekraft |
@@ -55,11 +59,15 @@
 | **Schaltplan Rev. 1.0 (`schaltplan_fahrrad_ruecklichtsystem.kicad_sch/.pdf`)** | **09.08.2026** | **Gültiger Zeichnungsstand; ersetzt Schaltplan v2** |
 | ~~Schaltplan v2.pdf~~ | 20.05.2026 | **überholt** — an drei Stellen nachweislich falsch, nicht mehr verwenden |
 | **Messfahrt-Export `SmartBikeRearLightFahrt202608082245.csv`** | **08.08.2026** | **Feldnachweis Stufe 1, Schema v3, 10 Hz** |
-| Feldtest-Exporte 06.08.2026 (sechs CSV, Schema v2, 1 Hz) | 06.08.2026 | Vorher-Vergleich |
+| Feldtest-Exporte 06.08.2026 (sechs CSV, Schema v2, 1 Hz) | 06.08.2026 | Vorher-Vergleich. **Fahrt 5 wurde aus dem fahrenden Auto durchgeführt und ist kein Integritätsnachweis** (Klarstellung des Verfassers 12.08.2026) |
 | `Uebersicht.xlsx` (BOM) | 17.02.2026 | Stückliste mit Preisen — korrekturbedürftig (Kap. 11) |
-| Datenblätter (ESP32-WROOM-32E, BMP280, GY-521, IRLZ44N, MT3608, TP4056, **Quectel L86 Hardware Design V1.0**) | Herstellerstand | Referenzwerte |
+| Datenblätter (ESP32-WROOM-32E, BMP280, GY-521, IRLZ44N, MT3608, TP4056, **Quectel L86 Hardware Design V1.0**, **NTE30180 Rev. 9-21**) | Herstellerstand | Referenzwerte. NTE30180 ist ein **typgleiches Vergleichsbauteil** zur roten Leuchte, die Typidentität mit dem verbauten Teil ist nicht belegt |
+| **Angebotsangabe des Händlers zur gelben Leuchte** | abgerufen 12.08.2026 | 590–595 nm, 2,2–2,4 V. **Kein Datenblatt**, die Stromangabe widerspricht sich im Angebot selbst |
+| **Schaltplan Rev. 1.3** (`schaltplan_fahrrad_ruecklichtsystem.kicad_sch/.pdf`) | **10.08.2026** | **Gültiger Zeichnungsstand; ersetzt Rev. 1.1** |
+| **Fotodokumentation des Aufbaus** (Steckaufbau, handschriftlicher Bestückungsplan, Lochrasterplatine, Einbau im Gehäuse) | 08/2026 | Belegmaterial für Kap. 5.5 und Kap. 8 |
 | Nutzer-Lastenheft Firmware | 21.07.2026 | Funktionaler Zielumfang (Kap. 2) |
-| § 67 StVZO / ECE R6 / ECE R50 (recherchiert) | 07/2026 | Normative Grundlage (Kap. 2.8) |
+| § 67 StVZO (Primärtext) / UN-R50, R148, R74, R60 / UN-R53 | 07/2026, geprüft 11.08.2026 | Normative Grundlage (Kap. 2.8). **ECE R6 als nicht einschlägig erkannt.** |
+| **§ 23 Abs. 1a StVO** | geprüft 12.08.2026 | Verbot des Aufnehmens und Haltens elektronischer Geräte durch Fahrzeugführende. Grundlage der Bedienkonzeptentscheidung zu FR-SYS-05 (Kap. 2.1 und Kap. 10) |
 
 ---
 
@@ -149,7 +157,7 @@ Vier parallele (orthogonale) Regionen (Statechart nach Harel; Diagramme in Kap. 
 |---|---|---|
 | FR-TL-06 | Bremslicht-Kennlinie: Schlusslicht-Grundhelligkeit ~20 % PWM. Stetig-linearer Anstieg von 2,0 m/s² bis Sättigung 5,0 m/s² (100 %). Ausschalthysterese: Rückfall unter ~1,5 m/s². Mindesthaltezeit 300 ms. Anstieg schnell (Sicherheit). Eingang: gravitationskompensierte Längsverzögerung aus `motion_filter`. Norm-Anker ECE R50 (§ 67 Abs. 4). **Stand 09.08.2026:** Proportionalkennlinie bench- **und** feldvalidiert (Kap. 9.3/9.5; im Feld 194 von 194 Zeilen auf ±1 Prozentpunkt). Die Eingangsgröße ist seit Stufe 1 feldverifiziert (Kap. 9.5). **Die Mindesthaltezeit ist im Fahrbetrieb nachweislich unwirksam** — Mangel M-01, Kap. 9.5.4. | Kennlinie gesichert · Eingangsgröße feldverifiziert · **Mindesthaltezeit: Anforderungsabweichung** |
 | FR-TL-07 | Notbrems-Blinken (ESS-Konzept): aktiviert ab ≥ 5,0 m/s², deaktiviert bei < 3,0 m/s². ~4 Hz, Zeit-Duty 50 %. **Experimentalfunktion, standardmäßig DEAKTIVIERT — nicht konform mit § 67 Abs. 4 StVZO.** | gesichert (experimentell) |
-| FR-BLK-08 | Blinkfrequenz 1,5 Hz (ECE R6: 1,5 Hz ± 0,5), Duty 50 %, Hellzeit > 0,3 s. | gesichert |
+| FR-BLK-08 | Blinkfrequenz 1,5 Hz, Duty 50 %, Hellzeit > 0,3 s. **Normbezug korrigiert 11.08.2026:** Der Wert entspricht den 90 ± 30 Impulsen je Minute aus UN-R53 § 6.3.8.1. Die frühere Angabe ECE R6 war nicht verifiziert und ist nicht einschlägig. R53 gilt für Krafträder, der Wert wird deshalb als **Analogie** übernommen, begründet über die Wiedererkennbarkeit des Signalbilds. | gesichert · Normbezug als Analogie |
 | CON-02 | PWM-Trägerfrequenz aller LED-Kanäle 5 kHz, 8 bit Auflösung. | gesichert |
 | FR-RF-01 | Kontinuierliche Überwachung GPIO4 (RCSwitch); nur bekannte Codes (T1=10967538, T2=10967537). | gesichert |
 | FR-RF-02 | Druck erst nach ≥ 2 identischen Empfängen gültig (Entprellung/EMV). | gesichert |
@@ -162,18 +170,26 @@ Vier parallele (orthogonale) Regionen (Statechart nach Harel; Diagramme in Kap. 
 | FR-TEL-03 | Frame-Inhalt: IMU, BMP, GNSS, Status; ab Schema v3 zusätzlich GNSS-Referenzbeschleunigung, Filter-Innensicht und 100-Hz-Fensteraggregate. Kein Akkustand. | gesichert |
 | FR-TEL-04 | Ohne BLE Pufferung im RAM-Ringpuffer; Überlauf überschreibt Ältestes. | gesichert |
 
-### 2.8 Normative Grundlagen der Lichtfunktionen [recherchiert 07/2026]
+### 2.8 Normative Grundlagen der Lichtfunktionen [am Primärtext geprüft 11.08.2026]
 
 | Norm | Gegenstand | Bezug im Projekt |
 |---|---|---|
+| § 67 Abs. 1 StVZO | nur bauartgenehmigte lichttechnische Einrichtungen (§ 22a) | Prototyp **nicht** bauartgenehmigt |
+| § 67 Abs. 2 Satz 5 StVZO | Kombinationsverbot für Fahrtrichtungsanzeiger | FR-BLK-* |
 | § 67 Abs. 3 StVZO | Scheinwerfer: Blinken unzulässig | – |
-| § 67 Abs. 4 StVZO | Rote Schlussleuchte (kein Blinken); Bremslichtfunktion zulässig (ECE R50) | FR-TL-01/04/06 konform; **FR-TL-07 Konflikt** |
-| § 67 Abs. 5 StVZO | Fahrtrichtungsanzeiger zulässig, gelb/amber | FR-BLK-* |
-| ECE R6 | Blinkfrequenz 1,5 Hz ± 0,5, Hellzeit > 0,3 s | FR-BLK-08 |
-| ECE R50 | Schluss-/Bremslichtfunktion | FR-TL-06 |
-| ECE R48 (nur Kfz) | Emergency Stop Signal — für Fahrräder nicht anwendbar | FR-TL-07 (Konzeptanker) |
+| § 67 Abs. 4 StVZO | Rote Schlussleuchte; Bremslichtfunktion **ausdrücklich erlaubt** (Verweis auf UN-R50); blinkende Schlussleuchten unzulässig | FR-TL-01/04/06 konform; **FR-TL-07 Konflikt** |
+| § 67 Abs. 5 StVZO | Fahrtrichtungsanzeiger **zulässig**, sofern nach UN-R50 oder UN-R148 genehmigt, nach UN-R74 angebaut und Bedienteile nach UN-R60 angeordnet | FR-BLK-*; Prototyp erfüllt keine der drei Bedingungen |
+| UN-R50 / UN-R148 | Genehmigung von Schluss-, Brems- und Fahrtrichtungsleuchten | von § 67 in Bezug genommen |
+| UN-R74 / UN-R60 | Anbau bzw. Anordnung der Bedienteile | von § 67 in Bezug genommen |
+| UN-R53 § 6.3.8.1 (Krafträder) | Blinkfrequenz 90 ± 30/min = 1,5 Hz ± 0,5 | FR-BLK-08 — **Analogie**, gilt nicht für Fahrräder |
+| UN-R53 § 6.14.7.1 (Krafträder) | Notbremssignal 4,0 ± 1,0 Hz | FR-TL-07 — **Analogie** |
+| UN-R13-H (Pkw) | Signalisierungsschwelle 1,3 m/s²; Hysterese gegen Flackern gefordert, Wert nicht geregelt | FR-TL-06 — **Analogie** |
 
-Hinweis: Sekundärquellen; für die Thesis am Primärtext (§ 67) gegenprüfen. Keine Rechtsberatung.
+**Korrektur 11.08.2026.** Die bis v0.20 geführte Referenz **ECE R6 ist nicht einschlägig**. Sie betrifft Fahrtrichtungsanzeiger an Kraftfahrzeugen und wird von § 67 StVZO nicht in Bezug genommen. Sie ist durch die oben genannten Regelungen ersetzt.
+
+**Zwei Feststellungen mit Bedeutung für die Thesis.** Erstens erlaubt § 67 Abs. 4 StVZO die Bremslichtfunktion an der Schlussleuchte ausdrücklich; das Vorhaben steht damit auf einer positiven Rechtsgrundlage und ist keine Grauzone. Zweitens lässt § 67 Abs. 5 StVZO Fahrtrichtungsanzeiger am Fahrrad ausdrücklich zu. Eine Einschränkung auf mehrspurige Fahrräder enthält der Wortlaut nicht. Die gegenteilige Aussage in `Parameterherleitung.md`, Abschnitt 13, ist falsch und dort zu korrigieren.
+
+**Quantitative Vorgaben macht § 67 StVZO nicht.** Weder Verzögerungsschwellen noch Haltezeiten, Reaktionszeiten oder Lichtstärken sind dort geregelt; die photometrischen Anforderungen sind über § 22a in die Bauartgenehmigung verlagert. Jeder normative Bezug auf eine UN-Regelung in diesem Projekt ist deshalb eine ingenieurtechnische Analogie und keine Rechtsgrundlage. Das ist in der Arbeit an jeder Stelle so zu kennzeichnen.
 
 ### 2.9 Fehlerbehandlung & Sicherheit — Block E
 
@@ -224,6 +240,31 @@ Hinweis: Sekundärquellen; für die Thesis am Primärtext (§ 67) gegenprüfen. 
 | NFR-EXT-01 | Modulare Struktur mit klaren Schnittstellen. | gesichert |
 | FR-TEL-06 | Telemetrie-Frame trägt eine Schema-/Versionskennung. | gesichert (aktuell Schema v3, 113 Byte) |
 
+### 2.13 Konstruktive Anforderungen — Block K [neu, 11.08.2026]
+
+Dieser Block stand **nicht** am Anfang der Entwicklung. Die konstruktiven Anforderungen wurden abgeleitet, nachdem der Aufbau der Elektronik feststand. Erst mit festgelegter Bauteilauswahl, Verschaltung und Strombilanz war bestimmbar, welchen Bauraum, welche Zugänglichkeiten und welche thermischen Randbedingungen ein Gehäuse erfüllen muss. Das Vorgehen ist bewusst so dokumentiert und in der Thesis auch so darzustellen.
+
+Für diese Gruppe wird zusätzlich zwischen **Forderung (F)** und **Wunsch (W)** unterschieden, angelehnt an die Anforderungsliste nach VDI 2221. Für die übrigen Blöcke gilt diese Unterscheidung nicht.
+
+| ID | Anforderung | Art | Grundlage |
+|---|---|---|---|
+| KON-01 | Alle Baugruppen sind in einem geschlossenen Gehäuse unterzubringen. Die Außenmaße folgen aus der Anordnung der Elektronik. | F | Bauteilübersicht Kap. 4.1 |
+| KON-02 | Der Ladeanschluss (USB-C an U1) muss von außen zugänglich sein, ohne das Gehäuse zu öffnen. | F | Kap. 4.1 |
+| KON-03 | Der Ein- und Ausschalter SW1 muss von außen bedienbar sein. | F | Kap. 4.1 |
+| KON-04 | Der Programmieranschluss des DevKitC ist im montierten Zustand bewusst nicht zugänglich. | F | Kap. 4.1 |
+| KON-05 | Die Antenne des GNSS-Moduls benötigt freie Sicht nach oben und ein nichtmetallisches Gehäuse im Antennenbereich. | F | L86-Datenblatt, Kap. 8 |
+| KON-06 | Der Gehäusewerkstoff muss die Wärmeentwicklung der Vorwiderstandsnetze RN1–RN3 und der Transistoren Q1–Q3 ertragen, ohne sich zu verformen. | F | Kap. 5.4 |
+| KON-07 | Die Verbindungstechnik muss wiederholtes Öffnen und Schließen ohne Festigkeitsverlust erlauben. | F | Kap. 8 |
+| KON-08 | Die Lichtaustrittsflächen müssen so angeordnet sein, dass die rote Leuchte nach hinten und die beiden gelben Leuchten als Richtungsanzeige erkennbar wirken. | F | Funktion, FR-TL-01, FR-BLK-* |
+| KON-09 | Die innere Kabelführung soll definiert sein und die Montage nicht behindern. | W | Kap. 8 |
+| KON-10 | Das Gehäuse soll fertigungsgerecht für das FDM-Verfahren gestaltet sein. | W | Kap. 8 |
+
+**Systemgrenze Trockenbetrieb [festgelegt 11.08.2026].** Für das System wurden **keine Umgebungsanforderungen** festgelegt. Weder ein Temperaturbereich noch ein Schutz gegen Feuchtigkeit oder Spritzwasser sind spezifiziert, und ein entsprechender Nachweis wurde nicht geführt. Der Prototyp ist damit ausdrücklich für den **Trockenbetrieb** ausgelegt. Ein dichtes Gehäuse ist für ein Serienprodukt erforderlich und wird als Ausblick geführt. Diese Festlegung ersetzt die bisher unausgesprochene Annahme einer Outdoor-Tauglichkeit.
+
+**Anzahl der Anforderungen insgesamt:** 79 eindeutige Einträge — 51 FR, 13 NFR, 10 KON, 3 CON, 2 OUT.
+
+**Offen:** Die konkreten Maße, Wandstärken, Druckparameter und die Befestigungsart am Fahrrad sind nicht Teil der Anforderungen, sondern Ergebnis der Konstruktion und in Kap. 8 nachzutragen. Ebenfalls offen ist die Nachweisart je Anforderung (Analyse, Inspektion, Test, Messung) für die Nachweismatrix in Anhang B der Thesis.
+
 ---
 
 ## 3. Gesamtsystem
@@ -254,28 +295,28 @@ I²C (Sensoren), UART2 (GNSS), UART0 (Debug/Konfig), digitaler GPIO-Eingang (RF)
 
 | Ref. | Bauteil | Hersteller/Typ | Funktion | Versorgung / Schnittstelle | Status |
 |---|---|---|---|---|---|
-| U3 | **Espressif ESP32-DevKitC-32E (WROOM-32E)** | Espressif | Hauptrechner, AMS1117-3.3 onboard | VIN 5 V → 3V3 | Board-Tausch ausgeführt und validiert (`docs/ble_brownout_fallstudie.md`) |
+| U3 | **Espressif ESP32-DevKitC-32E (WROOM-32E)** | Espressif | Hauptrechner, AMS1117-3.3 onboard | VIN 5 V → 3V3 | Board-Tausch ausgeführt und validiert (`docs/ble_brownout_fallstudie.md`). **Ersetzt** das ursprünglich verbaute **AZ-Delivery ESP-32 Dev Kit C V2** (Anleitung AZ281). **Beide Boards tragen denselben Reglertyp AMS1117-3.3**; der Brownout war damit keine Eigenschaft des Reglertyps, sondern eine Grenze oder ein Defekt des konkreten Altboards |
 | IC2 | MPU-6050 (GY-521) | AZ-Delivery | IMU | **+3V3**, I²C 0x68 (AD0 modulseitig auf GND) | validiert |
 | IC3 | BMP280 | AZ-Delivery | Barometer | **+3V3**, I²C 0x76 | validiert |
-| IC4 | Quectel L86-M33 | Quectel | GNSS GPS+GLONASS | **+3V3** an VCC **und** V_BCKP, UART 9600 Bd | validiert (Feldfix erreicht) |
-| U4 | SRX882S V2.0 | – | 433-MHz-Empfänger, superheterodyn | **+3V3** an VCC **und** CS, DATA → GPIO4 | validiert |
-| — | QIACHIP-Fernbedienung (2 Tasten) | QIACHIP | Blinkerauslösung | eigene Batterie, 433 MHz ASK | validiert (10967538 / 10967537) |
+| IC4 | Quectel L86-M33 | Quectel | GNSS. **Empfang von GPS und GLONASS auf L1** (Datenblatt Tab. 1). SBAS und QZSS werden zusätzlich unterstützt, am Einsatzort ist davon **nur SBAS in Form von EGNOS wirksam**, weil QZSS ein regionales System über Asien und Ozeanien ist | **+3V3** an VCC **und** V_BCKP, UART 9600 Bd | validiert (Feldfix erreicht) |
+| U4 | SRX882S V2.0 | NiceRF | **Empfangsseite.** 433-MHz-Überlagerungsempfänger für ASK/OOK. Datenblatt Rev. V1.0 seit 11.08.2026 abgelegt: f = 433,92 MHz typ., Bandbreite 200 kHz, Empfindlichkeit **−107 dBm** bei 1 kbit/s, 0,1–9,6 kbit/s, 2,0–5,5 V, < 3 mA im Betrieb, < 0,1 µA bei CS = 0, Einschaltzeit < 3 ms | **+3V3** an VCC **und** CS, DATA → GPIO4 | validiert |
+| — | QIACHIP-Fernbedienung (2 Tasten), Codierbaustein PT2262 | QIACHIP | **Sendeseite, Kaufteil.** Blinkerauslösung. Die früher als Widerspruch geführte Doppelbezeichnung „SRX882S vs. PT2262" ist damit aufgelöst: PT2262 sitzt im Handsender, SRX882S ist der Empfänger im Gerät. Konformität der Sendeparameter beruht auf der CE-Kennzeichnung, ein eigener Nachweis wurde nicht geführt | eigene Batterie, 433 MHz ASK | validiert (10967538 / 10967537) |
 | Q1–Q3 | IRLZ44N (3×) | Int. Rectifier | Low-Side-PWM-Treiber | Gate an GPIO über 100 Ω | validiert |
 | R1/R3/R5 | 100 Ω (3×) | – | Gate-Serienwiderstand | – | verbaut |
-| R2/R4/R6 | 10 kΩ (3×) | – | Gate-Pull-Down gegen GND | – | verbaut |
+| ~~R2/R4/R6~~ | ~~10 kΩ (3×)~~ | – | ~~Gate-Pull-Down gegen GND~~ | – | **nicht bestückt (Korrektur 13.08.2026).** Schaltplan Rev. 1.3 führt das als Befund B-9. Die frühere Angabe „real verbaut" aus der Projektanalyse vom 21.07.2026 ist damit überholt |
 | RN1–RN3 | je 8 × 100 Ω parallel = 12,5 Ω | – | Strombegrenzung je LED-Kanal | in Reihe zur LED | verbaut |
-| D1 | **LED rot, 3-W-COB** | Vrabocry | Schluss- + Bremslicht (GPIO26) | Anode an **+5 V**, PWM über Q2 | **Bestückung geklärt 09.08.2026** |
+| D1 | **LED rot, 3 W** | Vrabocry | Schluss- + Bremslicht (GPIO26) | Anode an **+5 V**, PWM über Q2 | **Bestückung geklärt 09.08.2026.** Kennwerte nach typgleichem Vergleichsbauteil NTE30180-R: Dauerstrom 800 mA, V_f 2,0–2,6 V bei 400 mA, 620–630 nm, 90 lm typ. bei 800 mA, T_J typ. 115 °C gegen Grenzwert 120 °C |
 | D2/D3 | **LEDs gelb, 3-W-COB** | Vrabocry | Blinker links/rechts (GPIO25/27) | Anode an **+5 V**, PWM über Q1/Q3 | **Bestückung geklärt 09.08.2026** |
 | U1 | TP4056 Typ-C (DW01) | – | LiPo-Laderegler 1 A | USB-C, von außen zugänglich | verbaut; Verhalten unter Last unverifiziert |
 | U2 | MT3608 Step-Up | AZ-Delivery | 3,7 V → 5,00 V (Trimmer) | von U1 OUT+ | verbaut; unter Last nicht abgeglichen |
 | BT1 | LiPo-Akku LP103454, 3,7 V, 2000 mAh | – | Energiespeicher | B+/B− an U1 | verbaut |
-| SW1 | Rastender Drucktaster IP65, 8 mm | – | Ein/Aus | **im Akkupfad zwischen U1 OUT+ und U2 VIN+**; trennt den Eingang des Wandlers, dadurch ist die gesamte +5-V-Schiene stromlos | verbaut, im Schaltplan geführt; Nennstrom nicht belegt (Befund B-6) |
+| SW1 | **Wippschalter KCD1-2** | – | Ein/Aus | **im Akkupfad zwischen U1 OUT+ und U2 VIN+**; trennt den Eingang des Wandlers, dadurch ist die gesamte +5-V-Schiene stromlos | verbaut. **Korrektur 13.08.2026:** bis v0.22 als rastender Drucktaster IP65 geführt, tatsächlich ein Wippschalter. Das Typenschild nennt 6 A / 250 V AC und 10 A / 125 V AC; eine **Gleichstromangabe fehlt**, Befund B-6 bleibt offen |
 | C1 | Elko 1000 µF | – | Pufferung Reglereingang | +5 V ↔ GND | verbaut |
 | C2 | Elko 1000 µF | – | Pufferung Reglerausgang | +3V3 ↔ GND | verbaut |
-| ANT2 | Drahtantenne 17,3 cm (λ/4) | – | 433-MHz-Empfang | an U4 ANT | verbaut |
+| ~~ANT2~~ | ~~Drahtantenne 17,3 cm (λ/4)~~ | – | – | – | **nicht verbaut (verbindlich festgelegt 12.08.2026).** U4 ANT ist unbeschaltet, der Empfang erfolgt über die Anschlussflächen des Moduls. Das weicht von der Herstellervorgabe einer 50-Ω-Antenne ab. Die Beobachtung, dass der Empfang **mit** Draht schlechter war, bleibt bestehen und ist unerklärt. Aus der BOM zu streichen |
 | ~~ANT1~~ | ~~GNSS-Antenne Namvo~~ | Namvo | – | – | **nicht verbaut.** Der L86 nutzt seine interne Patch-Antenne (18,4 × 18,4 × 4 mm); EX_ANT ist unbeschaltet. Aus der BOM zu streichen. |
 
-**Anmerkungen.** Alle drei LED-Kanäle sind mit dem 3-W-COB-Bauteil bestückt und werden bewusst mit rund 224 mA statt des Nennstroms von 400–500 mA betrieben (thermische Reserve im gedruckten Gehäuse, Werkstoff PETG — s. Kap. 8). Sämtliche Peripheriemodule liegen an +3,3 V; dadurch ist an keiner Schnittstelle eine Pegelwandlung erforderlich. Der Micro-USB-Anschluss des DevKitC dient ausschließlich der Programmierung und ist im montierten Zustand nicht zugänglich; beim Flashen wird der Akkupfad getrennt.
+**Anmerkungen.** Alle drei LED-Kanäle sind mit dem 3-W-Bauteil bestückt und werden bewusst mit **208 bis 240 mA (Rechenwert 224 mA)** statt des Dauerstroms von **800 mA** betrieben (thermische Reserve im gedruckten Gehäuse, Werkstoff PETG — s. Kap. 8). **Korrektur 13.08.2026:** Bis v0.22 stand hier ein Nennstrom von 400–500 mA. Das Datenblatt des typgleichen Vergleichsbauteils nennt 800 mA Dauerstrom, die Reduktion ist also stärker als bisher dokumentiert. Sie ist zugleich die Voraussetzung für den Einbau in ein geschlossenes Kunststoffgehäuse, weil die Sperrschichttemperatur bei Dauerstrom mit typisch 115 °C nur 5 K unter dem Grenzwert liegt. Sämtliche Peripheriemodule liegen an +3,3 V; dadurch ist an keiner Schnittstelle eine Pegelwandlung erforderlich. Der Micro-USB-Anschluss des DevKitC dient ausschließlich der Programmierung und ist im montierten Zustand nicht zugänglich; beim Flashen wird der Akkupfad getrennt.
 
 ### 4.2 Pinbelegung [gesichert]
 
@@ -290,7 +331,7 @@ I²C (Sensoren), UART2 (GNSS), UART0 (Debug/Konfig), digitaler GPIO-Eingang (RF)
 | Bremslicht (PWM) | GPIO26 | Q2 Gate | gesichert |
 | Blinker rechts | GPIO27 | Q3 Gate | gesichert |
 | Gate-Widerstand | 100 Ω | alle 3 Gates | gesichert |
-| Gate-Pull-Down | 10 kΩ → GND | alle 3 Gates | gesichert, im Schaltplan geführt |
+| ~~Gate-Pull-Down~~ | ~~10 kΩ → GND~~ | – | **nicht bestückt**, s. Kap. 4.1 und Befund B-9 |
 
 Der MPU6050-INT-Pin bleibt unbeschaltet (GPIO4 durch RF belegt) → Polling. Die Strapping-Pins GPIO0, 2, 5, 12 und 15 sind frei. GPIO16/17 sind beim WROOM-32E ohne Einschränkung nutzbar (die bekannte PSRAM-Belegung betrifft nur WROVER-Module). Pinbelegung im Code: `firmware/include/pins.h`.
 
@@ -354,7 +395,7 @@ SW1 sitzt im Akkupfad **vor** dem Aufwärtswandler und trennt dessen Eingang. Im
 
 > **Korrekturhinweis.** Die Bilanz der Versionen bis 0.16 addierte Ströme aus der 3,3-V- und der 5-V-Domäne und teilte die Summe durch eine bei 3,7 V geltende Kapazität. Das ist methodisch unzulässig. Zusätzlich war der LED-Strom mit 50 mA um den Faktor 4,5 zu niedrig angesetzt. Die daraus abgeleiteten ~13 h sind zurückgezogen.
 
-Grundlage: I_LED = (5 V − V_f)/12,5 Ω = **224 mA** je Kanal bei V_f = 2,2 V [Annahme, Mittelwert der Produktangabe 2,0–2,4 V]. ESP32 mit Sensorik: 113 mA an 5 V. Wirkungsgrad MT3608: η = 0,90 [Annahme].
+Grundlage: I_LED = (5 V − V_f)/12,5 Ω. Mit V_f = 2,0 bis 2,4 V ergibt sich eine Spanne von **208 bis 240 mA** je Kanal, als Rechenwert wird **224 mA** bei V_f = 2,2 V geführt [belegte Spanne aus NTE30180-R und der Angebotsangabe zur gelben Leuchte, Einzelwert weiterhin Annahme]. ESP32 mit Sensorik: 113 mA an 5 V. Wirkungsgrad MT3608: **η = 0,90 [Annahme]**. Das Datenblatt des Moduls nennt ausschließlich einen Bestwert von „bis zu 97 %" ohne Angabe von Eingangsspannung, Ausgangsspannung und Laststrom und ohne Wirkungsgradkurve. Dieser Wert ist für den Arbeitspunkt 3,7 → 5 V bei bis zu 1,18 A nicht übertragbar und wird deshalb **nicht** verwendet.
 
 | Betriebsfall | Entnahme an +5 V | Leistung | Strom aus BT1 |
 |---|---|---|---|
@@ -364,14 +405,14 @@ Grundlage: I_LED = (5 V − V_f)/12,5 Ω = **224 mA** je Kanal bei V_f = 2,2 V [
 
 Der Worst-Case-Strom von 1,18 A fließt vollständig über SW1, da der Schalter im Akkupfad sitzt.
 
-**Rechnerische Laufzeit im Dauerbetrieb mit Schlusslicht: rund 8 h.** Messtechnische Verifikation weiterhin erforderlich (NFR-PWR-02). Der Worst-Case-Eingangsstrom von 1,18 A ist der maßgebliche Lastfall für die Beurteilung des MT3608 (Kap. 12).
+**Rechnerische Laufzeit im Dauerbetrieb mit Schlusslicht: rund 8 h.** Für η zwischen 0,85 und 0,95 verschiebt sich der Wert auf **7,9 bis 8,8 h**; die Aussage ist gegenüber der Wirkungsgradannahme also robust. Messtechnische Verifikation weiterhin erforderlich (NFR-PWR-02). Der Worst-Case-Eingangsstrom von 1,18 A ist der maßgebliche Lastfall für die Beurteilung des MT3608 (Kap. 12).
 
 ### 5.3 Hinweis zur Zustandsüberwachung
 Keine Batteriespannungsmessung (OUT-01). Ladezustand nur über das USB-C-/TP4056-Modul. Konsequenz: keine Low-Battery-Warnung durch die Firmware.
 
 ### 5.4 Schaltplan Rev. 1.0 [neu, 09.08.2026]
 
-Der Schaltplan liegt erstmals in einer Fassung vor, die dem realen Aufbau entspricht: `hardware/schaltplan_fahrrad_ruecklichtsystem.kicad_sch` (KiCad 7, bearbeitbar, Symbolbibliothek eingebettet) mit PDF-Export in A4 Querformat. **Rev. 1.1 (09.08.2026)** korrigiert die Position von SW1 gegenüber der Erstfassung. Begleitdokumentation: `claude/Schaltplan_Dokumentation.md`.
+Der Schaltplan liegt in einer Fassung vor, die dem realen Aufbau entspricht: `hardware/schaltplan_fahrrad_ruecklichtsystem.kicad_sch` (KiCad 7, bearbeitbar, Symbolbibliothek eingebettet) mit PDF-Export in A4 Querformat. Rev. 1.1 (09.08.2026) korrigierte die Position von SW1. **Gültiger Stand ist Rev. 1.3 vom 10.08.2026**; sie führt den nicht bestückten Antennendraht, die nicht bestückten Gate-Ableitwiderstände (Befund B-9) und den unbeschalteten EX_ANT-Anschluss des L86 ausdrücklich als dokumentierten Aufbaustand. Begleitdokumentation: `claude/Schaltplan_Dokumentation.md`.
 
 Der frühere Schaltplan v2 vom 20.05.2026 ist damit **überholt**. Seine drei dokumentierten Fehler (RF an GPIO34 statt GPIO4, vertauschte Kanäle GPIO25/26, fehlende Gate-Pull-Downs) sowie die fehlenden Positionen SW1 und Entkopplungskondensatoren sind in Rev. 1.0 bereinigt.
 
@@ -388,11 +429,21 @@ Der frühere Schaltplan v2 vom 20.05.2026 ist damit **überholt**. Seine drei do
 | B-3 | Die Last hängt an OUT+; im Ladebetrieb speist der TP4056 gleichzeitig Akku und System. Der Laststrom fließt durch die Strommessung des Ladereglers, die Abschalterkennung kann dadurch gestört werden. | bekannte Topologieeigenschaft, dokumentieren |
 | B-4 | Das L86-Datenblatt (Kap. 3.3) empfiehlt 10 µF und 100 nF unmittelbar am VCC-Pin. Verbaut sind nur die beiden 1000-µF-Elkos an den Schienen; Elektrolytkondensatoren sind oberhalb einiger 10 kHz unwirksam. | dokumentierte Abweichung |
 | B-5 | Kein Verpolungs- und kein Überstromschutz. Ein Kurzschluss im LED-Zweig würde nur durch die Strombegrenzung des MT3608 und den DW01 begrenzt. | bestätigter Aufbaustand (Kap. 12) |
-| B-6 | SW1 liegt im Akkupfad und führt damit den Eingangsstrom des Wandlers: im Worst Case **1,18 A** bei 3,7–4,2 V statt 0,79 A auf der 5-V-Seite. Für den verbauten 8-mm-Drucktaster liegt kein Datenblatt vor; Nennstrom und Kontaktwiderstand sind unbelegt. Ein erhöhter Kontaktwiderstand wirkt hier zusätzlich direkt auf den Eingangsspannungsbereich des MT3608. | **zu prüfen** (Kap. 11.2) |
+| B-6 | SW1 liegt im Akkupfad und führt damit den Eingangsstrom des Wandlers: im Worst Case **1,18 A** bei 3,7–4,2 V statt 0,79 A auf der 5-V-Seite. Verbaut ist ein Wippschalter KCD1-2; das Typenschild nennt nur Wechselstromwerte (6 A / 250 V AC, 10 A / 125 V AC), eine **Gleichstromangabe fehlt**. Ein erhöhter Kontaktwiderstand wirkt hier zusätzlich direkt auf den Eingangsspannungsbereich des MT3608. | **zu prüfen** (Kap. 11.2) |
+| **B-9** | **Die Gate-Ableitwiderstände R2/R4/R6 sind nicht bestückt.** Das Gate hängt nur über den 100-Ω-Serienwiderstand am GPIO. Während Reset und Hochlauf sind die GPIO Eingänge, das Gate ist in dieser Zeit hochohmig und der Zustand der drei Leuchten damit nicht definiert. | **Abweichung, dokumentiert (13.08.2026).** Im Betrieb kein auffälliges Verhalten beobachtet; das Init-Diagnose-Blinken überdeckt das Zeitfenster. Nachrüstung als Ausblick. Auf Entscheidung des Verfassers **nicht Gegenstand des Thesis-Texts**, aber im Schaltplan vermerkt |
 
-**Als unkritisch geprüft:** GPIO-Belegung (acht verschiedene Pins, kein Strapping-Pin betroffen), I²C (Adressen 0x68/0x76 kollisionsfrei; zwei modulinterne Pull-Ups von je typisch 4,7 kΩ ergeben parallel 2,35 kΩ → 1,4 mA Low-Strom und rund 0,1 µs Anstiegszeit, beides weit innerhalb der Spezifikation), UART-Kreuzung (korrekt), MOSFET-Ansteuerung (V_GS(th) 1,0–2,0 V, bei 3,3 V und 224 mA rund 2,5 mW Verlustleistung; Gate-Zeitkonstante 0,33 µs gegen 200 µs Periodendauer), LED-Vorwiderstände (0,63 W je Kanal auf acht Bauteile verteilt, 31 % Auslastung bei 0,25-W-Typen).
+**Als unkritisch geprüft:** GPIO-Belegung (acht verschiedene Pins, kein Strapping-Pin betroffen), I²C (Adressen 0x68/0x76 kollisionsfrei; zwei modulinterne Pull-Ups von je typisch 4,7 kΩ ergeben parallel 2,35 kΩ → 1,4 mA Low-Strom und rund 0,1 µs Anstiegszeit, beides weit innerhalb der Spezifikation), UART-Kreuzung (korrekt), MOSFET-Ansteuerung (**neu bewertet 11.08.2026, s. Befunde P-1 bis P-3 unten**), LED-Vorwiderstände (0,63 W je Kanal auf acht Bauteile verteilt, 31 % Auslastung bei 0,25-W-Typen).
 
-**Thermische Stabilität der Vorwiderstandslösung [neu bewertet].** Mit I = (5 V − V_f)/12,5 Ω und dV_f/dT ≈ −2 mV/K ergibt sich dI/dT = 0,16 mA/K; über 50 K Erwärmung steigt der Strom um 8 mA, also um 3,6 %. Über dem Widerstand fallen mit 2,8 V mehr Spannung ab als über der LED mit 2,2 V, die Schaltung ist dadurch hinreichend steif. **Ein thermisches Weglaufen ist bei dieser Dimensionierung nicht zu erwarten**; das Risiko wird in Kap. 12 entsprechend herabgestuft.
+**Thermische Stabilität der Vorwiderstandslösung [belegt 11.08.2026].** Mit I = (5 V − V_f)/12,5 Ω und dem für Leuchtdioden belegten Temperaturkoeffizienten dV_f/dT ≈ **−1 mV/K** [Hering u. a., 8. Aufl., S. 325] ergibt sich dI/dT = **0,08 mA/K**. Über 50 K Erwärmung steigt der Strom damit um 4 mA, also um **1,8 %**. Über dem Widerstand fallen mit 2,8 V mehr Spannung ab als über der LED mit 2,2 V, die Schaltung ist dadurch hinreichend steif. **Ein thermisches Weglaufen ist bei dieser Dimensionierung nicht zu erwarten**; das Risiko ist in Kap. 12 herabgestuft. Die bis v0.20 verwendeten −2 mV/K sind der Wert für Silizium-Kleinsignaldioden und waren für eine Leuchtdiode zu groß angesetzt; die Aussage wird durch die Korrektur stärker, nicht schwächer.
+
+**Befunde aus der Datenblattprüfung des IRLZ44N [neu, 11.08.2026].**
+
+| Nr. | Befund | Folge |
+|---|---|---|
+| P-1 | Die bis v0.20 verwendete Eingangskapazität von 3,3 nF steht nicht im Datenblatt. Angegeben sind C_iss = 1700 pF typ. bei V_DS = 25 V (Abb. 5: rund 2400 pF bei V_DS = 1 V). Zudem ist die RC-Abschätzung das falsche Modell; maßgeblich ist die Gate-Ladung. | Mit Q_gs + Q_gd = 33,6 nC und 18 bis 33 mA Gate-Strom folgen **1,0 bis 1,9 µs** statt der dokumentierten 0,33 µs. Die Schlussfolgerung „unter 1 % der Periodendauer von 200 µs" bleibt gültig, die Herleitung ist zu ersetzen. |
+| P-2 | R_DS(on) ist bei V_GS = 3,3 V **nicht spezifiziert**. Der niedrigste angegebene Wert gilt für V_GS = 4,0 V mit 0,035 Ω max. | Die verwendeten 0,05 Ω sind eine Extrapolation und als **Annahme** zu kennzeichnen. Die Aussage bleibt robust: selbst mit 0,2 Ω sind es bei 224 mA nur 10 mW, bei R_thJA = 62 K/W also 0,6 K Übertemperatur. |
+| P-3 | V_GS(th) = 1,0…2,0 V ist bei I_D = 250 µA definiert und markiert den Einsatz der Leitfähigkeit, nicht die volle Durchsteuerung. | Tragfähig ist das Argument über den Laststrom: die Plateauspannung liegt bei V_GS(th) + I_D/g_fs; mit g_fs = 21 S trägt der zweite Term bei 224 mA nur rund **11 mV** bei. Der Transistor arbeitet bei 3,3 V damit tief im ohmschen Bereich. |
+| P-4 | Der Temperaturkoeffizient der LED-Durchlassspannung beträgt **−1 mV/K**, nicht −2 mV/K. | s. Absatz oben. |
 
 ---
 
@@ -567,7 +618,7 @@ Gratis-Weg über ein Personal Team. Installation per USB aus Xcode; Profil läuf
 
 Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/Wartung, Kabelführung, Bauraum, Wärmeabfuhr (Werkstoffgrenzen PETG), Schraubverbindungen, Vibrationsfestigkeit, Feuchtigkeit/Outdoor. Bauraum-Referenz Akku: LP103454 (10,3 × 34 × 54 mm).
 
-**Werkstoff [gesichert, 10.08.2026]:** Das Gehäuse wird im FDM-Verfahren aus **PETG** gefertigt, nicht aus PLA. Frühere Fassungen dieser Bible nannten durchgängig PLA; das war eine Fehlangabe. Die Korrektur ist thermisch relevant: PETG besitzt eine höhere Glasübergangstemperatur als PLA und ist zäher sowie witterungsbeständiger, was für den Outdoor-Einsatz und für die Nähe zur Leistungs-LED günstiger ist. Die Auslegung des LED-Stroms auf rund 224 mA statt des Nennstroms bleibt davon unberührt und ist weiterhin in Kap. 5.4 begründet.
+**Werkstoff [gesichert, 10.08.2026 · Begründung präzisiert 11.08.2026]:** Das Gehäuse wird im FDM-Verfahren aus **PETG** gefertigt, nicht aus PLA. Frühere Fassungen dieser Bible nannten durchgängig PLA; das war eine Fehlangabe. **Tragende Begründung ist die thermische Belastung** nach KON-06: Die Vorwiderstandsnetze RN1–RN3 und die Transistoren Q1–Q3 sind die einzige nennenswerte Verlustleistungsquelle im Gerät, und PETG besitzt eine höhere Glasübergangstemperatur als PLA. **Ergänzung 13.08.2026:** Der zweite Teil derselben Begründung ist die Stromreduktion der Leuchten. Das Datenblatt des typgleichen Vergleichsbauteils gibt bei Dauerstrom eine Sperrschichttemperatur von typisch 115 °C gegen einen Grenzwert von 120 °C an. Bei Nennstrom bliebe in einem geschlossenen Kunststoffgehäuse also praktisch keine Reserve. Erst der Betrieb bei rund einem Viertel des Dauerstroms macht die gewählte Bauweise tragfähig. Die höhere Zähigkeit und die Witterungsbeständigkeit sind willkommene Nebeneffekte, aber **keine** Begründung, weil ihnen keine Anforderung gegenübersteht — für das System sind keine Umgebungsanforderungen festgelegt (Kap. 2.13, Systemgrenze Trockenbetrieb). Die Auslegung des LED-Stroms auf rund 224 mA statt des Nennstroms bleibt davon unberührt und ist in Kap. 5.4 begründet.
 
 **Verbindungstechnik [gesichert, 10.08.2026]:** Gehäuse und Lochrasterplatine werden verschraubt. Eingesetzt werden **Einschmelzgewinde M3 × 5 × 5** in den gedruckten Bauteilen sowie Schrauben **M3 × 6** und **M3 × 8**.
 
@@ -585,6 +636,7 @@ Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/Wartung, Kabelführ
 |---|---|
 | ESP32-Grundfunktion | ✅ validiert |
 | SRX882S RF-Empfang · Fernbedienungscodes | ✅ validiert |
+| **Reichweite und Erkennungsrate der Funkstrecke** | ✅ **erstmals gemessen (12.08.2026, Kap. 9.6).** In Einbaulage 19/20 und 18/20 erkannte Tastendrücke, Reichweite bis 3 m gesichert. Ohne Drahtantenne, Körper im Signalweg |
 | Fernbedienung Kurz-/Langdruck- & Wiederhol-Timing | ⚠️ **abgegrenzt (Kap. 12.2)** — im Feldbetrieb ohne Fehlfunktion bestätigt, systematische Messung des Wiederholintervalls nicht Teil des Arbeitsumfangs |
 | BMP280 (I²C 0x76), FORCED-Mode | ✅ validiert (Befund s. 9.1); Plausibilitätsprüfung/Recovery abgegrenzt (Kap. 12.2) |
 | MPU6050 (I²C 0x68) | ✅ validiert |
@@ -597,14 +649,14 @@ Zu berücksichtigen: additive Fertigung, Toleranzen, Montage/Wartung, Kabelführ
 | Bias-Kalibrierung / Nickwinkel-Verankerung | ✅ im Feld wirksam (`bias_calibrated` ab dem ersten Frame) |
 | Feldkalibrierung der Bremsschwellen | ⚠️ **abgegrenzt** (Umfangsschnitt 07.08.2026); Verhalten dokumentiert statt iteriert |
 | GPS L86 – NMEA/UART · GPS-Fix (Freiland) | ✅ validiert |
-| GNSS-Integrität unter Abschattung | ❌ kritischer Befund (Kap. 9.4) — Qualitätsflaggen erkennen falsche Navigationslösung nicht |
+| GNSS-Integrität unter Abschattung | ⚠️ **ungeprüft.** Der Abschattungsversuch fand im bewegten Zustand statt und ist ergebnislos; der frühere kritische Befund ist zurückgezogen (Kap. 9.4). Eine Integritätsprüfung liegt damit nicht vor |
 | PlatformIO-Umgebung, Host-Unit-Tests | ✅ **126/126 grün** (Commit `835c7b3`) |
 | Golden-Vektor-Kreuztest Firmware ↔ App | ✅ bestanden |
 | R1-Lebenszyklus · R2-Zustandslogik | ✅ HW-validiert |
 | Blinker-Funktion | ✅ HW-validiert; physische L/R-Zuordnung ❌ offen |
 | I²C-Bus-Recovery · Watchdog-Reset · Fail-Safe | ✅ per Fehlerinjektion verifiziert |
 | BLE-Transport · iOS-App gegen reale Verbindung | ✅ validiert |
-| **Schaltplan Rev. 1.1, Verbindungsprüfung** | ✅ **maschinell über die Netzliste geprüft (Kap. 5.4)**; 32 Netze, keine unerwarteten Einzelknoten |
+| **Schaltplan Rev. 1.3, Verbindungsprüfung** | ✅ **maschinell über die Netzliste geprüft (Kap. 5.4)**; 28 Bauteile, 32 Netze, keine unerwarteten Einzelknoten |
 | Energiebilanz/Laufzeit unter realen Lastfällen | ❌ offen — Messung (NFR-PWR-02) |
 | Brown-Out unter realer LED-Lastspitze | ❌ offen |
 | Verlustleistung AMS1117 unter Spitzenlast (B-2) | ❌ offen — Messung |
@@ -637,7 +689,7 @@ Nachweis der Bremslicht-Regellogik (FR-TL-06), ihres zeitlichen Verhaltens (NFR-
 
 > Vollständige Auswertung: `claude/Feldtest_2026-08-06_Auswertung.md`.
 
-**Versuch.** Sechs Fahrten am 06.08.2026 (öffentliche Straße, ~5,1 km). Fahrten 1–3 Normalbetrieb, Fahrt 4 Neigungstest, Fahrten 5–6 GNSS-Abschattungstest. Aufzeichnung über die iOS-App (1 Hz, Schema v2), Referenz zusätzlich Strava.
+**Versuch.** Sechs Fahrten am 06.08.2026 (öffentliche Straße, ~5,1 km). Fahrten 1–3 Normalbetrieb, Fahrt 4 Neigungstest, Fahrten 5–6 GNSS-Abschattungstest. Aufzeichnung über die iOS-App (1 Hz, Schema v2), Referenz zusätzlich Strava. **Fahrt 5 wurde aus dem fahrenden Auto durchgeführt** und diente allein der Prüfung, ob das System auch bei abgedeckter Antenne weiterarbeitet [Klarstellung des Verfassers, 12.08.2026].
 
 **Validität der Messkette [gesichert].** Distanzvergleich App gegen Strava: −7,0 %…+0,4 %.
 
@@ -653,7 +705,16 @@ Nachweis der Bremslicht-Regellogik (FR-TL-06), ihres zeitlichen Verhaltens (NFR-
 
 *Abgrenzung.* Der Sensor ist nicht die Ursache; fehlerhaft war ausschließlich die Signalaufbereitung zwischen Rohdaten und Kennlinie.
 
-**GNSS-Bewertung [gesichert].** Das GNSS ist als primäre Bremsquelle nicht tragfähig: Bandbreite (L86 maximal 10 Hz), Latenz (200–400 ms = 5–8× NFR-RT-01), Integrität (bei Abschattung `FIX_OK`, 12–15 Satelliten und HDOP ≤ 0,8 bei 73 km/h Scheingeschwindigkeit im Stand) und Rauschen (90-%-Quantil der differenzierten Geschwindigkeit bis 1,97 m/s²). Es eignet sich als langsame, hochgenaue Stütz- und Referenzgröße.
+**GNSS-Bewertung [gesichert].** Das GNSS ist als primäre Bremsquelle nicht tragfähig. Vier voneinander unabhängige Gründe:
+
+1. **Ratengrenze des Empfängers** — maximal 10 Hz gegen geforderte 100 Hz [Datenblatt Tab. 1, S. 9]. Davon **unabhängig** begrenzt die serielle Schnittstelle: sie läuft im Auslieferzustand mit 9600 bit/s, und das Datenblatt vermerkt, dass die Standard-Satzfolge bei 4800 bit/s schon bei 1 Hz Daten verliert [S. 23]. Rate und Schnittstelle sind zwei getrennte Grenzen und dürfen nicht vermengt werden.
+2. **Latenz** — **[Korrektur 13.08.2026]** Die bis v0.22 geführten 200–400 ms waren eine **eigene Abschätzung** und sind im Datenblatt nicht enthalten; es macht zur Ausgabeverzögerung überhaupt keine Angabe. Die Schätzung war zudem zu günstig, weil sie Übertragung und Leseperiode überging. Maßgeblich ist der an der Messfahrt vom 08.08.2026 bestimmte **Versatz von 1,6 bis 2,0 s** zwischen Inertialsignal und GNSS-Referenz, von dem ein Teil auf die Mittelungsbreite des Auswerteverfahrens entfällt. In jeder Lesart wird NFR-RT-01 (≤ 50 ms) um mehr als eine Größenordnung verfehlt.
+3. **Verfügbarkeit** — rund 20 s bis zum Erstfix nach dem Einschalten (Fahrt 6); das Datenblatt nennt 15 s Kaltstart mit EASY.
+4. **Rauschen** — 90-%-Quantil der differenzierten Geschwindigkeit bis 1,97 m/s² gegen eine Ansprechschwelle von 2,0 m/s².
+
+Es eignet sich als langsame, hochgenaue Stütz- und Referenzgröße.
+
+> **Zurückgezogener Befund — GNSS-Integrität [12.08.2026].** Bis v0.21 wurde als fünftes und stärkstes Argument geführt, das Modul habe bei abgedeckter Antenne **73 km/h im Stand** bei `FIX_OK`, 15 Satelliten und HDOP 0,7 gemeldet, weshalb der Umschaltauslöser „Fix verloren" einer GNSS-primären Architektur im gefährlichsten Fehlerfall gerade nicht greife. **Dieser Befund ist vollständig zurückgezogen.** Fahrt 5 wurde aus dem fahrenden Auto durchgeführt, die gemeldete Geschwindigkeit war real. Die Abdeckung hat das Signal offenbar nicht ausreichend gedämpft. Der Versuch ist damit ergebnislos und weder Beleg für noch gegen die Integrität des Empfängers. Die Entscheidung gegen V-A bleibt davon unberührt, weil sie auf den vier oben genannten Punkten steht. Eine belastbare Integritätsprüfung liegt nicht vor und wird auch nicht nachgeholt (Kap. 12.2). In der Arbeit darf der Befund nicht verwendet werden.
 
 **Nebenbefund — Aliasing der 1-Hz-Verdichtung [gesichert].** Einzelne Zeilen zeigen `brake_decel_ms2 = 0,00` bei erhöhtem `brake_light_pct`. Ursache ist die Verdichtung des 10-Hz-Frames auf 1 Hz in der App. Kein Firmwarefehler, aber ein dokumentationspflichtiger Messartefakt. Mit dem 10-Hz-Validierungsmodus des Schemas v3 ist er behoben.
 
@@ -768,13 +829,43 @@ Eine Fahrt von knapp drei Minuten mit neun Bremsvorgängen. Ausreichend für ein
 
 Projektphase: **Phase 3 (Implementierung)**, Modul M5b abgeschlossen.
 
+### 9.6 Funkstrecke 12.08.2026 — Reichweite und Erkennungsrate [neu]
+
+Bis zu diesem Versuch existierte für die Fahrtrichtungsanzeige — eine der drei Kernfunktionen — **kein einziger Messnachweis**. Der offene Punkt aus Kap. 11.2 ist damit geschlossen.
+
+**Versuch 1 — Reichweite.** Innenraum, Gerät und Handsender in vier Richtungen zueinander (vorn, hinten, links, rechts).
+
+| Abstand | Ergebnis |
+|---|---|
+| 3 m | in allen vier Richtungen zuverlässig |
+| 4 m | deutlich unzuverlässig |
+| 5 m | kaum noch Signale |
+
+**Versuch 2 — Erkennungsrate in Einbaulage.** Handsender am Lenker, Gerät über dem Hinterrad, **Verfasser auf dem Rad sitzend und damit im Signalweg**.
+
+| Kanal | erkannte Tastendrücke |
+|---|---|
+| Blinker links | **19 von 20** |
+| Blinker rechts | **18 von 20** |
+| gesamt | 37 von 40 = **92,5 %** |
+
+**Randbedingungen beider Versuche [gesichert]:** ohne die Drahtantenne ANT2, also im dokumentierten Aufbaustand. Versuch 1 im Innenraum, also mit Reflexionen.
+
+**Bewertung.** Die Reichweite genügt. Zwischen Lenker und Leuchte liegen am Fahrrad rund 1,5 m, die gesicherte Reichweite ist doppelt so groß, und der ungünstige Fall mit Körper im Signalweg ist bereits enthalten.
+
+Die Erkennungsrate genügt **nicht ohne Weiteres**. Bei einer Sicherheitsfunktion bedeutet ein nicht erkannter Tastendruck, dass die fahrende Person eine Abbiegeabsicht angezeigt zu haben glaubt, ohne dass eine Leuchte arbeitet. Zusammen mit der fehlenden Rückmeldung am Lenker (die Blinkleuchten sitzen hinter der fahrenden Person, die Funkstrecke ist einseitig) ist das die **deutlichste Schwachstelle des aufgebauten Systems**.
+
+**Nicht interpretiert:** Der Unterschied von einem Tastendruck zwischen links und rechts. Bei n = 20 je Kanal liegt er in der Zufallsstreuung und ist kein Kanalunterschied.
+
+**Grenzen.** Ein Durchgang je Kanal, keine Wiederholung, kein Freilandversuch, keine Variation von Haltung und Griffposition. Die Zahl ist eine Größenordnung, keine belastbare Ausfallrate.
+
 ---
 
 ## 10. Entwicklungsentscheidungen (lebend gepflegt)
 
 | Entscheidung | Begründung | Verworfene Alternative |
 |---|---|---|
-| SRX882S statt XY-MK-5V | Superheterodyn, −114 dBm, störfest | XY-MK-5V (störanfällig) |
+| SRX882S statt XY-MK-5V | Überlagerungsempfänger, störfest. **Korrektur 11.08.2026:** Die Empfindlichkeit beträgt laut Datenblatt **−107 dBm** bei 1 kbit/s; die bisher geführten −114 dBm sind nicht belegt. Der Abschalteingang CS liegt fest auf +3,3 V, weil ein schlafender Empfänger den Handsender nicht hören würde; die dadurch entstehenden rund 3 mA Dauerstrom sind bewusst in Kauf genommen (Kap. 5.2) | XY-MK-5V (störanfällig) |
 | RF-DATA auf GPIO4 | Kein Strapping-Pin | GPIO15 (Boot-Probleme) |
 | UART2 (GPIO16/17) für GNSS | UART0 für Debug/Konfig reserviert | — |
 | **Fahrtrichtungsachse Y; Vorzeichen über `MOTION_BRAKE_SIGN` geführt** | Physikalische Einbaulage; das Vorzeichen ist ein kalibrierter Parameter, keine Annahme | X-Achse; richtungsblinder Betrag |
@@ -791,7 +882,7 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5b abgeschlossen.
 | Init-Timeout 5 s → degradierter RUN | garantiert Dauer-Schlusslicht (§ 67) | Warten ohne Fallback |
 | Bremskennlinie stetig-linear + Hysterese | feine Rückmeldung, flackerfrei | starre Stufen |
 | Notbrems-Blinken (ESS) experimentell/deaktiviert | Sicherheitsnutzen vs. § 67 Abs. 4 | aktiv ausliefern |
-| Blinkfrequenz 1,5 Hz, 50 % Duty | ECE-R6-Mitte | 2,5 Hz / 1 Hz |
+| Blinkfrequenz 1,5 Hz, 50 % Duty | Nennwert der 90 ± 30/min aus UN-R53 § 6.3.8.1 (Krafträder), als **Analogie** übernommen. Die frühere Begründung „ECE-R6-Mitte" ist nicht einschlägig (Korrektur 11.08.2026) | 2,5 Hz / 1 Hz |
 | PWM-Träger 5 kHz | flackerfrei/kamerasicher | 1 kHz |
 | RF-Codes fest codiert | robust, deterministisch | Anlern-/Pairing-Modus |
 | Sampling ≠ Telemetrie-Rate (100/10 Hz) | BLE-Bandbreite schonen | alles hochratig streamen |
@@ -811,7 +902,11 @@ Projektphase: **Phase 3 (Implementierung)**, Modul M5b abgeschlossen.
 | WiFi statt BLE verworfen | gleiche RF-Kalibrierung, mehr Strom | WiFi als Transport |
 | Native iOS-App statt PWA | kein Web Bluetooth auf iOS | PWA |
 | Bench-Validierung über NFR-TST-02-Einspeisung | reproduzierbar, löst 300 ms und < 50 ms auf | physische Verzögerung |
-| **Fusionsarchitektur V-B** (06.08.) | GNSS erfüllt NFR-RT-01 physikalisch nicht und ist nicht integritätssicher | V-A (GNSS primär); V-C (IMU unverändert) |
+| **Fusionsarchitektur V-B** (06.08., Begründung präzisiert 12.08.) | GNSS erfüllt NFR-RT-01 physikalisch nicht (10 Hz, 200–400 ms), ist nach dem Einschalten rund 20 s nicht verfügbar und rauscht bis nahe an die Ansprechschwelle. **Das frühere Integritätsargument entfällt** (Kap. 9.4) | V-A (GNSS primär); V-C (IMU unverändert) |
+| **Bedienung über Funk-Handsender statt über die App** (Konzeptphase, begründet 12.08.) | § 23 Abs. 1a StVO verbietet das Aufnehmen und Halten eines elektronischen Geräts beim Führen eines Fahrzeugs und erlaubt die Bedienung nur bei kurzer Blickzuwendung. Daraus folgt das Entwurfsziel der Bedienbarkeit ohne Blick. Hinzu kommen die Unabhängigkeit vom Smartphone (FR-SYS-04/05) und der Verzicht auf einen Rückkanal | Bedienung über die App; verkabelter Lenkerschalter (Kabel über den Lenkeinschlag, zusätzliche Gehäusedurchführung) |
+| **Vorwiderstandsnetz statt Konstantstromquelle** (Konzeptphase, belegt 11./13.08.) | geringerer Bauteil- und Bauraumaufwand bei drei Kanälen; die Temperaturabhängigkeit ist mit 1,8 % Stromanstieg über 50 K unkritisch, weil über dem Widerstand mehr Spannung abfällt als über der Leuchte | Konstantstromquelle je Kanal |
+| **Gate-Ableitwiderstände nicht bestückt** (Aufbaustand, dokumentiert 13.08.) | Entscheidung des Verfassers; im Betrieb kein auffälliges Verhalten. Der Zustand der Leuchten während Reset und Hochlauf ist damit nicht definiert (Befund B-9) | Bestückung mit 10 kΩ je Gate |
+| **Kriterium „wissenschaftlicher Gehalt" nicht in der Thesis-Bewertung** (12.08.) | eine technische Entscheidung mit der Darstellbarkeit in der Arbeit zu begründen ist wissenschaftlich angreifbar; das Kriterium bleibt in der internen Entscheidungsdokumentation, erscheint aber nicht in Tabelle 4-1 | Kriterium mitbewerten |
 | **Normbetrags-Gate statt Tiefpass/Median** (06.08.) | physikalischer Diskriminator ohne Latenzkosten; literaturgestützt (Madgwick, Mahony) | Tiefpass; Median; α anheben |
 | **GNSS-Stützung hinter Flag, default aus** (06.08.) | Einzelfaktor-Validierung von Stufe 1 | beide Stufen gleichzeitig |
 | **Verankerung und Bias-Kalibrierung getrennt** (07.08.) | zwei verschiedene Anforderungen: Verankerung braucht Zusammenhang, Mittelung nicht. **Feldbeleg 08.08.: bei 39,2 % STATIC wäre die alte Auslegung nie zustande gekommen (10⁻⁴¹)** | gemeinsames Fenster |
@@ -864,13 +959,39 @@ Bibliotheken. Abgegrenzt statt umgesetzt: FR-CFG-02 und FR-CFG-03 (Kap. 12.2).
   beschaffen oder den Spannungsabfall über dem geschlossenen Kontakt unter Last
   messen.
 - **Fehlende HF-Entkopplung am L86 (Befund B-4)** dokumentieren oder nachrüsten.
-- **BOM-Korrekturen:** GNSS-Antenne Namvo als nicht verbaut kennzeichnen;
-  RF-Empfänger einheitlich als SRX882S führen (nicht „PT2262"); Positionen
-  10-kΩ-Pull-Down (3×), Drucktaster IP65 8 mm, LP103454 und die Widerstandsnetze
-  RN1–RN3 ergänzen.
+- ~~**RF-Empfänger einheitlich als SRX882S führen (nicht „PT2262")**~~ — **erledigt
+  11.08.2026.** Kein Widerspruch: PT2262 ist der Codierbaustein im gekauften
+  Handsender (Sendeseite), SRX882S der Empfänger im Gerät. Kap. 4.1 präzisiert.
+- ~~**Bestückungsstand ANT2 klären.**~~ — **erledigt 12.08.2026.** Die Drahtantenne
+  ist **nicht verbaut**; Zeichnung (Rev. 1.3), Kap. 4.1 und die Stückliste sind
+  nachgezogen. **Offen bleibt allein die Erklärung** der Beobachtung, dass der
+  Empfang mit angeschlossenem Draht schlechter war als ohne. Das widerspricht der
+  Herstellervorgabe einer 50-Ω-Antenne und ist weder erklärt noch gemessen.
+  Ursachenhypothesen unverändert: Einkopplung von MT3608 und ESP32 über den Draht,
+  fehlende Gegenmasse, ungünstige Leitungsführung, Verstimmung durch Nachbarschaft.
+  Wird als unerklärte Beobachtung dokumentiert, nicht weiter untersucht.
+- ~~**Reichweiten- und Zuverlässigkeitsmessung der Funkstrecke.**~~ — **erledigt
+  12.08.2026, s. Kap. 9.6.** 19/20 und 18/20 erkannte Tastendrücke in Einbaulage
+  mit Körper im Signalweg, Reichweite bis 3 m gesichert. **Als Grenze zu führen:**
+  ein Durchgang je Kanal, kein Freilandversuch, keine Variation von Haltung und
+  Griffposition. Die 92,5 % sind eine Größenordnung, keine belastbare Ausfallrate.
+- **BOM-Korrekturen:** GNSS-Antenne Namvo **und** Drahtantenne ANT2 als nicht
+  verbaut kennzeichnen; die Position 10-kΩ-Pull-Down (3×) **streichen**, weil nicht
+  bestückt; „Drucktaster IP65 8 mm" durch **Wippschalter KCD1-2** ersetzen;
+  LP103454 und die Widerstandsnetze RN1–RN3 ergänzen.
 - **Physische Blinker-L/R-Zuordnung** noch nicht festgelegt.
-- **Datenblatt der 3-W-COB-LED** (Hersteller Vrabocry) fehlt weiterhin;
-  V_f = 2,2 V ist der Mittelwert der Produktangabe 2,0–2,4 V.
+- **Typidentität der roten Leuchte bestätigen.** Seit 12.08.2026 liegt das
+  Datenblatt der Serie **NTE30180** vor (Rev. 9-21). Es ist ein **typgleiches
+  Vergleichsbauteil**: Die NTE30180 ist eine Einzelchip-Star-Leuchte, die Bible
+  führt die Leuchten als COB. Ob das verbaute Teil eine NTE30180-R ist, ist nicht
+  belegt. Solange das offen ist, wird die Quelle im Thesis-Text ausdrücklich als
+  Vergleichsbauteil geführt.
+- **Datenblatt der gelben Leuchte** fehlt weiterhin. Vorhanden ist nur eine
+  Angebotsangabe (590–595 nm, 2,2–2,4 V), die sich beim zulässigen Strom selbst
+  widerspricht (400–500 mA gegen 700 mA).
+- **Nennstrom SW1** weiterhin unbelegt. Verbaut ist ein Wippschalter KCD1-2; das
+  Typenschild nennt nur Wechselstromwerte, der Gleichstromfall ist damit nicht
+  abgedeckt (Befund B-6).
 - **Anordnung der Patch-Antenne im Gehäuse** gegen die Datenblattvorgaben prüfen
   (Kap. 8).
 
@@ -903,6 +1024,30 @@ Bibliotheken. Abgegrenzt statt umgesetzt: FR-CFG-02 und FR-CFG-03 (Kap. 12.2).
 - **`ios-app/SmartBikeRearLight/README.md`** fehlt (App Bible Kap. 9 führt es auf).
 - **Rechtliche Zulässigkeit FR-TL-07:** nach § 67 Abs. 4 unzulässig, daher
   standardmäßig deaktiviert; als Zielkonflikt im Text ausführen.
+- **Quellennummerierung [17] bis [22] festgelegt (13.08.2026).** Nach dem ersten
+  Auftreten: [17] Quectel L86 (4.2), [18] § 23 Abs. 1a StVO (4.4), [19] NTE30180
+  (5.3), [20] IRLZ44N (5.3), [21] Angebotsangabe gelbe Leuchte (5.3), [22] MT3608
+  (5.4). Das MOSFET-Datenblatt rückt damit hinter die Kapitel-4-Quellen. Verbindlich
+  bleibt, was der Word-Quellenmanager erzeugt.
+- **Bildunterschriften der eigenen Abbildungen korrigieren.** Die Abbildungen aus
+  Kapitel 4 tragen im Manuskript derzeit den Zusatz „KI generiert". Fachlich
+  richtig ist **„eigene Darstellung"**; die KI-Unterstützung gehört nach der
+  HSD-Richtlinie in Anhang E und in die eidesstattliche Versicherung, nicht in die
+  Bildunterschrift.
+- **Zwei Sachfehler in der Nutzerfassung von Kapitel 4** (Stand 13.08.2026):
+  „Die Beleuchtung wird ausschließlich vom Funksender angesteuert" muss „vom Gerät"
+  heißen, sonst widerspricht der Satz der gesamten Systemgrenze. Und die geplante
+  Rückmeldung gehört an den Lenker, nicht auf das Smartphone — eine Rückmeldung auf
+  dem Telefon verlangt genau die Blickzuwendung, die § 23 Abs. 1a einschränkt.
+- **Zurückgezogenen GNSS-Integritätsbefund nachziehen.** Er steht noch als
+  Beleg in `claude/Feldtest_2026-08-06_Auswertung.md` (Abschnitt 6.4 und
+  Variantenvergleich Abschnitt 7) und in `claude/Thesis_Transfer_Firmware.md`
+  („Der entscheidende Integritätsbefund"). Beide Dokumente widersprechen
+  damit dieser Project Bible und sind zu korrigieren.
+- **Formulierung des Umsetzungsstands.** In der Arbeit wird V-B als gewählt
+  geführt, der Auslieferungsstand aber ausdrücklich als „funktional V-C mit
+  vorbereiteter, abgeschalteter Stufe 2" bezeichnet. Diese Formulierung ist
+  über alle Kapitel einheitlich zu halten.
 
 ---
 
@@ -917,7 +1062,7 @@ Bibliotheken. Abgegrenzt statt umgesetzt: FR-CFG-02 und FR-CFG-03 (Kap. 12.2).
 | UART-Pegel überschreitet L86-Spezifikation (B-1) | Betrieb außerhalb zugesicherter Bedingungen; Zerstörung nicht zu erwarten | **realisiert.** Serienwiderstand oder Teiler; Entscheidung offen (Kap. 11.2) |
 | Geschwindigkeitsabhängige Grundlinie (G-01) | Reserve zur Ansprechschwelle bei Reisegeschwindigkeit nur noch 0,32 m/s² | **realisiert und quantifiziert** (Kap. 9.5.6). Als Grenze dokumentiert; Stufe 2 adressiert genau diesen Offset |
 | **Ursache der 6,7-ms-Schleifenzeit nicht eindeutig zugeordnet (B7)** | Aussage über die dominierende Einzellast der Hauptschleife nicht belegbar | **erkannt und offengelegt (Kap. 9.5.5).** NFR-RT-04 bleibt in jeder Lesart erfüllt; die Ursachenbehauptung ist zurückgenommen, der Diskriminierungsversuch als Empfehlung dokumentiert |
-| ~~Thermisches Weglaufen der Vorwiderstandslösung~~ | — | **herabgestuft auf gering (09.08.2026).** Rechnerisch steigt der LED-Strom über 50 K Erwärmung nur um 3,6 %, weil über dem Widerstand mehr Spannung abfällt als über der LED (Kap. 5.4) |
+| ~~Thermisches Weglaufen der Vorwiderstandslösung~~ | — | **herabgestuft auf gering (09.08.2026), belegt am 11.08.2026.** Mit dem für Leuchtdioden belegten Temperaturkoeffizienten von −1 mV/K steigt der LED-Strom über 50 K Erwärmung nur um **1,8 %**, weil über dem Widerstand mehr Spannung abfällt als über der LED (Kap. 5.4). Der frühere Wert von 3,6 % beruhte auf −2 mV/K und war zu konservativ |
 | Stromreduktion vs. § 67-Mindestlichtstärke | ggf. nicht zulassungsfähig | photometrische Prüfung offen; separate Hardware-Eigenschaft |
 | FR-TL-07 verstößt gegen § 67 Abs. 4 | im Auslieferzustand unzulässig | standardmäßig deaktiviert, dokumentiert |
 | Brown-Out unter LED-Lastspitzen | ungewollter Neustart | Worst Case beziffert: 1,18 A aus dem Akku (Kap. 5.2). Am Ersatzboard nicht mehr reproduzierbar; Messung offen |
@@ -926,11 +1071,13 @@ Bibliotheken. Abgegrenzt statt umgesetzt: FR-CFG-02 und FR-CFG-03 (Kap. 12.2).
 | Schalterstrom über SW1 im Akkupfad (B-6) | Kontakterwärmung, Spannungsabfall vor dem Wandlereingang | 1,18 A im Worst Case; Nennstrom unbelegt, Messung offen |
 | Kein Tiefentladeschutz über DW01 hinaus | Akkuschädigung | systemseitigen Schutz bewerten |
 | Firmware-Hang | Systemausfall | Task-Watchdog (~2 s), Auto-Reset; per Fehlerinjektion verifiziert |
-| GNSS meldet gültigen Fix bei falscher Navigationslösung | sicherheitsrelevante Fehlentscheidung eines Fallbacks | **realisiert und dokumentiert** (Kap. 9.4). GNSS nicht als Primärpfad (V-B) |
+| GNSS meldet gültigen Fix bei falscher Navigationslösung | sicherheitsrelevante Fehlentscheidung eines Fallbacks | **nicht belegt, Bewertung offen (12.08.2026).** Der Beleg aus Fahrt 5 ist zurückgezogen, weil die Fahrt im bewegten Zustand stattfand (Kap. 9.4). Das Restrisiko bleibt theoretisch bestehen, wird aber durch die Architekturentscheidung V-B ohnehin nicht sicherheitswirksam, weil das GNSS keinen Primärpfad bildet |
 | ~~Bremserkennung im Feld funktionsunfähig~~ | — | **geschlossen (08.08.2026).** Stufe 1 im Feld verifiziert (Kap. 9.5). Die Falsifikation vom 06.08. bleibt als methodisch sauberer Validierungsbefund verwertbar |
 | Energiebilanz nur gerechnet | Laufzeitangabe unbelegt | Messung unter Last (NFR-PWR-02) offen |
 | **Nur eine Messfahrt nach Stufe 1** | Fehlauslösungsrate nicht belastbar hochrechenbar; kein Streckenvergleich | **als Grenze der Arbeit geführt** (Kap. 9.5.7, Kap. 12.2). Teil A des Messprotokolls wird nicht nachgeholt |
 | **Korrigierte Firmware nicht im Feld nachgemessen** | Die Wirksamkeit der M-01-Behebung ist am Gerät geprüft, aber nicht über eine Messfahrt quantifiziert | **bewusst in Kauf genommen** (Kap. 12.2). Die Behebung ist durch Quelltext, Regressionstest und Beobachtung am Gerät belegt; die Feldmessung vom 08.08.2026 dokumentiert den Zustand davor |
+| **Erkennungsrate der Funkstrecke 92,5 %** | Ein nicht erkannter Tastendruck bleibt für die fahrende Person unbemerkt, weil die Blinkleuchten hinter ihr sitzen und die Funkstrecke keine Rückmeldung gibt. Bei einer Sicherheitsfunktion die deutlichste Schwachstelle des Aufbaus | **realisiert und gemessen (Kap. 9.6).** Nicht behoben. Rückmeldung am Lenker als Ausblick; keine Nachbesserung im Arbeitsumfang |
+| **Leuchtenzustand während Reset und Hochlauf nicht definiert (B-9)** | Ohne Gate-Ableitwiderstand ist das Gate in dieser Zeit hochohmig | **erkannt und dokumentiert (13.08.2026).** Im Betrieb kein auffälliges Verhalten; das Init-Diagnose-Blinken überdeckt das Zeitfenster. Nachrüstung als Ausblick |
 | Zeitbudget bis Abgabe | Nachweise unvollständig | Umfangsschnitte vom 07.08. und 10.08.2026 gelten; nur funktionsblockierende Punkte werden umgesetzt |
 
 ### 12.2 Abgrenzung des Arbeitsumfangs [Umfangsschnitt 10.08.2026]
@@ -974,7 +1121,9 @@ Position ist im Ausblick der Arbeit als konkrete Empfehlung wiederzugeben.
 | Core Bluetooth | Apples natives BLE-Framework (iOS/macOS) |
 | DLPF | Digital Low Pass Filter (MPU6050-Register `CONFIG`) |
 | DMP | Digital Motion Processor (MPU6050) |
-| ECE R6 / R48 / R50 | UN-Regelungen Fahrtrichtungsanzeiger / Lichtanbau Kfz / Positions- und Bremsleuchten |
+| UN-R50 / R148 / R74 / R60 | von § 67 Abs. 5 StVZO in Bezug genommene UN-Regelungen: Genehmigung von Leuchten (R50, R148), Anbau (R74), Anordnung der Bedienteile (R60) |
+| UN-R53 | UN-Regelung für Krafträder; Quelle der Blinkfrequenz 90 ± 30/min und der ESS-Frequenz 4,0 ± 1,0 Hz — im Projekt nur als **Analogie** verwendet |
+| ~~ECE R6~~ | **nicht einschlägig** für Fahrrad-Fahrtrichtungsanzeiger; bis v0.20 fälschlich geführt |
 | ERC | Electrical Rules Check (Schaltplanprüfung) |
 | ESS | Emergency Stop Signal (Notbrems-Blinken) |
 | FSM | Finite State Machine |
