@@ -12,6 +12,14 @@ Seiten bliebe sonst unsichtbar.
 Werte definiert in `firmware/test/test_frame_v3_golden/test_frame_v3_golden.cpp::buildGoldenFrame()`.
 Layout gemäß `docs/BLE_Frame_v3_Schnittstelle.md` Kap. 3.
 
+**Herkunft der Bytefolge:** erzeugt mit Commit `1178017` vom 07.08.2026
+(letzte Änderung an `frame_v3_golden.hex` sowie an
+`telemetry_frame.cpp`/`.h`, im Repo per `git log` verifiziert); seither
+unverändert. Ablieferungsstand der Firmware ist Commit `835c7b3` vom
+10.08.2026 — die Bytefolge selbst ist davon nicht betroffen, da Schema v3
+und Serialisierung seit `1178017` unangetastet blieben. Umfang: 44 Felder
+/ 113 Byte / 39 unterscheidbare Werte (s. Werte-Tabelle unten).
+
 **Diese Datei ist bewusst eingefroren, nicht automatisch nachzuziehen.**
 Ändert sich das Frame-Layout oder eine Skalierung absichtlich, müssen
 `frame_v3_golden.hex` und diese Tabelle bewusst neu erzeugt (Firmware-Test
