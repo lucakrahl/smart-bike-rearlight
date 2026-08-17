@@ -1,6 +1,6 @@
 # Project Bible — Smartes Fahrrad-Rücklicht
 **Bachelorarbeit Krahl · Maschinenbau & Produktentwicklung (B.Eng.)**
-**Version 0.24 · Stand 13.08.2026 · Status: aktiv gepflegt (Single Source of Truth)**
+**Version 0.25 · Stand 17.08.2026 · Status: aktiv gepflegt (Single Source of Truth)**
 
 > Diese Project Bible ist die oberste Wissensinstanz des Projekts. Bei Widersprüchen zwischen Chat-Historie und Project Bible gilt ausschließlich die Project Bible. Chats dienen der Diskussion und Entscheidungsfindung; der offizielle Projektstand steht ausschließlich hier.
 
@@ -47,6 +47,7 @@
 | **0.22** | **12.08.2026** | **Rücknahme des GNSS-Integritätsbefunds und Kapitel 4 der Thesis.** (a) **Der Befund „73 km/h Scheingeschwindigkeit im Stand bei FIX_OK" ist zurückgezogen.** Fahrt 5 des Feldtests vom 06.08.2026 wurde nach Klarstellung des Verfassers aus dem *fahrenden* Auto durchgeführt. Die gemeldete Geschwindigkeit war damit real und kein Integritätsfehler. Die Abdeckung hat das Signal nicht ausreichend gedämpft, der Versuch ist ergebnislos und **kein Beleg**. Kap. 0.4, 9. (Validierungstabelle), 9.4, 10 und 12.1 angepasst. (b) Die Architekturentscheidung V-B bleibt unverändert bestehen. Sie trägt auf vier voneinander unabhängigen, weiterhin belegten Punkten: Höchstrate 10 Hz gegen 100 Hz, Latenz 200–400 ms gegen NFR-RT-01, rund 20 s bis zum Erstfix und ein 90-%-Quantil des Differentiationsrauschens bis 1,97 m/s² gegen eine Ansprechschwelle von 2,0 m/s². (c) **Kapitel 4 der Thesis (Systemkonzept) geschrieben**, mit Tabelle 4-1 (Variantenvergleich) und den Abbildungen 4-1 bis 4-4. Das Kriterium „wissenschaftlicher Gehalt für die Arbeit" aus der internen Variantenbewertung wird in der Thesis-Tabelle bewusst nicht geführt, weil es kein ingenieurtechnisches Kriterium ist. (d) Der ausgelieferte Firmwarestand entspricht funktional V-C mit vorbereiteter, aber abgeschalteter Stufe 2. Diese Formulierung wird in der Arbeit so verwendet. | Klarstellung des Verfassers, Thesis-Kapitel 4 |
 | **0.23** | **13.08.2026** | **Hardwarestand gegen Fotos, Schaltplan Rev. 1.3 und zwei neue Datenblätter abgeglichen; Kapitel 5 der Thesis geschrieben.** (a) **Bestückungskorrekturen:** SW1 ist ein **Wippschalter** und kein Drucktaster IP65. Die **Gate-Ableitwiderstände R2/R4/R6 sind nicht bestückt** — Schaltplan Rev. 1.3 führt das als Befund B-9. **ANT2 ist nicht verbaut**, der Empfang erfolgt über die Anschlussflächen des Moduls; der Widerspruch zwischen Kap. 4.1 und 11.2 ist damit aufgelöst. (b) **Datenblatt der roten Leuchte beschafft** (NTE30180-R, typgleiches Vergleichsbauteil): Dauerstrom **800 mA** statt der bisher geführten 400–500 mA, Durchlassspannung 2,0–2,6 V bei 400 mA, Sperrschichttemperatur typisch 115 °C gegen Grenzwert 120 °C. Der Kanalstrom wird als Spanne **208 bis 240 mA** mit 224 mA als Rechenwert geführt. (c) **Wirkungsgrad des MT3608 bleibt eine Annahme.** Das Datenblatt nennt nur „bis zu 97 %" ohne Arbeitspunkt und ohne Kennlinie; η = 0,90 wird beibehalten, die Laufzeit zusätzlich als Spanne 7,9 bis 8,8 h angegeben. (d) **Latenzangabe korrigiert:** die 200–400 ms waren eine eigene Abschätzung und nicht aus dem Datenblatt belegbar. Maßgeblich ist der gemessene Versatz von 1,6 bis 2,0 s aus der Messfahrt. Ratengrenze des Empfängers und Grenze der seriellen Schnittstelle werden getrennt geführt. (e) **Funkstrecke erstmals gemessen:** 19 von 20 bzw. 18 von 20 erkannten Tastendrücken in Einbaulage mit Körper im Signalweg, ohne Drahtantenne. Der offene Punkt aus Kap. 11.2 ist damit geschlossen. (f) Schaltplanstand auf **Rev. 1.3 (10.08.2026)** gehoben. (g) Fotodokumentation des Aufbaus in die Datengrundlage aufgenommen. | Fotoabgleich, Datenblätter, Thesis-Kapitel 5 |
 | **0.24** | **13.08.2026** | **Präzisierungen aus der Quellenarbeit zu Kapitel 5.1.** (a) Das **ersetzte Mikrocontrollerboard wird namentlich geführt**: AZ-Delivery ESP-32 Dev Kit C V2, belegt über die Herstelleranleitung AZ281 aus der Projektablage. Bisher stand dort nur „Board eines anderen Anbieters". (b) **Wichtige Präzisierung zum Board-Tausch:** Beide Boards tragen denselben Reglertyp AMS1117-3.3. Der Brownout ist deshalb **keine generische Eigenschaft** dieses Reglertyps oder der Plattform, sondern nach der Fallstudie eine Grenze oder ein Defekt des konkreten Altboards, wahrscheinlich durch umfangreiches Rework verursacht. Diese Einordnung ist im Thesis-Text zu übernehmen. (c) **L86 präzisiert:** Empfang von GPS und GLONASS auf L1; SBAS und QZSS sind unterstützt, am Einsatzort ist davon nur SBAS in Form von EGNOS wirksam, weil QZSS ein regionales System über Asien und Ozeanien ist. (d) Belegliste auf [17] bis [27] erweitert; die Alternativen der Komponentenauswahl sind jetzt einzeln belegt. | Quellenarbeit Kapitel 5.1 |
+| **0.25** | **17.08.2026** | **Thesis-Kapitel 6 bis 10 abgeschlossen, Anhangsstruktur festgeschrieben, Projektarchiv veröffentlicht.** (a) **Anhangsstruktur der Thesis verbindlich festgelegt** (neues Kap. 12.3): A Schaltplan, Stückliste und Bestückungsplan · B Anforderungsliste mit Nachweisführung · C Projektarchiv, Rohdaten und Auswertungsskripte · D Herleitung der Zahlenwerte der Signalaufbereitung · E Schnittstellenbeschreibung des Telemetriepakets · F Dokumentation der Nutzung generativer KI-Werkzeuge. Die KI-Dokumentation steht ausdrücklich an letzter Stelle. (b) **Nachweisart je Anforderung festgelegt** — der seit Kap. 2.13 offene Punkt ist geschlossen. Vier Arten: Analyse, Inspektion, Test, Messung. Zusätzlich eine vierstufige Bewertungsskala. 73 der 79 Anforderungen sind erfüllt und nachgewiesen; eingeschränkt sind FR-TL-06, FR-TL-07, FR-CFG-02, FR-CFG-03, NFR-PWR-02 und KON-06. (c) **Lücke im Anforderungsbestand erkannt:** Für die Funkstrecke existiert keine Anforderung an die Erkennungsrate, obwohl sie die einzige Eingabeschnittstelle des Systems ist. (d) **Neuer Messbefund zum Zeitverhalten:** Die erhöhten Schleifenzeiten treten periodisch mit 1,00 s auf, insgesamt 175 Ereignisse über 177,86 s. (e) **Randbedingung von Prüfstandsversuch D festgeschrieben:** Dauerbremsung von 3,9 m/s² über vier Sekunden, alte und neue Aufbereitung parallel auf derselben Eingangsfolge. (f) **Formelzeichen vereinheitlicht:** Der Neigungswinkel der Fahrbahn trägt das Zeichen β, α bleibt dem Gewichtungsfaktor des Filters vorbehalten, δ wird neu geführt. (g) **Tabelle 6-1 aus dem Fließtext in Anhang D verlagert.** Der Wert 6,0 m/s² für das Rückfallkriterium war bisher nur im Quelltext geführt und wird in den Thesis-Text aufgenommen. (h) **Korrelationswerte in der Thesis wieder aufgenommen:** +0,85 und im Median +0,15 bei einheitlich herausgerechnetem Versatz von 2,0 s. (i) **Projektarchiv veröffentlicht** unter https://github.com/lucakrahl/smart-bike-rearlight, eingefrorener Stand a6e3a0c vom 17.08.2026. Als Folge: die beiden Transferdokumente zur Firmware werden entfernt, der Feldtestbericht erhält einen datierten Nachtrag mit drei zurückgezogenen Befunden, cad/README.md wird von PLA auf PETG korrigiert. | Thesis-Kapitel 6–10, Gesamtdurchsicht, Veröffentlichung des Archivs |
 
 ### 0.4 Datengrundlage
 | Quelle | Zeitstempel | Aussagekraft |
@@ -263,7 +264,13 @@ Für diese Gruppe wird zusätzlich zwischen **Forderung (F)** und **Wunsch (W)**
 
 **Anzahl der Anforderungen insgesamt:** 79 eindeutige Einträge — 51 FR, 13 NFR, 10 KON, 3 CON, 2 OUT.
 
-**Offen:** Die konkreten Maße, Wandstärken, Druckparameter und die Befestigungsart am Fahrrad sind nicht Teil der Anforderungen, sondern Ergebnis der Konstruktion und in Kap. 8 nachzutragen. Ebenfalls offen ist die Nachweisart je Anforderung (Analyse, Inspektion, Test, Messung) für die Nachweismatrix in Anhang B der Thesis.
+**Offen:** Die konkreten Maße, Wandstärken, Druckparameter und die Befestigungsart am Fahrrad sind nicht Teil der Anforderungen, sondern Ergebnis der Konstruktion und in Kap. 8 der Thesis dokumentiert.
+
+**Geschlossen 17.08.2026 — Nachweisart je Anforderung.** Für jede der 79 Anforderungen ist die Nachweisart festgelegt. Vier Arten: **Analyse** (Rechnung), **Inspektion** (Sichtprüfung von Aufbau oder Umsetzung), **Test** (Prüffall auf dem Entwicklungsrechner oder am Gerät), **Messung** (Messwert aus Kap. 9). Zusätzlich gilt eine vierstufige Bewertung des Erfüllungsgrads: *erfüllt und nachgewiesen*, *erfüllt, nicht nachgewiesen*, *teilweise erfüllt*, *bewusst abgegrenzt*. Für die beiden Ausschlüsse OUT-01 und OUT-02 gilt *eingehalten*. Die vollständige Matrix ist Anhang B der Thesis.
+
+**Bewertungsstand 17.08.2026:** 73 der 79 Anforderungen sind erfüllt und nachgewiesen. Eingeschränkt sind sechs: FR-TL-06 (Mindesthaltezeit behoben, aber nicht im Feld nachgemessen), FR-TL-07 (umgesetzt, dauerhaft abgeschaltet), FR-CFG-02 und FR-CFG-03 (bewusst abgegrenzt), NFR-PWR-02 (gerechnet, nicht gemessen), KON-06 (Werkstoffwahl aus der gerechneten Verlustleistung, keine Temperaturmessung).
+
+**Lücke im Anforderungsbestand [neu 17.08.2026].** Für die Funkstrecke ist keine Anforderung an die Erkennungsrate spezifiziert, obwohl sie die einzige Eingabeschnittstelle des Systems ist. Die in Kap. 9.6 gemessenen 92,5 % sind damit ein Eigenwert ohne zugehörige Sollvorgabe. Die Lücke ist eine fehlende Anforderung und keine verfehlte. Bei einer Fortführung ist sie zu ergänzen, zusammen mit einer Rückmeldung am Lenker.
 
 ---
 
@@ -682,6 +689,7 @@ Nachweis der Bremslicht-Regellogik (FR-TL-06), ihres zeitlichen Verhaltens (NFR-
 **Experiment A — Kennlinie:** Zustandswechsel exakt bei 2,004 m/s²; linearer Verlauf `pct = 26,66·decel − 33,32` mit **R² = 0,99984**; Sättigung ab 5,0 m/s².
 **Experiment B — Zeitverhalten:** Anstieg 20 %→100 % innerhalb eines 10-ms-Abtastschritts; nach Bremsende hält die FSM 100 % exakt 300 ms.
 **Experiment C — Fail-Safe:** Bei erzwungenem `imu_health = FAILED` bleibt `brake_light_pct` konstant bei 20 %.
+**Experiment D — Vorher/Nachher [Randbedingung festgeschrieben 17.08.2026]:** Eingespeist wird eine **Dauerbremsung von rund 3,9 m/s², gehalten über vier Sekunden**. Dieselbe Zahlenfolge durchläuft die alte und die überarbeitete Aufbereitung parallel. Verglichen wird der Filterausgang zu Beginn und am Ende der Bremsung: alt **3,924 → 0,000 m/s²**, neu **3,9 → 3,836 m/s²** gegen eine vorab berechnete Erwartung von 3,83 m/s².
 
 > **Einordnung 09.08.2026.** Experiment B bestätigt die Mindesthaltezeit für einen **idealisierten Sprung** von 6,0 auf 0,0 m/s², der das Hystereseband zwischen 2,0 und 1,5 in einem Schritt überspringt. Reale Bremssignale durchlaufen dieses Band kontinuierlich — und genau dort versagt der Mechanismus (Mangel M-01, Kap. 9.5.4). Die Bench-Aussage bleibt für das geprüfte Signal korrekt, ihre Reichweite ist aber enger als bisher formuliert.
 
@@ -797,7 +805,7 @@ FR-TL-06 fordert eine Mindesthaltezeit von 300 ms. In der Aufzeichnung fällt de
 | Anteil Fenster > 10 ms | — | **0,00 %** | ✅ |
 | `dt_max_ms` > 10 ms | — | 10,15 % (max. 13 ms) | — |
 
-Die Spitzen treten **periodisch mit 1,00 s** auf und betreffen 9,9 % der Fenster. Dieselben Fenster tragen auch die dt-Ausreißer. Ohne diese Fenster liegt die Schleifenzeit im Median bei 92 µs.
+Die Spitzen treten **periodisch mit 1,00 s** auf und betreffen 9,9 % der Fenster. **Präzisierung 17.08.2026:** Über die gesamte Messfahrt von 177,86 s treten **175 Ereignisse oberhalb 3 ms** auf, deren Abstände durchgehend zwischen 1,00 und 1,01 s liegen. Keine Spitze fällt aus diesem Raster. Verursacher kann damit nur eine Teilaufgabe im Sekundentakt sein — im Aufzeichnungsstand waren das vier. Dieselben Fenster tragen auch die dt-Ausreißer. Ohne diese Fenster liegt die Schleifenzeit im Median bei 92 µs.
 
 **Ursachenzuordnung — methodische Korrektur [10.08.2026].** In der Erstauswertung wurde die Spitze dem GNSS-Slot (`PERIOD_GNSS_MS` = 1000) zugeschrieben. Diese Zuordnung war nicht belegt. Im Aufzeichnungsstand liefen **drei** Debug-Ausgaben mit exakt 1 Hz, und zwar alle innerhalb des Messfensters von `loop_max_us`: `[R1/R2]` (≈ 72 B), `[Baro]` (≈ 41 B) und `[GNSS]` (≈ 60 B), zusammen rund 173 Byte. Bei 115 200 Bd entspricht das etwa 87 µs je Byte; sobald der UART-Sendepuffer gefüllt ist, blockiert `Serial.printf`. Fallen zwei dieser Ausgaben in denselben `loop()`-Durchlauf, liegt der Beitrag in derselben Größenordnung wie die gemessenen 6,7 ms. Aus den Felddaten allein sind beide Ursachen **nicht trennbar**, weil beide exakt mit 1,00 s periodisch sind.
 
@@ -1029,8 +1037,9 @@ Bibliotheken. Abgegrenzt statt umgesetzt: FR-CFG-02 und FR-CFG-03 (Kap. 12.2).
   (5.3), [20] IRLZ44N (5.3), [21] Angebotsangabe gelbe Leuchte (5.3), [22] MT3608
   (5.4). Das MOSFET-Datenblatt rückt damit hinter die Kapitel-4-Quellen. Verbindlich
   bleibt, was der Word-Quellenmanager erzeugt.
-- **Bildunterschriften der eigenen Abbildungen korrigieren.** Die Abbildungen aus
-  Kapitel 4 tragen im Manuskript derzeit den Zusatz „KI generiert". Fachlich
+- **Bildunterschriften der eigenen Abbildungen korrigieren.** Betroffen sind nach
+  der Gesamtdurchsicht vom 17.08.2026 **27 Abbildungen** in den Kapiteln 2, 4, 5,
+  6 und 9, nicht nur die aus Kapitel 4. Sie tragen derzeit den Zusatz „KI generiert". Fachlich
   richtig ist **„eigene Darstellung"**; die KI-Unterstützung gehört nach der
   HSD-Richtlinie in Anhang E und in die eidesstattliche Versicherung, nicht in die
   Bildunterschrift.
@@ -1039,11 +1048,31 @@ Bibliotheken. Abgegrenzt statt umgesetzt: FR-CFG-02 und FR-CFG-03 (Kap. 12.2).
   heißen, sonst widerspricht der Satz der gesamten Systemgrenze. Und die geplante
   Rückmeldung gehört an den Lenker, nicht auf das Smartphone — eine Rückmeldung auf
   dem Telefon verlangt genau die Blickzuwendung, die § 23 Abs. 1a einschränkt.
-- **Zurückgezogenen GNSS-Integritätsbefund nachziehen.** Er steht noch als
-  Beleg in `claude/Feldtest_2026-08-06_Auswertung.md` (Abschnitt 6.4 und
-  Variantenvergleich Abschnitt 7) und in `claude/Thesis_Transfer_Firmware.md`
-  („Der entscheidende Integritätsbefund"). Beide Dokumente widersprechen
-  damit dieser Project Bible und sind zu korrigieren.
+- ~~**Zurückgezogenen GNSS-Integritätsbefund nachziehen.**~~ — **erledigt
+  17.08.2026.** Der Feldtestbericht trägt einen datierten Nachtrag mit drei
+  zurückgezogenen Befunden: Integritätsbefund aus Fahrt 5, Latenzangabe
+  200–400 ms und Korrelation −0,132. Die beiden Transferdokumente zur Firmware
+  werden aus dem öffentlichen Archiv entfernt.
+- **Auswertungsskripte im Archiv ablegen — abgabekritisch.** Anhang C führt elf
+  Skripte auf, die im Archiv nicht vorhanden sind. Ohne sie zeigt der Anhang auf
+  nicht existierende Dateien. Vor der Ablage sind die absoluten Dateipfade in
+  `load.py` und `a5_baseline.py` auf relative Pfade umzustellen.
+- **Schalterbeschriftung im Schaltplan.** Rev. 1.3 trägt bei SW1 noch die
+  überholte Angabe Ein/Aus IP65. Verbaut ist ein Wippschalter KCD1-2. Da der
+  Schaltplan als Anhang A Teil der Arbeit wird, entsteht sonst ein sichtbarer
+  Widerspruch zur Stückliste.
+- **Zwei oder drei vorläufige Schwellwerte.** Thesis-Kap. 6.4 spricht von den drei
+  als vorläufig gekennzeichneten Schwellwerten, Anhang D kennzeichnet nur zwei
+  als vorläufig. Eine der beiden Stellen ist anzupassen.
+- **Formale Vorlagenreste im Manuskript.** Symbol- und Abkürzungsverzeichnis sind
+  noch die der HSD-Vorlage. Auf S. 84 f. stehen die Vorlagentexte zum Anhang.
+  Kapitel 1 enthält den Vorlagentext samt Feldfehler.
+- **Eidesstattliche Versicherung bei Verwendung von KI fehlt.** Das Manuskript
+  enthält nur die einfache Erklärung. Bei 27 als KI-gestützt gekennzeichneten
+  Abbildungen ist das Formular des Fachbereichs zwingend.
+- **Quellensprache im Word-Manager.** Alle 26 Seitenangaben lauten auf p. statt S.
+- **Quelle [26] ist im Verzeichnis, aber nicht zitiert.** Der TP4056 wird in
+  Kap. 5.1 zweimal ohne Beleg genannt.
 - **Formulierung des Umsetzungsstands.** In der Arbeit wird V-B als gewählt
   geführt, der Auslieferungsstand aber ausdrücklich als „funktional V-C mit
   vorbereiteter, abgeschalteter Stufe 2" bezeichnet. Diese Formulierung ist
@@ -1108,6 +1137,27 @@ Bremserkennung ist erbracht und im Feld belegt; die verbleibenden Punkte würden
 die Kennzahlen verfeinern, nicht die Kernaussage ändern. Das Zeitbudget bis zur
 Abgabe wird für Auswertung, Konstruktion und Text benötigt. Jede abgegrenzte
 Position ist im Ausblick der Arbeit als konkrete Empfehlung wiederzugeben.
+
+### 12.3 Anhangsstruktur der Thesis [festgelegt 17.08.2026]
+
+Verbindliche Reihenfolge und Inhalt. Die Dokumentation der KI-Nutzung steht ausdrücklich
+an letzter Stelle.
+
+| Anhang | Bezeichnung | Inhalt | Verweisstellen im Thesis-Text |
+|---|---|---|---|
+| A | Schaltplan, Stückliste und Bestückungsplan | Schaltplan Rev. 1.3, Stückliste nach den vier Bereichen des Schaltplans, handschriftlicher Bestückungsplan | Bildunterschrift Abb. 5-2, Kap. 5.5 |
+| B | Anforderungsliste mit Nachweisführung | alle 79 Anforderungen mit Art, Nachweisart, Nachweisstelle und Bewertung | Kap. 3 (zweimal), Kap. 6.4, Kap. 10.1 |
+| C | Projektarchiv, Rohdaten und Auswertungsskripte | Zugang und eingefrorener Stand des Archivs, Ordnerstruktur, acht Aufzeichnungen, elf Auswertungsskripte | Kap. 9.1 |
+| D | Herleitung der Zahlenwerte der Signalaufbereitung | die bisherige Tabelle 6-1 mit Auslegungswerten, Eingangsgrößen und abgeleiteten Werten | Kap. 3, Kap. 6.2.5, Kap. 6.4 |
+| E | Schnittstellenbeschreibung des Telemetriepakets | Rahmenbedingungen, Feldbelegung der 113 Byte, Regel für unterschiedliche Fassungen | Kap. 7.2 |
+| F | Dokumentation der Nutzung generativer KI-Werkzeuge | Einsatzbereiche, Werkzeuge, Art der Nutzung, Prüfung durch den Verfasser | Kap. 10.3 |
+
+**Zwingend zu ändernder Verweis.** Kap. 10.3 verweist auf Anhang E und muss auf
+**Anhang F** geändert werden. Sechs weitere Stellen tragen den Platzhalter „Anhang X".
+
+**Formelzeichen [festgelegt 17.08.2026].** Der Neigungswinkel der Fahrbahn trägt das
+Zeichen **β**. Das Zeichen α bleibt dem Gewichtungsfaktor des Komplementärfilters
+vorbehalten. Neu geführt wird **δ** für die halbe Breite des Toleranzbands um g.
 
 ---
 
