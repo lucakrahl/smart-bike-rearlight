@@ -4,7 +4,30 @@
 **Dokumenttyp:** Validierungsbericht (Zuarbeit zur Project Bible, Kap. 9.4)
 **Prüfling:** Firmware-Stand vor Feldtest (Frame-Schema v2, 81 Byte), Board Espressif ESP32-DevKitC-32E
 **Datum Versuchsdurchführung:** 06.08.2026, 22:20–22:43 Uhr MESZ
-**Erstellt:** 06.08.2026 · **Status:** abgeschlossen, Befunde freigegeben
+**Erstellt:** 06.08.2026 · **Status:** abgeschlossen, Befunde freigegeben · **Nachtrag 17.08.2026: zwei Befunde zurückgezogen, siehe Kasten unten**
+
+> ## Nachtrag vom 17.08.2026 — zurückgezogene Befunde
+>
+> **(1) Der Integritätsbefund aus Fahrt 5 ist vollständig zurückgezogen.** Abschnitt 6.4 führte
+> die gemeldeten 73 km/h bei gesetztem Fix-Flag als Beleg dafür, dass eine falsche
+> Navigationslösung unerkannt bleibt. Fahrt 5 wurde nach Klarstellung des Verfassers **aus dem
+> fahrenden Auto** durchgeführt. Die gemeldete Geschwindigkeit war damit real, die Abdeckung hat
+> das Signal nicht ausreichend gedämpft. Der Versuch ist ergebnislos und weder Beleg für noch
+> gegen die Integrität des Empfängers. Eine belastbare Integritätsprüfung liegt nicht vor.
+>
+> **(2) Die Latenzangabe von 200 bis 400 ms ist zurückgezogen.** Sie war eine eigene Abschätzung
+> und im Datenblatt nicht belegt. Maßgeblich ist der an der Messfahrt vom 08.08.2026 bestimmte
+> Versatz von **1,6 bis 2,0 s** zwischen Inertialsignal und Satellitenreferenz.
+>
+> **(3) Die Korrelation r = −0,132 ist als Gütemaß nicht belastbar.** Sie wurde ohne
+> Berücksichtigung der Latenz der Referenzkette gerechnet. Bei einheitlich herausgerechnetem
+> Versatz von 2,0 s ergibt sich für die Vergleichsfahrten im Median +0,15 gegenüber +0,85 für die
+> Messfahrt vom 08.08.2026.
+>
+> **Unberührt bleibt die Falsifikation der Bremserkennung.** Sie ist analytisch aus dem Quelltext
+> hergeleitet, am Prüfstand gemessen und über die Verteilung der Lichtstärke unabhängig belegt.
+> Ebenso unberührt bleibt die Entscheidung gegen eine satellitengestützte Primärarchitektur. Sie
+> steht auf der Ratengrenze, der Latenz, der Verfügbarkeit nach dem Einschalten und dem Rauschen.
 
 > Dieses Dokument ist die ausführliche Fassung der Feldtest-Auswertung. Die Project Bible führt in Kap. 9.4 nur die verdichteten Befunde; die Herleitung, die Rohdatenauszüge und die Variantendiskussion stehen hier. Für die Thesis ist dieses Dokument die Quelle für das Validierungskapitel „Feldtest Bremslichterkennung“.
 
@@ -74,7 +97,7 @@ K5 ist das eigentliche Prüfkriterium dieses Feldtests.
 
 **Bewertung K3:** Die Abtastung ist in allen CSV-Exporten lückenlos; die Zeitstempel `t_s` steigen in ~1,00-s-Schritten, `device_timestamp_ms` läuft monoton. Kein Frame-Verlust erkennbar.
 
-**Bewertung K4:** Das Fix-Gating funktioniert formal — in Fahrt 6 werden ~20 s korrekt als `NO_FIX` mit `sats = 0` geführt. Der Integritätsbefund aus Fahrt 5 (Abschnitt 6.4) zeigt allerdings, dass ein *gesetztes* Fix-Flag kein Beleg für eine korrekte Navigationslösung ist.
+**Bewertung K4:** Das Fix-Gating funktioniert formal — in Fahrt 6 werden ~20 s korrekt als `NO_FIX` mit `sats = 0` geführt. Eine Aussage darüber, ob ein gesetztes Fix-Flag eine korrekte Navigationslösung belegt, lässt sich aus diesem Feldtest nicht ableiten (Nachtrag 17.08.2026).
 
 **Zwischenfazit:** Die eigene Messkette ist tragfähig. Kumulative Größen (Distanz, Höhenmeter, Durchschnitts- und Höchstgeschwindigkeit) stimmen mit einer unabhängigen Referenz überein. Damit sind alle folgenden Aussagen zum Bremslicht **nicht** durch eine defekte Messkette erklärbar.
 
@@ -263,14 +286,20 @@ Der L86 ist mit 9600 Baud angebunden. Das entspricht rund 960 Byte/s Nutzdaten. 
 |---|---|
 | Interne Lösungslatenz des Empfängers (Signalverarbeitung, Ausgabe) | 100–300 ms |
 | Zusätzliche Epoche für die Differentiation v → a | + 1 Abtastperiode |
-| **Summe bis zur nutzbaren Verzögerungsinformation** | **200–400 ms** |
+| **Summe bis zur nutzbaren Verzögerungsinformation** | ~~200–400 ms~~ · gemessen 1,6 bis 2,0 s (Nachtrag 17.08.2026) |
 | Anforderung NFR-RT-01 | **≤ 50 ms** |
 
 Die Überschreitung beträgt Faktor 4 bis 8. Sicherheitstechnisch übersetzt sich das direkt in Weg: Bei einem mit 50 km/h (13,9 m/s) folgenden Fahrzeug entsprechen 300 ms zusätzlicher Verzug **4,2 m** später einsetzender Warnwirkung. Eine Architektur, die die schnellste Sicherheitsfunktion des Systems an den langsamsten Sensor bindet, ist nicht begründbar.
 
-### 6.4 Integritäts- und Verfügbarkeitsgrenze — der entscheidende Befund
+### 6.4 Verfügbarkeitsgrenze  ~~und Integritätsgrenze~~
 
-Fahrt 5 (22:40, „GNSS nach Fix verdecken“) liefert das stärkste Argument. Auszug aus den Rohdaten:
+> **Zurückgezogen am 17.08.2026.** Der folgende Abschnitt bis einschließlich des Absatzes zur
+> Unsichtbarkeit des Fehlers beruht auf Fahrt 5. Diese Fahrt fand im fahrenden Auto statt, die
+> gemeldete Geschwindigkeit war real. Der Abschnitt ist **kein Beleg** und darf nicht verwendet
+> werden. Er bleibt aus Gründen der Nachvollziehbarkeit stehen. Gültig bleibt allein der letzte
+> Absatz zu Fahrt 6 und der Verfügbarkeit nach dem Einschalten.
+
+Fahrt 5 (22:40, „GNSS nach Fix verdecken“). Auszug aus den Rohdaten:
 
 | t [s] | v [km/h] | Fix | Sats | HDOP | lat | lon |
 |---|---|---|---|---|---|---|
@@ -286,7 +315,7 @@ Ein Fahrrad fährt keine 73,6 km/h. Die Positionsdifferenz zwischen t = 0 und t 
 
 **Das Entscheidende ist nicht der Fehler selbst, sondern seine Unsichtbarkeit:** Während der gesamten Fehlmessung meldet der Empfänger `FIX_OK`, **15 bzw. 14 Satelliten** und einen **HDOP von 0,7–0,8**. Nach jedem gängigen Qualitätskriterium — und nach dem in FR-TEL-05 implementierten Gating (`isValid` & Alter < 3 s & Sats ≥ 4) — ist das ein exzellenter Fix.
 
-Damit ist die vorgeschlagene Architektur „GNSS primär, IMU als Notfallebene bei Fix-Verlust“ widerlegt: **Der Umschaltauslöser („Fix verloren“) tritt in genau dem Fehlerfall nicht ein, gegen den er schützen soll.** Das System hätte in dieser Situation aus einer Scheinverzögerung von 73 → 58 km/h eine Bremsung von rund 0,7 m/s² errechnet und in den anderen Sekunden aus den Sprüngen beliebige Werte — bei voller Vertrauenswürdigkeitsanzeige.
+~~Damit ist die vorgeschlagene Architektur „GNSS primär, IMU als Notfallebene bei Fix-Verlust“ widerlegt: **Der Umschaltauslöser („Fix verloren“) tritt in genau dem Fehlerfall nicht ein, gegen den er schützen soll.** Das System hätte in dieser Situation aus einer Scheinverzögerung von 73 → 58 km/h eine Bremsung von rund 0,7 m/s² errechnet und in den anderen Sekunden aus den Sprüngen beliebige Werte — bei voller Vertrauenswürdigkeitsanzeige.~~ *(zurückgezogen 17.08.2026)*
 
 Fahrt 6 (22:42, „vor Fix verdecken“) ergänzt die Verfügbarkeitsseite: Nach dem Geräteneustart (`device_timestamp_ms` beginnt bei 3291 ms) vergehen rund **20 s mit `NO_FIX` und `sats = 0`**; anschließend wird ein Fix mit nur 5 Satelliten und HDOP 1,5–1,8 erreicht. In einer GNSS-primären Architektur wäre das Bremslicht für 20 s nach jedem Einschalten funktionslos — bei einer Sicherheitsfunktion nicht vertretbar.
 
@@ -308,7 +337,7 @@ Bei einer Ansprechschwelle von 2,0 m/s² liegt das 90-%-Perzentil des reinen Dif
 | 100 Hz Abtastrate erreichbar? | **Nein** — Datenblattgrenze 10 Hz |
 | Latenz ≤ 50 ms (NFR-RT-01)? | **Nein** — 200–400 ms, Faktor 4–8 zu langsam |
 | Verfügbarkeit ab Systemstart? | **Nein** — 20 s bis Erstfix gemessen |
-| Fehler durch Fix-Gating erkennbar? | **Nein** — falsche Lösung mit FIX_OK/15 Sats/HDOP 0,7 belegt |
+| Fehler durch Fix-Gating erkennbar? | **ungeprüft** — der Abschattungsversuch ist ergebnislos, siehe Nachtrag |
 | Rauscharm genug für 2,0-m/s²-Schwelle? | **Grenzwertig** — p90 bis 1,97 m/s² |
 | Als *langsame* Referenz-/Korrekturgröße geeignet? | **Ja** — 0,1 m/s Geschwindigkeitsgenauigkeit, driftfrei |
 
@@ -323,7 +352,7 @@ Das GNSS ist als **Stütz- und Korrekturgröße** hervorragend geeignet, weil es
 Bremsintensität wird aus der GNSS-Geschwindigkeit abgeleitet; bei Fix-Verlust übernimmt die IMU.
 
 *Vorteile:* physikalisch direkte Messung der Fahrzeugverzögerung, driftfrei, keine Neigungsproblematik.
-*Nachteile:* verletzt NFR-RT-01 um Faktor 4–8; 20 s funktionsloses Bremslicht nach dem Start; der Umschaltauslöser greift bei der gefährlichsten Fehlerart (falsche Lösung mit gutem Fix-Flag) nicht; Rauschen grenzwertig; die IMU-Rückfallebene enthielte weiterhin denselben ungefixten Filter, wäre also kein sicherer Rückfall.
+*Nachteile:* verletzt NFR-RT-01 um Faktor 4–8; 20 s funktionsloses Bremslicht nach dem Start; Rauschen grenzwertig; die IMU-Rückfallebene enthielte weiterhin denselben ungefixten Filter, wäre also kein sicherer Rückfall.
 
 ### V-B — IMU als schneller Regelpfad, GNSS als langsame Stützgröße *(empfohlen)*
 
@@ -463,12 +492,12 @@ Für die wissenschaftliche Redlichkeit sind folgende Einschränkungen der Auswer
 
 | Nr. | Vorschlag | Aussage |
 |---|---|---|
-| Abb. F1 | Streudiagramm `brake_decel_ms2` über a_GNSS, alle 939 Punkte, mit Regressionsgerade und r = −0,132 | Die Kernaussage in einem Bild: kein Zusammenhang |
+| Abb. F1 | Streudiagramm `brake_decel_ms2` über a_GNSS, alle 939 Punkte, mit Regressionsgerade | Nur mit herausgerechnetem Zeitversatz aussagekräftig, siehe Nachtrag |
 | Abb. F2 | Zeitverlauf Fahrt 2, drei Kurven übereinander: v(t), a_GNSS(t), `brake_light_pct`(t) | Zeigt die fünf Bremsungen und dass das Licht bei keiner reagiert |
 | Abb. F3 | Ausschnitt um Fahrt 2, t = 51 s: Konstantfahrt mit 100 % Bremslicht | Fehlauslösung, das Spiegelbild zu F2 |
 | Abb. F4 | Simulierter Filterverlauf: Sprungantwort des Komplementärfilters mit τ = 0,49 s auf eine 2-s-Bremsung | Belegt den Fehlermechanismus rechnerisch, unabhängig von Messdaten |
 | Abb. F5 | Vektordiagramm der drei Fahrzustände mit ‖a‖ = g, > g, ≫ g | Erklärt das Lösungsprinzip anschaulich |
-| Abb. F6 | Rohdatenauszug Fahrt 5 mit v = 73,6 km/h bei FIX_OK/15 Sats/HDOP 0,7 | Das Argument gegen GNSS-primär, in einer Tabelle |
+| ~~Abb. F6~~ | ~~Rohdatenauszug Fahrt 5~~ | **entfällt, Befund zurückgezogen (Nachtrag 17.08.2026)** |
 | Tab. F1 | App ↔ Strava Soll-Ist-Vergleich (Abschnitt 3) | Nachweis der Messkettengültigkeit |
 | Tab. F2 | Nicht erkannte Bremsungen (Abschnitt 4.3) | Quantifizierung Fehler 1. Art |
 | Tab. F3 | Fehlauslösungen (Abschnitt 4.4) | Quantifizierung Fehler 2. Art |
